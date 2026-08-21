@@ -1,0 +1,14 @@
+
+--- A: committed evidence (escalation present) ---
+  stages: ['PLAN', 'STEP 1', 'STEP 2', 'CONTAIN', 'STEP 3', 'STEP 4', 'STEP 5', 'CHALLENGE', 'HUMAN GATE', 'EXECUTE', 'VERIFY', 'REPORT']
+  status=COMPLETED_WITH_RESTRICTIONS  escalations=1  isolated=fleet_recon
+  drift=CRITICAL(40)  external=sbx-4ba8f8139365  verified=True
+
+--- B: same mission, escalating rows REMOVED ---
+  stages: ['PLAN', 'STEP 1', 'STEP 2', 'STEP 3', 'STEP 4', 'STEP 5', 'CHALLENGE', 'HUMAN GATE', 'EXECUTE', 'VERIFY', 'REPORT']
+  status=COMPLETED  escalations=0  isolated=None
+  drift=ELEVATED(40)  external=None  verified=None
+
+CONTAIN phase present in A: True
+CONTAIN phase present in B: False
+TRACES IDENTICAL: False

@@ -1,0 +1,28 @@
+{
+  "name": "disjoint-radii-still-one-hearing",
+  "class": "multi_premise",
+  "description": "Two premises whose radii do not intersect: no duplicates to suppress, one settlement.",
+  "retractions": [
+    {
+      "claim_id": "clm_000002",
+      "source_id": "src_fx_desk",
+      "new_value": 25.0,
+      "reason": "FX desk revised the rate",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    },
+    {
+      "claim_id": "clm_000003",
+      "source_id": "src_logistics_ops",
+      "new_value": 48.0,
+      "reason": "logistics revised transit time",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    }
+  ],
+  "vertex_disabled": true,
+  "expect": {
+    "max_duplicate_obligations": 0,
+    "arbiter_must_rule": true,
+    "must_converge": true,
+    "team_must_dissolve": true
+  }
+}

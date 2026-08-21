@@ -1,0 +1,26 @@
+{
+  "name": "contested-line-capacity-two-owners",
+  "class": "multi_premise",
+  "description": "Two commitments in one radius contend for the same reserved line capacity.",
+  "retractions": [
+    {
+      "claim_id": "clm_000000",
+      "source_id": "src_supplier_K",
+      "new_value": 20,
+      "reason": "supplier K notified a revised lead time",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    }
+  ],
+  "vertex_disabled": true,
+  "expect": {
+    "arbiter_must_rule": true,
+    "must_allocate": true,
+    "must_converge": true,
+    "team_must_dissolve": true,
+    "max_duplicate_obligations": 0
+  },
+  "contested_resources": {
+    "cnc_001967": "line-3-capacity",
+    "cnc_002416": "line-3-capacity"
+  }
+}

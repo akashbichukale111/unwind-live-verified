@@ -1,0 +1,17 @@
+{
+  "description": "The T2 queue with no T2 available. Every node must render UNRESOLVED.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_001083",
+    "new_value": 0,
+    "reason": "The T2 queue with no T2 available. Every node must render UNRESOLVED.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "clause-with-vertex-down",
+  "class": "tool_failure"
+}

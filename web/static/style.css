@@ -1,0 +1,1239 @@
+/* UNWIND — two worlds.
+ *
+ * ⚠ CONTRAST IS MEASURED, NOT EYEBALLED. Against --ink, only --bone (14.98:1)
+ * and --amber (6.21:1) clear 4.5:1; --graphite is 2.34:1 and --oxide is 2.40:1,
+ * so those two are used for LINES, FILLS AND BORDERS ON THE FIELD AND NEVER FOR
+ * TEXT. Secondary text is --bone at reduced opacity, which still measures
+ * 5.68:1 at 0.58 and 7.6:1 at 0.72 -- hierarchy from opacity and size, not from
+ * a hue nobody can read. On --bone, --ink (14.98:1), --graphite (6.39:1) and
+ * --oxide (6.24:1) all pass, which is why the paper can use the rust.
+ * `scripts/check_contrast.py` recomputes every pair and fails the build.
+ *
+ *   THE FIELD       dark, structural, machine register
+ *   THE OBLIGATION  light, paper, human register
+ *
+ * The transition between them is the signature moment of the product, so the
+ * boldness is spent there and everything else stays quiet.
+ *
+ * SEVEN TOKENS. No eighth colour is defined anywhere in this file; the only
+ * other values are rgba() alphas of these same seven, which is depth from
+ * opacity rather than a new hue. No gradient on any surface. No radius above
+ * 4px -- this is structural, not soft.
+ */
+
+:root {
+  --ink:       #12151A; /* field ground — deliberately not pure black */
+  --slate:     #262C34; /* structure lines, inactive nodes */
+  --graphite:  #4A535E; /* secondary text on field */
+  --bone:      #EDE8DE; /* paper — the obligation surface */
+  --amber:     #C88A2E; /* flare / load warning — engineering, not neon */
+  --oxide:     #8C3A2B; /* irreversible — rust, not alarm red */
+  --verdigris: #3E7A6E; /* settled — patina, not success green */
+
+  --cond: "Archivo Narrow", "Arial Narrow", Impact, sans-serif;
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --body: "Inter Tight", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--body);
+  overflow: hidden;
+}
+
+/* The machine speaks condensed; the document speaks serif. Never mixed in
+ * one surface. */
+.cond { font-family: var(--cond); font-weight: 700; letter-spacing: 0.04em; }
+.mono { font-family: var(--mono); font-size: 11px; letter-spacing: 0.01em; }
+.serif { font-family: var(--serif); font-weight: 400; }
+
+#field {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── HUD ─────────────────────────────────────────────────────────── */
+
+.hud {
+  position: fixed;
+  z-index: 5;
+  color: var(--bone);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+#hud-left { top: 58px; left: 24px; }
+.hud-row { display: flex; gap: 14px; align-items: baseline; line-height: 1.9; }
+.hud-row .k { min-width: 108px; color: var(--bone); opacity: 0.72; }
+.hud-row .v { color: var(--bone); opacity: 1; font-variant-numeric: tabular-nums; }
+.hud-debt .v { color: var(--amber); }
+.hud-note { color: var(--bone); opacity: 0.58; margin-top: 2px; font-size: 10px; }
+
+#hud-right { top: 22px; right: 24px; text-align: right; }
+.counter-line { display: flex; align-items: baseline; gap: 14px; justify-content: flex-end; }
+.counter-from, .counter-to {
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.counter-from { color: var(--bone); opacity: 0.62; }
+.counter-to { color: var(--amber); }
+.counter-arrow { color: var(--bone); opacity: 0.62; font-family: var(--mono); font-size: 20px; }
+.counter-breakdown {
+  color: var(--bone);
+  opacity: 0.78;
+  margin-top: 10px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+#legend {
+  bottom: 18px;
+  left: 24px;
+  color: var(--bone);
+  opacity: 0.62;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 70vw;
+}
+.tag {
+  border: 1px solid currentColor;
+  padding: 1px 5px;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
+.tag.built { color: var(--amber); }
+.tag.designed { color: var(--bone); }
+.sep { color: var(--bone); }
+.key {
+  border: 1px solid currentColor;
+  color: var(--bone);
+  padding: 0 4px;
+}
+
+#pacing {
+  bottom: 18px;
+  right: 24px;
+  color: var(--bone);
+  opacity: 0.62;
+  max-width: 40vw;
+  text-align: right;
+}
+
+/* ── THE BAR ─────────────────────────────────────────────────────── */
+
+#bar-wrap {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, 88vw);
+  background: var(--ink);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 22px 26px 18px;
+  transition: opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+#bar-wrap.gone { opacity: 0; transform: translate(-50%, -50%) scale(0.98); pointer-events: none; }
+
+#bar {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--slate);
+  color: var(--bone);
+  font-family: var(--body);
+  font-size: 20px;
+  padding: 14px 4px;
+  outline: none;
+}
+#bar::placeholder { color: var(--bone); opacity: 0.62; }
+#bar:focus { border-bottom-color: var(--amber); }
+#bar:focus-visible { outline: 2px solid var(--amber); outline-offset: 6px; }
+
+#bar-hints { color: var(--bone); opacity: 0.62; margin-top: 10px; line-height: 1.9; }
+#bar-hints b { color: var(--amber); font-weight: 500; opacity: 1; }
+
+/* ── PANELS ──────────────────────────────────────────────────────── */
+
+.panel {
+  position: fixed;
+  z-index: 7;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, 88vw);
+  background: var(--ink);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 26px 28px;
+}
+
+.echo-grid {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px 16px;
+  line-height: 1.8;
+}
+.echo-grid .k { color: var(--bone); opacity: 0.62; }
+.echo-grid .v { color: var(--bone); }
+.echo-grid .v b { color: var(--amber); font-weight: 500; }
+
+.echo-refusal {
+  margin-top: 18px;
+  border-left: 2px solid var(--oxide);
+  padding: 8px 0 8px 12px;
+  color: var(--bone);
+  line-height: 1.7;
+}
+/* oxide is 2.40:1 on ink and unreadable as text; the rule keeps the rust
+ * and the label stays amber, which measures 6.21:1. */
+.echo-refusal .code { color: var(--amber); letter-spacing: 0.06em; }
+
+.echo-actions { margin-top: 22px; display: flex; gap: 12px; }
+
+.btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--bone);
+  border: 1px solid var(--amber);
+  border-radius: 2px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+.btn:hover { background: rgba(200, 138, 46, 0.12); }
+.btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.btn-quiet { border-color: var(--bone); color: var(--bone); opacity: 0.72; }
+.btn-quiet:hover { background: rgba(74, 83, 94, 0.16); }
+.btn-advance { margin-top: 26px; }
+/* This button lives on the PAPER, where amber is 2.41:1 and oxide is 6.24:1 --
+ * the reverse of the field. Same rust, opposite ground. */
+.btn-dark { border-color: var(--oxide); color: var(--oxide); }
+.btn-dark:hover { background: rgba(140, 58, 43, 0.1); }
+
+/* ── OVERLAYS (dark register) ────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  background: var(--ink);
+  padding: 6vh 6vw;
+  overflow-y: auto;
+  animation: rise 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.overlay-h { font-size: 13px; color: var(--bone); opacity: 0.72; margin: 0 0 26px; }
+
+.split-grid { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0; }
+.split-col { padding: 0 34px; }
+.split-col:first-child { padding-left: 0; }
+.split-rule { background: var(--slate); }
+.split-col h2 { font-size: 13px; color: var(--bone); opacity: 0.72; margin: 0 0 12px; }
+.split-n { font-size: 96px; line-height: 0.9; letter-spacing: -0.02em; color: var(--bone); }
+.split-sub { color: var(--bone); opacity: 0.62; margin-top: 8px; }
+.split-list { list-style: none; padding: 0; margin: 26px 0 0; max-height: 34vh; overflow-y: auto; }
+.split-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(38, 44, 52, 0.7);
+  color: var(--bone);
+  opacity: 0.78;
+}
+.split-list li .age { color: var(--amber); font-variant-numeric: tabular-nums; }
+.split-list li.old .age { color: var(--amber); font-weight: 500; }
+.split-gap {
+  margin-top: 30px;
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--bone);
+  max-width: 62ch;
+  line-height: 1.6;
+}
+.split-gap b { color: var(--amber); font-weight: 500; }
+
+/* ── THE PAPER (light register — the signature) ──────────────────── */
+
+.paper {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: var(--bone);
+  color: var(--ink);
+  overflow-y: auto;
+  animation: dissolve 760ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dissolve {
+  from { opacity: 0; filter: blur(14px); transform: scale(1.02); }
+  to   { opacity: 1; filter: none; transform: none; }
+}
+.paper-inner { max-width: 74ch; margin: 0 auto; padding: 8vh 28px 12vh; }
+.paper-head {
+  display: flex;
+  justify-content: space-between;
+  color: var(--graphite);
+  border-bottom: 1px solid rgba(18, 21, 26, 0.18);
+  padding-bottom: 10px;
+}
+#o-title { font-size: 46px; margin: 26px 0 6px; line-height: 1.1; }
+.o-lede { font-size: 21px; line-height: 1.5; color: var(--ink); margin: 0 0 30px; font-style: italic; }
+.o-h {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--graphite);
+  margin: 34px 0 10px;
+  border-bottom: 1px solid rgba(18, 21, 26, 0.14);
+  padding-bottom: 5px;
+}
+.o-h-bad { color: var(--oxide); border-bottom-color: rgba(140, 58, 43, 0.3); }
+
+.told {
+  border-left: 2px solid var(--slate);
+  padding-left: 14px;
+  margin-bottom: 16px;
+}
+.told .who { font-family: var(--mono); font-size: 11px; color: var(--ink); }
+.told .line { font-family: var(--mono); font-size: 11px; color: var(--graphite); line-height: 1.9; }
+.told .now { color: var(--oxide); }
+
+.o-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; }
+.o-list { list-style: none; padding: 0; margin: 0; }
+.o-list li {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 7px 0 7px 24px;
+  position: relative;
+  color: var(--ink);
+}
+.o-list li::before {
+  content: "[ ]";
+  position: absolute;
+  left: 0;
+  /* verdigris is 4.08:1 on bone -- below the floor. graphite is 6.39:1. */
+  color: var(--graphite);
+}
+.o-list-bad li::before { content: "[X]"; color: var(--oxide); font-weight: 500; }
+.o-list-bad li { color: var(--oxide); }
+
+.o-exposure { font-size: 34px; letter-spacing: -0.01em; }
+.o-exposure .unpriced {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--oxide);
+  margin-top: 8px;
+}
+.o-assume { margin-top: 10px; }
+.o-assume summary {
+  cursor: pointer;
+  color: var(--graphite);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.o-assume summary:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.o-assume ul { margin: 10px 0 0; padding-left: 18px; }
+.o-assume li { font-family: var(--mono); font-size: 11px; line-height: 1.8; color: var(--graphite); }
+
+.o-draft {
+  margin: 0;
+  padding: 18px 22px;
+  border-left: 2px solid var(--amber);
+  font-size: 19px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.o-nomodel {
+  margin-top: 10px;
+  color: var(--oxide);
+  border: 1px solid rgba(140, 58, 43, 0.4);
+  padding: 8px 12px;
+  border-radius: 2px;
+}
+.o-sign {
+  margin-top: 36px;
+  border-top: 1px solid rgba(18, 21, 26, 0.18);
+  padding-top: 14px;
+  display: flex;
+  gap: 16px;
+}
+.o-sign .k { color: var(--graphite); text-transform: uppercase; letter-spacing: 0.1em; }
+.o-sign .v { color: var(--ink); }
+
+/* ── COURT ───────────────────────────────────────────────────────── */
+
+.court-meta { color: var(--bone); opacity: 0.72; margin-bottom: 20px; line-height: 1.9; }
+.court-pleas { list-style: none; padding: 0; margin: 0 0 28px; max-height: 40vh; overflow-y: auto; }
+.court-pleas li {
+  display: grid;
+  grid-template-columns: 150px 130px 1fr auto;
+  gap: 16px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(38, 44, 52, 0.7);
+  color: var(--bone);
+  opacity: 0.78;
+}
+.court-pleas .stance { color: var(--bone); }
+.court-pleas .stance.concede { color: var(--amber); }
+.court-pleas .stance.survive_unchanged { color: var(--bone); font-weight: 500; }
+.court-pleas .ev { color: var(--bone); opacity: 0.62; }
+.court-ruling {
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--amber);
+  letter-spacing: -0.01em;
+  border-top: 1px solid var(--slate);
+  padding-top: 20px;
+}
+.court-ruling .advisory {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+}
+.court-dissent { margin-top: 20px; color: var(--bone); opacity: 0.78; line-height: 1.9; }
+.court-dissent .lbl { color: var(--amber); text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* ── LOAD RATING ─────────────────────────────────────────────────── */
+
+.lr-wrap { max-width: 620px; }
+.lr-bar-track { height: 3px; background: var(--slate); margin: 22px 0; }
+.lr-bar {
+  height: 3px;
+  background: var(--amber);
+  width: 50%;
+  transition: width 1400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lr-nums { font-size: 72px; line-height: 1; display: flex; gap: 20px; align-items: baseline; }
+.lr-nums #lr-before { color: var(--bone); opacity: 0.62; }
+.lr-nums #lr-after { color: var(--amber); }
+.lr-arrow { font-family: var(--mono); font-size: 22px; color: var(--bone); opacity: 0.62; }
+.lr-note { color: var(--bone); opacity: 0.78; margin-top: 22px; line-height: 1.8; max-width: 62ch; }
+
+/* ── HONESTY ─────────────────────────────────────────────────────── */
+
+.h-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; }
+.h-h { color: var(--bone); opacity: 0.72; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px; }
+.h-table { width: 100%; border-collapse: collapse; color: var(--bone); opacity: 0.85; }
+.h-table td, .h-table th { padding: 6px 8px; border-bottom: 1px solid rgba(38, 44, 52, 0.8); text-align: right; }
+.h-table th { color: var(--bone); opacity: 0.62; font-weight: 400; text-align: right; }
+.h-table td:first-child, .h-table th:first-child { text-align: left; }
+.h-table tr.worst td { color: var(--amber); font-weight: 500; }
+.h-table tr.worst td:first-child::after { content: "  ← worst"; color: var(--amber); }
+.h-worst { color: var(--amber); margin-top: 14px; line-height: 1.8; }
+.h-creds { color: var(--bone); opacity: 0.85; line-height: 1.9; margin-bottom: 26px; }
+.h-creds .bad { color: var(--amber); font-weight: 500; }
+.h-creds .ok { color: var(--bone); font-weight: 500; }
+.h-built { color: var(--bone); opacity: 0.85; line-height: 1.9; }
+.h-built .b { color: var(--amber); }
+.h-built .d { color: var(--bone); opacity: 0.62; }
+
+/* ── REPLAY DISCLOSURE ───────────────────────────────────────────── */
+
+.replay {
+  position: fixed;
+  z-index: 20;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--oxide);
+  color: var(--bone);
+  text-align: center;
+  padding: 9px 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .h-grid, .o-cols { grid-template-columns: 1fr; gap: 26px; }
+  .split-grid { grid-template-columns: 1fr; }
+  .split-rule { display: none; }
+  .split-col { padding: 0 0 26px; }
+  .counter-from, .counter-to { font-size: 40px; }
+  .split-n { font-size: 64px; }
+}
+
+@media (max-width: 480px) {
+  #hud-left { top: 42px; left: 12px; }
+  #hud-right { top: 12px; right: 12px; }
+  #core-home-link { top: 10px; left: 12px; }
+  #legend { display: none; }
+  .counter-from, .counter-to { font-size: 30px; }
+  .split-n { font-size: 48px; }
+  #o-title { font-size: 32px; }
+  .o-exposure { font-size: 24px; }
+  .court-pleas li { grid-template-columns: 1fr; gap: 2px; }
+  .overlay, .paper-inner { padding-left: 16px; padding-right: 16px; }
+}
+
+/* ── THE INSTRUMENT (Card 0 spanning Cards 1-3, Card 3 prompt) ─────
+ * Same dark register as every other `.overlay`. One compositional device:
+ * Card 0 spans full width above a row of three; thin lines rise from each
+ * of the three into Card 0, so the eye reads three feeding one, not four
+ * separate widgets. No new colour: amber for the fill and the emphasised
+ * refusal/allow text, oxide as the risk-class LINE (never text, same rule
+ * as everywhere else on ink), verdigris only as a border on a small bone
+ * "paper" patch for the CHALLENGE freeze mark -- never as ink-surface text.
+ */
+
+.instr-offline {
+  color: var(--bone);
+  opacity: 0.85;
+  border-left: 2px solid var(--oxide);
+  padding: 10px 14px;
+  max-width: 62ch;
+  line-height: 1.8;
+}
+
+/* HYPERION-ZERO sits immediately to the left of WARRANT -- both hero-tier,
+ * same border/padding language as `.instr-card0` so it reads as native to
+ * the instrument rather than a bolted-on fifth thing. */
+.instr-hero-row { display: grid; grid-template-columns: 0.82fr 1.5fr; gap: 20px; align-items: stretch; }
+.instr-card-hyperion {
+  border: 1px solid var(--slate);
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.instr-card-hyperion .instr-card-head { margin-bottom: 0; }
+.hy-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.hy-stat { line-height: 1.5; }
+.hy-stat .n { color: var(--amber); font-size: 15px; display: block; }
+.hy-stat .l { color: var(--bone); opacity: 0.6; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.hy-status-line { color: var(--bone); opacity: 0.85; }
+/* The status dot is a GRAPHICAL OBJECT, not text: the sentence beside it
+   ("IMMUNE CORE ACTIVE — N decisions observed") carries the meaning, and the
+   dot only echoes it. Rendered as a shape rather than a coloured glyph so it
+   is held to WCAG's 3:1 non-text threshold, which verdigris (4.08:1) clears,
+   instead of the 4.5:1 text threshold it did not. `scripts/check_contrast.py`
+   flagged the old `color: var(--verdigris)` form and was right to. */
+.hy-status-line .dot {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--verdigris);
+  vertical-align: baseline;
+  margin-right: 0.15em;
+}
+
+.instr-card0 {
+  border: 1px solid var(--slate);
+  padding: 22px 26px;
+}
+.instr-card-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.instr-label { font-size: 13px; color: var(--amber); }
+.instr-sub { color: var(--bone); opacity: 0.62; }
+
+.instr-bars { display: flex; flex-direction: column; gap: 12px; }
+.warrant-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 74px 90px;
+  align-items: center;
+  gap: 14px;
+}
+.wr-label { color: var(--bone); opacity: 0.78; font-size: 11px; }
+.wr-track { position: relative; height: 7px; background: var(--slate); }
+.wr-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  background: var(--amber);
+  width: 0%;
+  transition: width 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wr-threshold {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1px solid var(--oxide);
+}
+.wr-value {
+  color: var(--bone);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.wr-synthetic {
+  color: var(--bone);
+  opacity: 0.5;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+  text-align: right;
+}
+.wr-synthetic.earned { color: var(--amber); opacity: 1; }
+
+.instr-route {
+  margin-top: 18px;
+  padding: 8px 0 8px 12px;
+  border-left: 2px solid var(--slate);
+  color: var(--bone);
+  line-height: 1.8;
+}
+.instr-route.refused { border-left-color: var(--oxide); }
+.instr-route.allowed { border-left-color: var(--verdigris); }
+.instr-route .code { color: var(--amber); letter-spacing: 0.06em; }
+
+.instr-actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.instr-feed { width: 100%; height: 70px; display: block; overflow: visible; }
+.instr-feed-line {
+  fill: none;
+  stroke: var(--graphite);
+  stroke-width: 1;
+  opacity: 0.6;
+  transition: stroke 500ms ease, opacity 500ms ease;
+}
+.instr-feed-line.active { stroke: var(--amber); opacity: 1; }
+
+.instr-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+.instr-card {
+  border: 1px solid var(--slate);
+  padding: 16px 18px;
+}
+.instr-row .instr-label { display: block; margin-bottom: 10px; }
+.instr-body-text { color: var(--bone); opacity: 0.85; line-height: 2; }
+.instr-body-text .amber { color: var(--amber); }
+
+.instr-freeze-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bone);
+  border: 2px solid var(--verdigris);
+  padding: 2px 8px;
+  margin-top: 8px;
+}
+.instr-freeze-mark .lbl {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+/* ── THE INSTRUMENT is the default landing view -- no key required.
+ * Each of its four card sections is a real click target onto "its own"
+ * detail: Card 1 opens the full Unwind Core field/cascade experience;
+ * Cards 0/2/3 already show their full real detail inline (bars, registry,
+ * agreement rate) -- there is no deeper screen to fabricate for those, so
+ * their click is a genuine, visible acknowledgement (a brief amber
+ * highlight) rather than a fake navigation to nothing new. `Esc` from
+ * Core returns here.
+ */
+.instr-clickable { cursor: pointer; }
+.instr-clickable:hover, .instr-clickable:focus-visible {
+  border-color: var(--amber);
+  background: rgba(200, 138, 46, 0.06);
+}
+.instr-clickable:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.instr-clickable.instr-pulse { border-color: var(--amber); background: rgba(200, 138, 46, 0.1); }
+#instr-card0-head.instr-clickable { padding: 4px 6px; margin: -4px -6px 0; }
+
+.instr-hint { margin-top: 18px; color: var(--bone); opacity: 0.58; }
+.instr-hint .key { margin: 0 2px; }
+
+/* The one persistent way back to the instrument while inside Core --
+ * a real `<button>`, so it needs the same explicit reset `.btn` and
+ * `.instr-clickable`'s siblings already carry: a `<button>` does not
+ * inherit `color` from the document by default the way a `div` does,
+ * and `appearance: none` strips native OS chrome `background` alone does
+ * not remove in every browser. */
+#core-home-link {
+  appearance: none;
+  -webkit-appearance: none;
+  position: fixed;
+  z-index: 6;
+  top: 22px;
+  left: 24px;
+  margin: 0;
+  background: transparent;
+  color: var(--bone);
+  opacity: 0.72;
+  border: 1px solid var(--slate);
+  border-radius: 0;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+#core-home-link:hover, #core-home-link:focus-visible {
+  opacity: 1;
+  border-color: var(--amber);
+  color: var(--amber);
+}
+#core-home-link:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+@media (max-width: 1200px) {
+  .instr-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+  .instr-row { grid-template-columns: 1fr; }
+  .instr-hero-row { grid-template-columns: 1fr; }
+  .warrant-row { grid-template-columns: 1fr; row-gap: 4px; }
+  .wr-value, .wr-synthetic { text-align: left; }
+}
+
+/* WARRANT is the hero: the largest label on the page, nothing louder. */
+.instr-label-hero { font-size: 20px; }
+
+/* ── CARD DETAIL SCREENS (Warrant / Control Tower / Countersign) ──
+ * Same dark overlay register as the instrument itself. Each opens from its
+ * card's click target and returns via `.detail-back`, Esc, or T -- no new
+ * colour, no new surface language, just more of the same real data.
+ */
+.amber { color: var(--amber); }
+
+.detail-back { margin-bottom: 22px; }
+.detail-title { margin-bottom: 8px; }
+.detail-lede { max-width: 62ch; margin-bottom: 26px; }
+.detail-bars { margin-bottom: 22px; }
+.detail-notes { max-width: 70ch; }
+.detail-notes p {
+  color: var(--bone);
+  opacity: 0.85;
+  line-height: 1.8;
+  margin: 0 0 14px;
+}
+.detail-notes .mono { opacity: 0.9; }
+.detail-notes .h-h:not(:first-child) { margin-top: 24px; }
+
+.detail-registry { margin-bottom: 8px; }
+.reg-row {
+  border-left: 2px solid var(--slate);
+  padding: 4px 0 4px 12px;
+  margin-bottom: 16px;
+  color: var(--bone);
+  opacity: 0.85;
+  line-height: 1.9;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.reg-row .reg-id { color: var(--bone); opacity: 1; font-size: 12px; }
+.detail-reasons { color: var(--bone); opacity: 0.78; line-height: 2; margin-bottom: 8px; }
+
+/* ── SINGULARITY-MESH DETAIL (Card 5) ────────────────────────────
+ * Same dark overlay register and seven-token palette as every other
+ * detail screen -- no new colour, no gradient, no radius above 4px.
+ * `.sm-hero` sections (the lifecycle, Capability Genome, Behavioral DNA,
+ * the immune system, governed autonomy, the architecture views, the
+ * attack/recover walkthrough, the demo) get an amber left rule, the same
+ * "loudest = amber, never a new hue" emphasis language `.instr-label-hero`
+ * already uses for WARRANT. `.sm-status` badges reuse `.tag.built`'s amber
+ * for LIVE and `.tag.designed`'s dim bone for ARCHITECTURE/DEMO, so this
+ * card's honesty language matches the legend's BUILT/DESIGNED key exactly.
+ */
+.sm-section.detail-notes { max-width: 900px; margin: 0 0 40px; }
+.sm-section .h-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sm-hero.detail-notes { border-left: 2px solid var(--amber); padding-left: 20px; }
+
+.sm-status {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  border: 1px solid currentColor;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+.sm-status.live { color: var(--amber); }
+.sm-status.arch { color: var(--bone); opacity: 0.62; }
+.sm-status.demo { color: var(--bone); opacity: 0.62; font-style: italic; }
+
+.sm-eq {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
+  color: var(--bone);
+  opacity: 0.85;
+  line-height: 2;
+  margin-top: 6px;
+}
+.sm-plus, .sm-eq-arrow { color: var(--bone); opacity: 0.5; }
+.sm-eq-arrow { font-size: 13px; }
+
+.sm-subtitle { color: var(--bone); opacity: 0.72; font-size: 17px; margin: 2px 0 12px; }
+
+.sm-flow {
+  color: var(--bone);
+  opacity: 0.85;
+  line-height: 2.1;
+  margin: 10px 0;
+}
+.sm-flow .amber { color: var(--amber); }
+.sm-arrow { color: var(--amber); opacity: 0.85; margin: 0 2px; }
+.sm-flow-emph { color: var(--amber); letter-spacing: 0.08em; margin-top: 4px; }
+
+.sm-note {
+  color: var(--bone);
+  opacity: 0.62;
+  border-left: 2px solid var(--slate);
+  padding: 6px 0 6px 12px;
+  line-height: 1.7;
+  font-size: 12px;
+  margin-top: 14px;
+}
+
+.sm-hero-statement { color: var(--bone); font-size: 20px; margin: 10px 0; }
+
+.sm-lifecycle {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.sm-stage {
+  border: 1px solid var(--slate);
+  padding: 10px 12px;
+  min-height: 78px;
+}
+.sm-stage .n { color: var(--amber); font-family: var(--mono); font-size: 10px; opacity: 0.85; }
+.sm-stage .name { color: var(--bone); font-family: var(--cond); font-weight: 700; font-size: 13px; margin: 4px 0; }
+.sm-stage .note { color: var(--bone); opacity: 0.6; font-family: var(--mono); font-size: 10px; line-height: 1.5; }
+
+.sm-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 14px 0;
+}
+.sm-compare-col { border-left: 2px solid var(--verdigris); padding-left: 14px; }
+.sm-compare-col.sm-compare-bad { border-left-color: var(--oxide); }
+.sm-compare-h { color: var(--bone); opacity: 0.72; letter-spacing: 0.1em; margin-bottom: 8px; }
+.sm-compare-bad .sm-compare-h { color: var(--amber); opacity: 1; }
+.sm-compare-list { list-style: none; margin: 0; padding: 0; color: var(--bone); opacity: 0.85; line-height: 2; font-size: 11px; }
+
+.sm-immune-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+.sm-immune-card {
+  border: 1px solid var(--slate);
+  border-top: 2px solid var(--graphite);
+  padding: 14px 16px;
+  line-height: 1.8;
+}
+.sm-immune-card.sm-immune-live { border-top-color: var(--amber); }
+.sm-immune-card .name { color: var(--bone); font-family: var(--cond); font-weight: 700; font-size: 13px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sm-immune-card .threat { color: var(--bone); opacity: 0.72; font-size: 11px; }
+.sm-immune-card .action { color: var(--amber); font-family: var(--mono); font-size: 11px; margin-top: 8px; }
+
+.sm-layers { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.sm-layer-row {
+  display: grid;
+  grid-template-columns: 28px 170px 1fr auto;
+  align-items: baseline;
+  gap: 14px;
+  border-left: 2px solid var(--slate);
+  padding: 6px 0 6px 12px;
+}
+.sm-layer-row .n { color: var(--amber); font-family: var(--mono); font-size: 11px; }
+.sm-layer-row .name { color: var(--bone); font-family: var(--cond); font-weight: 700; font-size: 12px; }
+.sm-layer-row .detail { color: var(--bone); opacity: 0.72; font-family: var(--mono); font-size: 11px; }
+
+.sm-flow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+}
+.sm-flow-steps .step {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--slate);
+  padding: 6px 10px;
+  color: var(--bone);
+  opacity: 0.72;
+}
+.sm-flow-steps .step.live { border-color: var(--amber); color: var(--amber); opacity: 1; }
+.sm-flow-steps .sep { color: var(--bone); opacity: 0.4; }
+
+.sm-arch-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  color: var(--bone);
+  opacity: 0.85;
+  line-height: 1.7;
+}
+.sm-arch-flow div:nth-child(odd) { color: var(--bone); }
+.sm-crosscut { color: var(--bone); opacity: 0.62; margin-top: 12px; }
+
+.sm-status-table { display: flex; flex-direction: column; gap: 4px; color: var(--bone); opacity: 0.85; line-height: 2; }
+.sm-status-table .row { display: flex; justify-content: space-between; gap: 14px; max-width: 480px; border-bottom: 1px solid rgba(38, 44, 52, 0.6); padding: 2px 0; }
+
+.sm-demo-phase { border-left: 2px solid var(--slate); padding: 4px 0 12px 14px; margin-bottom: 18px; }
+.sm-demo-phase .title { color: var(--amber); font-family: var(--cond); font-weight: 700; font-size: 14px; }
+.sm-demo-phase .input { color: var(--bone); font-style: italic; opacity: 0.85; margin: 6px 0; }
+
+@media (max-width: 900px) {
+  .sm-lifecycle { grid-template-columns: 1fr 1fr; }
+  .sm-compare { grid-template-columns: 1fr; }
+  .sm-immune-grid { grid-template-columns: 1fr; }
+  .sm-layer-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* ── AGENTIC COMMAND OS ──────────────────────────────────────────
+ * The master orchestration layer above the instrument. Same dark overlay
+ * register (`.overlay`), same restrained palette -- no new hue, no new
+ * surface language, the same "amber = live, everything else says what it
+ * actually is" discipline the six existing cards already use.
+ */
+.cmdos-lede { max-width: 68ch; opacity: 0.7; margin: 0 0 22px; }
+.cmdos-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.cmdos-back-link { position: absolute; top: 22px; right: 24px; }
+
+.cmdos-stages { list-style: none; padding: 0; margin: 0 0 26px; max-width: 78ch; }
+.cmdos-stage {
+  border-left: 2px solid var(--slate);
+  padding: 8px 0 10px 14px;
+  margin-bottom: 6px;
+}
+.cmdos-stage-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cmdos-stage-n { color: var(--bone); opacity: 0.45; }
+.cmdos-stage-name { color: var(--bone); font-size: 13px; letter-spacing: 0.02em; }
+.cmdos-stage-summary { color: var(--bone); opacity: 0.72; margin-top: 4px; line-height: 1.7; }
+
+.cmdos-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid var(--slate);
+  border-radius: 2px;
+}
+.cmdos-live { color: var(--amber); border-color: var(--amber); }
+.cmdos-simulated { color: var(--bone); opacity: 0.85; border-style: dashed; }
+/* oxide is 2.40:1 on ink and unreadable as text (same rule the echo-refusal
+ * .code label already follows) -- the border keeps the rust, the label
+ * itself stays bone. */
+.cmdos-unavailable { color: var(--bone); border-color: var(--oxide); }
+.cmdos-reference { color: var(--bone); opacity: 0.55; }
+.cmdos-designed { color: var(--bone); opacity: 0.4; border-style: dotted; }
+
+.cmdos-report {
+  border: 1px solid var(--verdigris);
+  padding: 16px 20px;
+  margin-bottom: 30px;
+  max-width: 78ch;
+}
+/* verdigris is 3.67:1 on ink, below the 4.5:1 floor as text -- amber (6.21:1)
+ * carries the "this is real, on this run" meaning instead; verdigris stays
+ * on the border only. */
+.cmdos-report-title { color: var(--amber); font-size: 16px; margin-bottom: 10px; }
+.cmdos-report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+.cmdos-report-grid .k { color: var(--bone); opacity: 0.62; margin-right: 8px; }
+.cmdos-report-grid .v { color: var(--bone); font-variant-numeric: tabular-nums; }
+
+.cmdos-h { color: var(--bone); opacity: 0.72; font-size: 12px; letter-spacing: 0.04em; margin: 0 0 4px; }
+.cmdos-hint { color: var(--bone); opacity: 0.55; margin: 0 0 14px; }
+.cmdos-reality { display: flex; flex-wrap: wrap; gap: 24px 40px; }
+.cmdos-reality-group { min-width: 220px; }
+.cmdos-reality-area { color: var(--bone); opacity: 0.8; font-size: 12px; margin-bottom: 6px; }
+.cmdos-reality-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(38, 44, 52, 0.6);
+}
+.cmdos-reality-feature { color: var(--bone); opacity: 0.72; }
+
+.cmdos-gate-toggle { display: flex; align-items: center; gap: 6px; color: var(--bone); opacity: 0.72; }
+.cmdos-gate-toggle input { accent-color: var(--amber); }
+
+/* The pause state gets its own colour: not built (designed/dotted), not a
+ * live pass (amber), not a block (oxide-bordered) -- a decision genuinely
+ * pending, so it reuses the paper's rust-on-bone contrast pairing already
+ * proven for `.btn-dark`, since this panel visually reads as a request for
+ * a human's attention the same way the paper obligation does. */
+.cmdos-gate {
+  border: 1px solid var(--oxide);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  max-width: 78ch;
+  animation: rise 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cmdos-gate-title { color: var(--bone); font-size: 15px; margin-bottom: 10px; }
+.cmdos-gate-body { color: var(--bone); opacity: 0.78; line-height: 1.7; margin: 0 0 16px; max-width: 68ch; }
+
+/* ── CONSEQUENCE PREVIEW ─────────────────────────────────────────────
+ * A vertical chain (action -> premise -> radius -> regimes) beside the
+ * decomposed risk index. Same seven tokens; the only colour that carries
+ * meaning is --amber for the counts and the CRITICAL badge. */
+.cq-controls { display: flex; gap: 24px; flex-wrap: wrap; margin: 14px 0 18px; }
+.cq-controls label { display: flex; flex-direction: column; gap: 5px; color: var(--bone); opacity: 0.72; }
+.cq-controls select {
+  background: var(--ink); color: var(--bone); border: 1px solid var(--slate);
+  font-family: var(--mono); font-size: 11px; padding: 6px 8px; border-radius: 2px;
+}
+.cq-out { margin-bottom: 26px; }
+.cq-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px; align-items: start; }
+.cq-graph { display: flex; flex-direction: column; gap: 2px; }
+.cq-node {
+  border: 1px solid var(--slate); padding: 9px 12px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+}
+.cq-node-action { border-color: var(--amber); }
+.cq-label { font-size: 12px; letter-spacing: 0.04em; color: var(--bone); }
+.cq-count { font-size: 17px; color: var(--amber); font-variant-numeric: tabular-nums; }
+.cq-detail { grid-column: 1 / -1; margin-top: 2px; opacity: 0.62; }
+.cq-arrow { color: var(--bone); opacity: 0.58; font-size: 11px; text-align: center; line-height: 1; }
+.cq-risk { border: 1px solid var(--slate); padding: 16px 18px; }
+.cq-total {
+  font-size: 46px; line-height: 1; color: var(--amber);
+  font-variant-numeric: tabular-nums; margin: 6px 0 16px;
+  display: flex; align-items: baseline; gap: 12px;
+}
+.cq-band { font-size: 13px; letter-spacing: 0.1em; color: var(--bone); opacity: 0.78; }
+.cq-dim { display: grid; grid-template-columns: 10ch 1fr 4ch; gap: 10px; align-items: center; margin-bottom: 6px; }
+.cq-dim-k { color: var(--bone); opacity: 0.72; }
+.cq-dim-bar { height: 5px; background: var(--slate); display: block; }
+.cq-dim-bar i { display: block; height: 100%; background: var(--amber); }
+.cq-dim-v { color: var(--bone); text-align: right; font-variant-numeric: tabular-nums; }
+.cq-disclaim { margin-top: 14px; opacity: 0.58; line-height: 1.5; }
+.cq-unknown { border: 1px solid var(--slate); padding: 14px 16px; }
+@media (max-width: 1100px) { .cq-grid { grid-template-columns: 1fr; } }
+
+/* ── MISSION MEDIA LAB ───────────────────────────────────────────────
+ * Three cards, one row. Same seven tokens, same thin borders, same badge
+ * vocabulary as every other panel -- this is part of the instrument, not a
+ * separate dashboard bolted onto it. */
+.media-lab {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  margin-bottom: 14px; max-width: 100%;
+}
+.media-card {
+  border: 1px solid var(--slate); padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+}
+.media-card-head { display: flex; align-items: center; gap: 10px; }
+.media-glyph { color: var(--amber); font-size: 14px; line-height: 1; }
+.media-name { font-size: 13px; letter-spacing: 0.08em; color: var(--bone); }
+.media-title {
+  font-size: 12px; letter-spacing: 0.05em; color: var(--bone); opacity: 0.86;
+  text-transform: uppercase;
+}
+.media-model { color: var(--bone); opacity: 0.62; }
+.media-model b { color: var(--amber); font-weight: 500; }
+.media-why { opacity: 0.62; line-height: 1.5; }
+.media-out { width: 100%; }
+.media-result-head { display: flex; gap: 10px; align-items: center; margin: 8px 0 6px; }
+.media-text {
+  white-space: pre-wrap; word-break: break-word; margin: 6px 0 0;
+  font-family: var(--mono); font-size: 10px; line-height: 1.6;
+  color: var(--bone); opacity: 0.78; max-height: 260px; overflow-y: auto;
+  border-left: 1px solid var(--slate); padding-left: 10px;
+}
+/* The prompt stays collapsed by default: it is proof the work is real, not
+ * something a reader must scroll past to reach the status. */
+.media-details { width: 100%; margin-top: 8px; }
+.media-details summary {
+  cursor: pointer; color: var(--bone); opacity: 0.62; font-size: 10px;
+}
+.media-details summary:hover { opacity: 0.9; }
+.media-player { width: 100%; margin-top: 8px; border: 1px solid var(--slate); }
+@media (max-width: 1100px) {
+  .media-lab { grid-template-columns: 1fr; }
+}
+
+/* ── MISSION TIME MACHINE ────────────────────────────────────────────
+ * The arc is a horizontal ladder of the checkpoints that were ACTUALLY
+ * written, so its length varies per mission -- it scrolls rather than
+ * compressing, because a fixed-width arc would have to drop nodes and a
+ * dropped node is a phase the reader never learns ran.
+ * Colours are the existing tokens only: --amber for the current node,
+ * --graphite (6.39:1 on --bone, 4.5:1-clearing on --ink per the header
+ * note) for structure. No new hue is introduced. */
+.mtm-arc {
+  list-style: none; padding: 0 0 6px; margin: 0 0 22px;
+  display: flex; gap: 0; overflow-x: auto; max-width: 100%;
+}
+.mtm-arc-node {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  min-width: 15ch; padding-right: 18px; position: relative; flex: 0 0 auto;
+}
+/* The connector: a hairline from each node to the next, never after the
+ * last one -- an arc that trails off implies a phase that did not happen. */
+.mtm-arc-node:not(:last-child)::after {
+  content: ""; position: absolute; left: 9px; top: 4px;
+  width: calc(100% - 18px); height: 1px; background: var(--slate);
+}
+.mtm-arc-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1px solid var(--graphite); background: var(--ink);
+  position: relative; z-index: 1;
+}
+.mtm-arc-dot-current { border-color: var(--amber); background: var(--amber); }
+.mtm-arc-label {
+  font-size: 11px; letter-spacing: 0.04em; color: var(--bone);
+  text-transform: uppercase; line-height: 1.25; max-width: 14ch;
+}
+.mtm-state { margin-bottom: 26px; max-width: 78ch; }
+.mtm-caps {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px;
+}
+.mtm-cap {
+  border: 1px solid var(--slate); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+}
+.mtm-cap-name { font-size: 12px; letter-spacing: 0.05em; color: var(--bone); }
+.mtm-cap .btn { margin-top: 4px; }
+/* A disabled control must LOOK unavailable, not merely refuse the click --
+ * a button that looks live and does nothing is the defect this whole panel
+ * was fixed for. */
+.mtm-cap .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 900px) {
+  .mtm-caps { grid-template-columns: 1fr; }
+}
+
+.cmdos-tf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px; margin-bottom: 26px; max-width: 78ch; }
+.cmdos-trust, .cmdos-firewall { display: flex; flex-direction: column; }
+
+.cmdos-mission-list { list-style: none; padding: 0; margin: 0; max-width: 40ch; }
+.cmdos-clickable { cursor: pointer; }
+.cmdos-clickable:hover, .cmdos-clickable:focus-visible {
+  border-color: var(--amber);
+  background: rgba(200, 138, 46, 0.06);
+}
+
+@media (max-width: 900px) {
+  .cmdos-tf-grid { grid-template-columns: 1fr; }
+}
+
+/* ── REDUCED MOTION ──────────────────────────────────────────────
+ * The die-back must still be communicated. Animation is removed; the
+ * counter becomes a stepped figure and the field redraws in place.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Agentic Command OS: plan, fleet, economics, external action ─────────────
+   Additive only. Reuses the existing cmdos-* tokens (tag colours, row layout,
+   mono/cond faces) rather than introducing a second visual language for the
+   new panels — the contrast floor `scripts/check_contrast.py` enforces is a
+   property of those tokens, so inheriting them keeps the check meaningful. */
+
+.cmdos-auth,
+.cmdos-objective {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+
+.cmdos-auth label,
+.cmdos-objective label {
+  min-width: 11rem;
+  opacity: 0.75;
+}
+
+.cmdos-auth input,
+.cmdos-objective input[type="text"] {
+  flex: 1 1 22rem;
+  min-width: 12rem;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+}
+
+.cmdos-panel { margin: 1.5rem 0; }
+
+.cmdos-plan-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.cmdos-plan-step {
+  display: grid;
+  grid-template-columns: 2.5rem 11rem 12rem 9rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.3rem 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.cmdos-plan-seq { opacity: 0.6; }
+.cmdos-plan-scope,
+.cmdos-plan-clamps { opacity: 0.75; }
+.cmdos-plan-clamps { margin-top: 0.5rem; }
+
+.cmdos-fleet-row {
+  padding: 0.4rem 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.cmdos-fleet-scope,
+.cmdos-fleet-tools { opacity: 0.75; font-size: 0.9em; }
+
+.cmdos-econ-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.cmdos-econ-controls label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cmdos-econ-tax { margin: 0.4rem 0; }
+.cmdos-ground { margin-top: 0.5rem; }
+
+@media (max-width: 900px) {
+  .cmdos-plan-step {
+    grid-template-columns: 2.5rem 1fr;
+    row-gap: 0.15rem;
+  }
+}

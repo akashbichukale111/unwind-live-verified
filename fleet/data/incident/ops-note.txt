@@ -1,0 +1,21 @@
+ops handover — night shift → day shift
+======================================
+2026-08-19 06:40 (typed in a hurry, sorry)
+
+supplier K lead time is NOT 11 days any more. procurement said 20 on the
+call yesterday but the sheet still says 11. someone needs to check which
+agents are still planning against 11.
+
+also: the finance recon bot (fleet_recon?) has been asking for secret
+access again — 3rd time this week. #4 worker. i said no but it keeps
+retrying. tool calls went from ~6 to over 140 in one run, that can't be
+right.
+
+tariff rate for the K line — i *think* it's still 8% but the compliance
+note from 2026-05-02 says 8.5%. never reconciled. flagging it.
+
+carrier hub cutoff moved to 14:00 local (was 16:00). confirmed by the
+carrier portal, not by email, so no paper trail.
+
+TODO someone please trace what depends on the 11 day number before the
+monday run. i do not have a list. i never have a list.

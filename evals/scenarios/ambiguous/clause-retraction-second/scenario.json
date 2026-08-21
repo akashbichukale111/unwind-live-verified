@@ -1,0 +1,17 @@
+{
+  "description": "A second clause, same shape.",
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_001084",
+    "new_value": 0,
+    "confidence": 1.0,
+    "reason": "A second clause, same shape.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "clause-retraction-second",
+  "class": "ambiguous"
+}

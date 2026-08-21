@@ -1,0 +1,10 @@
+{"authority":["supplier_K."],"falsification_history":[],"kind":"supplier_email","load_rating":0.72,"name":"Kestrel Components GmbH","source_id":"src_supplier_K"}
+{"authority":["supplier_L."],"falsification_history":[],"kind":"supplier_email","load_rating":0.81,"name":"Lyric Fabrication Ltd","source_id":"src_supplier_L"}
+{"authority":["supplier_M."],"falsification_history":[],"kind":"vendor_pdf","load_rating":0.66,"name":"Meridian Castings SA","source_id":"src_supplier_M"}
+{"authority":["inventory.","capacity.","internal."],"falsification_history":[],"kind":"erp_feed","load_rating":0.93,"name":"Internal ERP replication feed","source_id":"src_erp_internal"}
+{"authority":["contract.supplier_K."],"falsification_history":[],"kind":"contract","load_rating":0.88,"name":"Master supply agreement, Kestrel","source_id":"src_msa_K"}
+{"authority":["contract.supplier_L."],"falsification_history":[],"kind":"contract","load_rating":0.88,"name":"Master supply agreement, Lyric","source_id":"src_msa_L"}
+{"authority":["tariff.","duty."],"falsification_history":[],"kind":"regulatory_bulletin","load_rating":0.9,"name":"Customs tariff bulletin","source_id":"src_tariff_bulletin"}
+{"authority":["fx."],"falsification_history":[],"kind":"internal_system","load_rating":0.85,"name":"Treasury FX desk","source_id":"src_fx_desk"}
+{"authority":["freight.transit.","dock."],"falsification_history":[],"kind":"internal_system","load_rating":0.87,"name":"Logistics operations system","source_id":"src_logistics_ops"}
+{"authority":["freight_broker_Z."],"falsification_history":[],"kind":"broker_email","load_rating":0.41,"name":"Zenith Freight Brokerage","source_id":"src_broker_Z"}

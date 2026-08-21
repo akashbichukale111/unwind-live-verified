@@ -1,0 +1,20 @@
+<stdin>:35: DeprecationWarning: CloudTraceSpanExporter is deprecated. See migration guide at https://github.com/GoogleCloudPlatform/opentelemetry-operations-python/blob/main/MIGRATION.md
+Overriding of current TracerProvider is not allowed
+=== Part 1: exporter selection with real credentials ===
+has_gcp_credentials: True uses_emulator: False
+exporter configured: cloud-trace (BatchSpanProcessor, real Cloud Trace v2 writes) + local capture (SimpleSpanProcessor, for this evidence)
+
+=== Part 2: the full reasoning chain -- one cascade + two gateway calls ===
+TRACE_ID: 698f22a5126986024bcd6187a4ed1a28
+cascade status: awaiting_authorisation radius: 2594
+gateway call 1 (draft_correction_for_cascade): ALLOWED allowed= True
+gateway call 2 (draft_correction_for_cascade_signing): SCOPE_EXCEEDED allowed= False
+captured span count: 7898
+wrote evidence/observability/captured-spans-2026-08-15.json
+
+=== Part 3: isolating whether the WRITE path works, independent of this run ===
+direct batch_write_spans: OK (write path confirmed working, independent of the OTel exporter)
+
+=== Part 4: isolating whether READ (Console-visible) path works ===
+get_trace(the real demo trace): FOUND, 2660 spans
+get_trace(the manual isolation span): FOUND, 1 spans

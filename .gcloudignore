@@ -1,0 +1,57 @@
+# ⚠ THIS FILE, NOT .dockerignore, CONTROLS WHAT CLOUD RUN UPLOADS.
+#
+# `gcloud run deploy --source .` uploads the WORKING DIRECTORY, not the tracked
+# repository. With no .gcloudignore, gcloud derives its exclusions from
+# .gitignore -- so any untracked, non-ignored file at the root goes to Cloud
+# Build. That is not hypothetical: a stray `poetry.lock` in the working tree is
+# a HIGH-PRECEDENCE package-manager marker, and Google's Python buildpack
+# switches to Poetry the moment it sees one. This project has no [tool.poetry]
+# section, so that path cannot succeed.
+#
+# Listing the exclusions explicitly makes the upload a property of the
+# repository rather than of whatever happens to be lying around.
+
+# --- version control ---
+.git/
+.gitignore
+.gcloudignore
+
+# --- python build/test detritus ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- ⚠ FOREIGN PACKAGE MANAGERS. Either one silently changes the build path. ---
+poetry.lock
+Pipfile
+Pipfile.lock
+
+# --- the dead Next.js skeleton. web/static IS required and stays. ---
+node_modules/
+.next/
+web/app/
+web/node_modules/
+web/next.config.ts
+web/package.json
+web/tsconfig.json
+
+# --- not needed by the running service ---
+tests/
+evals/results/
+docs/shots/
+docs/evidence/
+.cache/
+.github/
+
+# ⚠ KEPT ON PURPOSE. Excluding any of these breaks the build or the service:
+#   .python-version   pins the interpreter Cloud Build installs. Excluded, the
+#                     buildpack silently reverts to "newest supported Python".
+#   pyproject.toml    the dependency manifest pip reads
+#   Procfile          the buildpack entrypoint
+#   corpus/data/      spine.cascade reads it at request time
+#   web/static/       the API serves the operator UI from it
+#   evals/golden/     settle.cli reads court.txt
+#   docs/COVERAGE.md  the coverage endpoint's committed artifact

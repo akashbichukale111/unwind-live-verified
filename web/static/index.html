@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UNWIND — consequence clearing</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2312151A'/%3E%3Crect x='2' y='11' width='12' height='2' fill='%23C88A2E'/%3E%3Crect x='7' y='3' width='2' height='8' fill='%234A535E'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Non-blocking: if the CDN is slow or unreachable the field still renders,
+     and the fallback stacks in style.css keep the condensed/serif/mono split. -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="/static/style.css?v=6" />
+</head>
+<body>
+
+<!-- ─────────── THE FIELD ─────────── -->
+<canvas id="field" aria-label="Field of live decisions"></canvas>
+
+<button type="button" id="core-home-link" class="mono" hidden>&#9668; the four cards</button>
+
+<div id="hud-left" class="hud mono" hidden>
+  <div class="hud-row"><span class="k">live decisions</span><span id="c-nodes" class="v">—</span></div>
+  <div class="hud-row"><span class="k">premises</span><span id="c-claims" class="v">—</span></div>
+  <div class="hud-row"><span class="k">support edges</span><span id="c-edges" class="v">—</span></div>
+  <div class="hud-row hud-debt"><span class="k">causal debt</span><span id="c-debt" class="v">—</span></div>
+  <div class="hud-note" id="debt-note">standing consequence on a normal day</div>
+</div>
+
+<div id="hud-right" class="hud" hidden>
+  <div id="counter" hidden>
+    <div class="counter-line">
+      <span id="counter-from" class="counter-from">—</span>
+      <span class="counter-arrow">→</span>
+      <span id="counter-to" class="counter-to">—</span>
+    </div>
+    <div id="counter-breakdown" class="mono counter-breakdown"></div>
+  </div>
+</div>
+
+<div id="legend" class="hud mono" hidden>
+  <span class="tag built">BUILT</span> cascade · regimes · court · obligations
+  <span class="tag designed">DESIGNED</span> vertex T2 · model armor · deploy
+  <span class="sep">·</span> <span class="key">H</span> honesty panel
+  <span class="sep">·</span> <span class="key">T</span> the instrument
+  <span class="sep">·</span> <span class="key">R</span> restart
+</div>
+
+<div id="pacing" class="hud mono" hidden></div>
+
+<!-- ─────────── THE BAR ─────────── -->
+<div id="bar-wrap" hidden>
+  <form id="bar-form" autocomplete="off">
+    <input id="bar" type="text" spellcheck="false"
+           placeholder="State a fact that changed."
+           aria-label="State a fact that changed" />
+  </form>
+  <div id="bar-hints" class="mono"></div>
+</div>
+
+<!-- ─────────── THE PARSE ECHO ─────────── -->
+<div id="echo" class="panel mono" hidden>
+  <div class="echo-grid">
+    <span class="k">Read as:</span><span id="e-read" class="v"></span>
+    <span class="k">Source:</span><span id="e-source" class="v"></span>
+    <span class="k">Affects:</span><span id="e-affects" class="v"></span>
+  </div>
+  <div id="e-refusal" class="echo-refusal" hidden></div>
+  <div class="echo-actions">
+    <button id="e-confirm" type="button" class="btn">Confirm</button>
+    <button id="e-cancel" type="button" class="btn btn-quiet">Not what I meant</button>
+  </div>
+</div>
+
+<!-- ─────────── THE SPLIT ─────────── -->
+<section id="split" class="overlay" hidden>
+  <div class="split-grid">
+    <div class="split-col">
+      <h2 class="cond">STILL REVERSIBLE</h2>
+      <div id="s-rev-n" class="split-n cond">—</div>
+      <div class="split-sub mono">in-place correction</div>
+      <ul id="s-rev" class="split-list mono"></ul>
+    </div>
+    <div class="split-rule" aria-hidden="true"></div>
+    <div class="split-col">
+      <h2 class="cond">ALREADY ESCAPED</h2>
+      <div id="s-esc-n" class="split-n cond">—</div>
+      <div class="split-sub mono">went out to someone</div>
+      <ul id="s-esc" class="split-list mono"></ul>
+    </div>
+  </div>
+  <p id="split-gap" class="split-gap"></p>
+  <button class="btn btn-advance" data-next="obligation" type="button">Show what we owe</button>
+</section>
+
+<!-- ─────────── THE OBLIGATION (paper) ─────────── -->
+<section id="obligation" class="paper" hidden>
+  <div class="paper-inner">
+    <div class="paper-head mono">
+      <span id="o-id"></span>
+      <span id="o-status"></span>
+    </div>
+    <h1 class="serif" id="o-title">Correction obligation</h1>
+    <p class="serif o-lede" id="o-lede"></p>
+
+    <h3 class="o-h mono">Who was told something that is no longer true</h3>
+    <div id="o-told"></div>
+
+    <div class="o-cols">
+      <div>
+        <h3 class="o-h mono">Still reversible</h3>
+        <ul id="o-rev" class="o-list"></ul>
+      </div>
+      <div>
+        <h3 class="o-h mono o-h-bad">Not reversible</h3>
+        <ul id="o-irr" class="o-list o-list-bad"></ul>
+      </div>
+    </div>
+
+    <h3 class="o-h mono">Residual exposure</h3>
+    <div id="o-exposure" class="o-exposure serif"></div>
+    <details id="o-assume" class="o-assume">
+      <summary class="mono">assumptions</summary>
+      <ul id="o-assume-list"></ul>
+    </details>
+
+    <h3 class="o-h mono">Draft correction</h3>
+    <blockquote id="o-draft" class="serif o-draft"></blockquote>
+    <div id="o-nomodel" class="o-nomodel mono" hidden></div>
+
+    <div class="o-sign mono">
+      <span class="k">must be signed by</span>
+      <span id="o-approver" class="v"></span>
+    </div>
+    <button class="btn btn-advance btn-dark" data-next="court" type="button">Show the hearing</button>
+  </div>
+</section>
+
+<!-- ─────────── THE COURT ─────────── -->
+<section id="court" class="overlay" hidden>
+  <h2 class="cond overlay-h">THE HEARING</h2>
+  <div id="court-meta" class="mono court-meta"></div>
+  <ul id="court-pleas" class="mono court-pleas"></ul>
+  <div id="court-ruling" class="court-ruling"></div>
+  <div id="court-dissent" class="court-dissent mono"></div>
+  <button class="btn btn-advance" data-next="loadrating" type="button">Show the consequence</button>
+</section>
+
+<!-- ─────────── LOAD RATING ─────────── -->
+<section id="loadrating" class="overlay" hidden>
+  <h2 class="cond overlay-h">LOAD RATING</h2>
+  <div class="lr-wrap">
+    <div id="lr-source" class="mono"></div>
+    <div class="lr-bar-track"><div id="lr-bar" class="lr-bar"></div></div>
+    <div class="lr-nums cond"><span id="lr-before">—</span><span class="lr-arrow">→</span><span id="lr-after">—</span></div>
+    <p id="lr-note" class="mono lr-note"></p>
+  </div>
+  <button class="btn btn-advance" data-next="honesty" type="button">Show what is not built</button>
+</section>
+
+<!-- ─────────── HONESTY PANEL ─────────── -->
+<section id="honesty" class="overlay" hidden>
+  <h2 class="cond overlay-h">WHAT IS MEASURED, AND WHERE IT IS BAD</h2>
+  <div class="h-grid">
+    <div>
+      <h3 class="mono h-h">Extraction coverage</h3>
+      <table id="h-cov" class="mono h-table"></table>
+      <p id="h-worst" class="mono h-worst"></p>
+    </div>
+    <div>
+      <h3 class="mono h-h">Credentials</h3>
+      <div id="h-creds" class="mono h-creds"></div>
+      <h3 class="mono h-h">Built / designed</h3>
+      <div id="h-built" class="mono h-built"></div>
+    </div>
+  </div>
+  <button class="btn btn-advance" data-next="field" type="button">Back to the field</button>
+</section>
+
+<!-- ─────────── AGENTIC COMMAND OS (master orchestration layer, above the
+     six existing control layers below — additive only, nothing under
+     #instrument changes) ─────────── -->
+<section id="command-os" class="overlay cmdos">
+  <h2 class="cond overlay-h">AGENTIC COMMAND OS</h2>
+  <p class="mono cmdos-lede">consequence clearing for autonomous AI systems — a premise changes,
+    the fleet is planned, delegated, challenged, governed and corrected, and every step leaves
+    evidence</p>
+
+  <div class="cmdos-auth mono">
+    <label for="cmdos-token">operator credential</label>
+    <input id="cmdos-token" type="password" placeholder="Bearer token (UNWIND_OPERATOR_TOKENS)"
+           autocomplete="off" spellcheck="false" />
+    <span id="cmdos-authmode" class="cmdos-hint"></span>
+  </div>
+
+  <div class="cmdos-objective mono">
+    <label for="cmdos-objective-input">mission objective</label>
+    <input id="cmdos-objective-input" type="text" spellcheck="false"
+           value="Investigate an anomalous finance capability request."
+           aria-describedby="cmdos-objective-hint" />
+    <span id="cmdos-objective-hint" class="cmdos-hint">change this and the PLAN changes — the
+      specialists, tools and action kinds are computed from the objective, not fixed</span>
+  </div>
+
+  <div class="cmdos-actions">
+    <button id="cmdos-run" type="button" class="btn">Run autonomous mission</button>
+    <label class="cmdos-gate-toggle mono">
+      <input id="cmdos-auto-approve" type="checkbox" />
+      require human approval before any external action
+    </label>
+    <button id="cmdos-open-instrument" type="button" class="btn btn-quiet">the six-layer instrument &#9658;</button>
+    <button id="cmdos-open-timemachine" type="button" class="btn btn-quiet">Mission Time Machine &#9658;</button>
+  </div>
+
+  <div id="cmdos-offline" class="mono instr-offline" hidden>
+    FIRESTORE UNREACHABLE — start the emulator (<span class="cond">make emulator</span>) to run a mission.
+  </div>
+  <div id="cmdos-authfail" class="mono instr-offline" hidden>
+    NOT AUTHENTICATED — every mutating endpoint refuses an anonymous caller. Supply an operator
+    credential above, or set <span class="cond">UNWIND_DEV_PRINCIPAL</span> for local development.
+  </div>
+
+  <div id="cmdos-plan-panel" class="cmdos-panel" hidden>
+    <h3 class="mono cmdos-h">Plan</h3>
+    <p class="cmdos-hint mono">computed from the objective · provenance is set by the code path that
+      actually ran, never claimed</p>
+    <div id="cmdos-plan" class="cmdos-plan mono"></div>
+  </div>
+
+  <div id="cmdos-gate" class="cmdos-gate mono" hidden>
+    <div class="cmdos-gate-title cond">HUMAN OVERRIDE GATE — AWAITING DECISION</div>
+    <p class="cmdos-gate-body">The mission paused after isolating the agent. Approving resumes the SAME
+      repair → re-mint → re-validate chain the automatic path uses; the original Gateway refusal is
+      never overturned either way — approval only authorises a new, narrower request to be
+      independently re-checked.</p>
+    <div class="cmdos-actions">
+      <button id="cmdos-gate-approve" type="button" class="btn">Approve</button>
+      <button id="cmdos-gate-deny" type="button" class="btn btn-quiet">Deny</button>
+    </div>
+  </div>
+
+  <ol id="cmdos-stages" class="cmdos-stages mono" aria-live="polite"></ol>
+
+  <div id="cmdos-report" class="cmdos-report mono" hidden></div>
+
+  <div id="cmdos-trust-firewall" class="cmdos-tf-grid" hidden>
+    <div>
+      <h3 class="mono cmdos-h">Trusted State</h3>
+      <p class="cmdos-hint mono">categorical, never a score — see the concept map for why</p>
+      <div id="cmdos-trust" class="cmdos-trust mono"></div>
+    </div>
+    <div>
+      <h3 class="mono cmdos-h">Context Firewall</h3>
+      <p class="cmdos-hint mono">what a resume would actually see, and why</p>
+      <div id="cmdos-firewall" class="cmdos-firewall mono"></div>
+    </div>
+  </div>
+
+  <div id="cmdos-external-panel" class="cmdos-panel" hidden>
+    <h3 class="mono cmdos-h">External Action</h3>
+    <p class="cmdos-hint mono">the one place this system changes anything outside its own process —
+      idempotent, reversible, and re-read to verify</p>
+    <div id="cmdos-external" class="cmdos-external mono"></div>
+  </div>
+
+  <div class="cmdos-tf-grid">
+    <div>
+      <h3 class="mono cmdos-h">Agent Fleet</h3>
+      <p class="cmdos-hint mono">five identities with their own principals and bounded scope —
+        served from the same constants the registry enforces</p>
+      <div id="cmdos-fleet" class="cmdos-fleet mono"></div>
+    </div>
+    <div>
+      <h3 class="mono cmdos-h">Warrant Market — live pricing</h3>
+      <p class="cmdos-hint mono">move a signal, watch every price change. Computed in
+        <span class="cond">warrant/economics.py</span>, which cannot reach a model</p>
+      <div class="cmdos-econ-controls mono">
+        <label>drift
+          <select id="cmdos-econ-drift">
+            <option>NORMAL</option><option>ELEVATED</option><option>DRIFT</option><option>CRITICAL</option>
+          </select>
+        </label>
+        <label>evidence coverage
+          <input id="cmdos-econ-completeness" type="range" min="0" max="100" value="100" />
+        </label>
+        <label class="cmdos-econ-check">
+          <input id="cmdos-econ-disagree" type="checkbox" /> challenger disagreed
+        </label>
+      </div>
+      <div id="cmdos-economics" class="cmdos-economics mono"></div>
+    </div>
+  </div>
+
+  <h3 class="mono cmdos-h">Consequence preview — what breaks if this executes</h3>
+  <p class="cmdos-hint mono">the question this product is named after, asked of an AGENT ACTION.
+    Every number below is a real traversal of the committed reverse index
+    (<span class="cond">spine/cascade.py</span>) over the premises the recon agent actually parsed —
+    zero model calls. Drive it yourself:
+    <span class="cond">GET /api/command-os/consequence-preview?subject=supplier_K&amp;predicate=lead_time_days&amp;value=20</span></p>
+  <div class="cq-controls mono">
+    <label>premise
+      <select id="cq-premise">
+        <option value="supplier_K|lead_time_days|20">supplier_K.lead_time_days 11 → 20</option>
+        <option value="tariff|hs_8536.rate_pct|9.5">tariff.hs_8536.rate_pct → 9.5</option>
+        <option value="fx|eur_usd.rate|1.21">fx.eur_usd.rate → 1.21</option>
+        <option value="nonexistent|premise|1">an untraceable premise</option>
+      </select>
+    </label>
+    <label>proposed action
+      <select id="cq-action">
+        <option value="READ_PUBLIC">READ_PUBLIC</option>
+        <option value="READ_INTERNAL">READ_INTERNAL</option>
+        <option value="WRITE_SANDBOX" selected>WRITE_SANDBOX</option>
+        <option value="CREATE_PR">CREATE_PR</option>
+        <option value="PRODUCTION_MUTATION">PRODUCTION_MUTATION</option>
+        <option value="SECRET_ACCESS">SECRET_ACCESS</option>
+      </select>
+    </label>
+  </div>
+  <div id="cq-out" class="cq-out mono"></div>
+
+  <h3 class="mono cmdos-h">Mission Media Lab</h3>
+  <p class="cmdos-hint mono">one mission. three AI modalities. one machine-verifiable source of
+    truth — all three read the same grounded brief, built from the checkpoints this mission
+    actually persisted (<span class="cond">GET /api/media/mission/{id}/brief</span> returns the
+    exact input, so it can be checked against the checkpoints themselves)</p>
+  <div id="media-lab" class="media-lab"></div>
+  <p id="media-note" class="cmdos-hint mono"></p>
+
+  <h3 class="mono cmdos-h">System Reality</h3>
+  <p class="cmdos-hint mono">every feature below carries its own honest status — nothing here claims
+    to be live that is not</p>
+  <div id="cmdos-reality" class="cmdos-reality mono"></div>
+
+  <p class="instr-hint mono">every stage above calls a real engine one layer down · every status
+    label is served by <span class="cond">/api/command-os/status</span>, a second independently
+    queryable source that must agree with this page or this page is wrong</p>
+</section>
+
+<!-- ─────────── MISSION TIME MACHINE ─────────── -->
+<section id="mission-time-machine" class="overlay cmdos" hidden>
+  <button type="button" id="mtm-back" class="btn btn-quiet cmdos-back-link">&#9650; Agentic Command OS</button>
+  <h2 class="cond overlay-h">MISSION TIME MACHINE</h2>
+  <p class="mono cmdos-lede">historical mission state, reconstructed from real checkpoints — not a
+    literal reversal of time, a replay of what was actually persisted</p>
+
+  <h3 class="mono cmdos-h">Mission arc — past to current trusted state</h3>
+  <ol id="mtm-timeline" class="mtm-arc mono"></ol>
+
+  <div id="mtm-state" class="cmdos-report mono mtm-state" hidden></div>
+
+  <div class="cmdos-tf-grid">
+    <div>
+      <h3 class="mono cmdos-h">Missions</h3>
+      <ol id="mtm-missions" class="cmdos-mission-list mono"></ol>
+    </div>
+    <div>
+      <h3 class="mono cmdos-h">Checkpoints</h3>
+      <ol id="mtm-checkpoints" class="cmdos-stages mono"></ol>
+      <div id="mtm-detail" class="cmdos-report mono" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── THE INSTRUMENT (Card 0 spanning Cards 1-3) ─────────── -->
+<section id="instrument" class="overlay instrument" hidden>
+  <button type="button" id="instr-cmdos-link" class="btn btn-quiet cmdos-back-link">&#9650; Agentic Command OS</button>
+  <h2 class="cond overlay-h">UNWIND — THE INSTRUMENT</h2>
+
+  <div id="instr-offline" class="mono instr-offline" hidden>
+    WARRANT LEDGER UNREACHABLE — start the Firestore emulator (<span class="cond">make emulator</span>) and reopen this panel.
+  </div>
+
+  <div id="instr-body" hidden>
+    <div class="instr-hero-row">
+      <div class="instr-card-hyperion instr-clickable" data-card="4" role="button" tabindex="0"
+           aria-label="Hyperion-Zero — open detail">
+        <div class="instr-card-head">
+          <span class="instr-label cond instr-label-hero">HYPERION-ZERO</span>
+          <span class="instr-sub mono">agentic immune core — observes Gateway decisions, before they execute</span>
+        </div>
+        <div id="instr-hyperion-body" class="mono instr-body-text"></div>
+      </div>
+      <div class="instr-card0">
+        <div id="instr-card0-head" class="instr-card-head instr-clickable" data-card="0" role="button" tabindex="0"
+             aria-label="Warrant — open detail">
+          <span class="instr-label cond instr-label-hero">WARRANT</span>
+          <span class="instr-sub mono">capability × risk class, never one number</span>
+        </div>
+        <div id="instr-bars" class="instr-bars"></div>
+        <div id="instr-route" class="mono instr-route" hidden></div>
+        <div class="instr-actions">
+          <button id="instr-burn" type="button" class="btn">Overturn a HIGH-risk judgement (BURN)</button>
+          <button id="instr-earn" type="button" class="btn">Earn the rookie's first delegation</button>
+        </div>
+      </div>
+    </div>
+
+    <svg class="instr-feed" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M170,88 C170,40 320,40 420,4" class="instr-feed-line" />
+      <path d="M500,88 C500,40 500,40 500,4" class="instr-feed-line" />
+      <path d="M830,88 C830,40 680,40 580,4" class="instr-feed-line" />
+    </svg>
+
+    <div class="instr-row">
+      <div class="instr-card instr-clickable" data-card="1" role="button" tabindex="0"
+           aria-label="Unwind Core — open detail">
+        <span class="instr-label cond">UNWIND CORE</span>
+        <div id="instr-c1" class="mono instr-body-text"></div>
+      </div>
+      <div class="instr-card instr-clickable" data-card="2" role="button" tabindex="0"
+           aria-label="Control Tower — open detail">
+        <span class="instr-label cond">CONTROL TOWER</span>
+        <div id="instr-c2" class="mono instr-body-text"></div>
+      </div>
+      <div class="instr-card instr-clickable" data-card="3" role="button" tabindex="0"
+           aria-label="Countersign — open detail">
+        <span class="instr-label cond">COUNTERSIGN</span>
+        <div id="instr-c3" class="mono instr-body-text"></div>
+      </div>
+      <div class="instr-card instr-clickable" data-card="5" role="button" tabindex="0"
+           aria-label="Singularity-Mesh — open detail">
+        <span class="instr-label cond">SINGULARITY-MESH</span>
+        <div id="instr-c5" class="mono instr-body-text"></div>
+      </div>
+    </div>
+    <p class="instr-hint mono">click a card to open its detail · <span class="key">Esc</span> returns here</p>
+  </div>
+</section>
+
+<!-- ─────────── HYPERION-ZERO DETAIL ─────────── -->
+<section id="hyperion-detail" class="overlay" hidden>
+  <button type="button" class="btn btn-quiet detail-back">&#9668; the instrument</button>
+  <h2 class="cond overlay-h detail-title">HYPERION-ZERO</h2>
+  <p class="instr-sub mono detail-lede">agentic immune core — scores and logs every real Gateway decision;
+    it observes agent execution state and intended tool actions before they cross the security boundary,
+    it does not gate them. Card 2's Gateway remains the one choke point.</p>
+  <div id="hd-summary" class="detail-notes"></div>
+  <div class="instr-actions">
+    <button id="hd-probe" type="button" class="btn">Run a real scope-escalation probe</button>
+  </div>
+  <div id="hd-probe-result" class="mono instr-route" hidden></div>
+  <h3 class="mono h-h">Live security event log</h3>
+  <div id="hd-events" class="detail-registry"></div>
+  <div class="detail-notes">
+    <h3 class="mono h-h">What this is, and is not</h3>
+    <p>Every event above is a real, already-happened call to
+      <span class="mono">tower.gateway.evaluate_gateway</span>, scored by a fixed, deterministic weight table
+      (<span class="mono">hyperion/risk.py</span>) and logged append-only. Hyperion adds no second authority
+      path — the Gateway's four ordered checks are untouched.</p>
+    <p id="hd-roadmap">MCP tool-call guarding, live Model Armor enforcement, sandboxed execution, and automated
+      quarantine/recovery are architecture only in this build — not implemented, not simulated. See
+      <span class="mono">hyperion/DESIGN.md</span> for the full, honest accounting.</p>
+  </div>
+</section>
+
+<!-- ─────────── WARRANT DETAIL ─────────── -->
+<section id="warrant-detail" class="overlay" hidden>
+  <button type="button" class="btn btn-quiet detail-back">&#9668; the instrument</button>
+  <h2 class="cond overlay-h detail-title">WARRANT</h2>
+  <p class="instr-sub mono detail-lede">deterministic, decaying, capability-scoped authority — minted only from
+    countersigned, human-validated outcomes. Nobody hands it over; nobody can hand it on.</p>
+  <div id="wd-bars" class="instr-bars detail-bars"></div>
+  <div id="wd-route" class="mono instr-route" hidden></div>
+  <div class="instr-actions">
+    <button id="wd-burn" type="button" class="btn">Overturn a HIGH-risk judgement (BURN)</button>
+    <button id="wd-earn" type="button" class="btn">Earn the rookie's first delegation</button>
+  </div>
+  <div class="detail-notes">
+    <p>Balance is a pure integer fold over an append-only ledger (MINT · BURN · SPEND · DECAY · CHALLENGE) —
+      never a single global number, always per capability × risk class.</p>
+    <p>Insufficient warrant does not retry. The Gateway refuses at
+      <span class="amber">WARRANT_INSUFFICIENT</span>, before any work, and the case routes to a human —
+      the live fold, no cache, visible on the very next call.</p>
+  </div>
+</section>
+
+<!-- ─────────── CONTROL TOWER DETAIL ─────────── -->
+<section id="tower-detail" class="overlay" hidden>
+  <button type="button" class="btn btn-quiet detail-back">&#9668; the instrument</button>
+  <h2 class="cond overlay-h detail-title">CONTROL TOWER</h2>
+  <p class="instr-sub mono detail-lede">executable registry · deterministic gateway · decision memory ·
+    durable runtime · observability</p>
+  <h3 class="mono h-h">Registry</h3>
+  <div id="td-registry" class="detail-registry"></div>
+  <h3 class="mono h-h">Gateway reason codes</h3>
+  <div id="td-reasons" class="mono detail-reasons"></div>
+  <div class="detail-notes">
+    <h3 class="mono h-h">Decision Memory Bank</h3>
+    <p>Append-only, causal chain: case → premise → decision → agent action → human decision → outcome →
+      future consequence. Not a vector store — <span class="mono">tower/memory.py</span> answers
+      "what happened because of X?" by walking the chain.</p>
+    <h3 class="mono h-h">Observability</h3>
+    <p>Cloud Trace carries the full reasoning chain as one root span, including the Gateway's router
+      branches. See <span class="mono">evidence/observability/</span>.</p>
+  </div>
+</section>
+
+<!-- ─────────── COUNTERSIGN DETAIL ─────────── -->
+<section id="countersign-detail" class="overlay" hidden>
+  <button type="button" class="btn btn-quiet detail-back">&#9668; the instrument</button>
+  <h2 class="cond overlay-h detail-title">COUNTERSIGN</h2>
+  <p class="instr-sub mono detail-lede">independent verifier · Gemma, a family separate from the judging
+    side · gates warrant minting</p>
+  <div id="cd-body" class="detail-notes"></div>
+</section>
+
+<!-- ─────────── SINGULARITY-MESH DETAIL ─────────── -->
+<section id="singularity-detail" class="overlay" hidden>
+  <button type="button" class="btn btn-quiet detail-back">&#9668; the instrument</button>
+  <h2 class="cond overlay-h detail-title">SINGULARITY-MESH</h2>
+  <p class="instr-sub mono detail-lede">ZERO-TRUST AUTONOMOUS AGENT FLEET — an adaptive operating architecture
+    governing capabilities, tools, execution, behavior, security, memory and recovery across a fleet of agents.</p>
+
+  <!-- 1. What is Singularity-Mesh -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">What is Singularity-Mesh?</h3>
+    <p>Singularity-Mesh is a Zero-Trust Autonomous Agent Fleet where agents plan tasks, use governed tools, execute
+      untrusted workloads inside isolated sandboxes, communicate through controlled interfaces, detect security
+      threats and recover from failures.</p>
+    <div class="sm-eq mono">AUTONOMY <span class="sm-plus">+</span> ZERO TRUST <span class="sm-plus">+</span>
+      GOVERNANCE <span class="sm-plus">+</span> SANDBOXING <span class="sm-plus">+</span> OBSERVABILITY
+      <span class="sm-plus">+</span> RECOVERY <span class="sm-eq-arrow">=</span>
+      <span class="amber">SAFE AUTONOMOUS AGENT FLEET</span></div>
+  </div>
+
+  <!-- 2/3/4/5. The Agent Fleet -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">The Agent Fleet</h3>
+    <p>Sentinel Shield is the <b>Policy Enforcement Agent</b>. The Orchestrator's loop is
+      <b>Plan → Delegate → Monitor → Validate → Recover</b>. The Worker Fleet is a set of specialized, isolated
+      execution workers.</p>
+    <div id="sm-fleet" class="detail-registry"></div>
+  </div>
+
+  <!-- 15. Lifecycle timeline (hero) -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">All Things Of Agents — the complete lifecycle</h3>
+    <div id="sm-lifecycle" class="sm-lifecycle"></div>
+  </div>
+
+  <!-- 16. Capability Genome (hero, LIVE) -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Capability Genome <span class="sm-status live">LIVE</span></h3>
+    <p class="sm-subtitle serif">Dynamic task-bound capability identity</p>
+    <p>An agent does not receive unlimited permanent power. The system continuously determines what this agent is
+      allowed to do <b>right now</b>, for <b>this task</b>, under <b>this risk context</b>.</p>
+    <div class="sm-flow mono">IAM <span class="sm-arrow">→</span> Capability Genome <span class="sm-arrow">→</span>
+      Task-specific permissions <span class="sm-arrow">→</span> Behavior monitoring <span class="sm-arrow">→</span>
+      Risk recalculation <span class="sm-arrow">→</span> Capability expansion/reduction</div>
+    <div class="instr-actions">
+      <button id="sm-genome-normal" type="button" class="btn">Negotiate: normal sales request</button>
+      <button id="sm-genome-attack" type="button" class="btn">Negotiate: "export all confidential tables"</button>
+    </div>
+    <div id="sm-genome-result" class="mono instr-route" hidden></div>
+  </div>
+
+  <!-- 17. Behavioral DNA (hero, LIVE) -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Behavioral DNA <span class="sm-status live">LIVE</span></h3>
+    <p>Do not just inspect what the agent says. Inspect what the agent is becoming.</p>
+    <div class="sm-compare">
+      <div class="sm-compare-col">
+        <div class="sm-compare-h mono">NORMAL</div>
+        <ul class="sm-compare-list mono">
+          <li>10–20 tool calls</li><li>read-only</li><li>sales datasets</li><li>~2 sec latency</li>
+        </ul>
+      </div>
+      <div class="sm-compare-col sm-compare-bad">
+        <div class="sm-compare-h mono">ANOMALOUS</div>
+        <ul class="sm-compare-list mono">
+          <li>147 tool calls</li><li>finance database</li><li>secret access attempt</li>
+          <li>export request</li><li>unusual latency</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sm-flow mono">Risk <span class="sm-arrow">↑</span> <span class="sm-arrow">→</span> Capability
+      restriction <span class="sm-arrow">→</span> Sentinel alert <span class="sm-arrow">→</span> Isolation
+      <span class="sm-arrow">→</span> Recovery</div>
+    <div class="instr-actions">
+      <button id="sm-behavior-normal" type="button" class="btn">Assess: Worker #04 normal activity</button>
+      <button id="sm-behavior-drift" type="button" class="btn">Assess: 147 calls · finance · secret access</button>
+    </div>
+    <div id="sm-behavior-result" class="mono instr-route" hidden></div>
+  </div>
+
+  <!-- 18. Agent Immune System -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Agent Immune System</h3>
+    <div id="sm-immune" class="sm-immune-grid"></div>
+    <p class="sm-note">Connects to <span class="mono">HYPERION-ZERO</span> conceptually — both implement a form of
+      agent immunity — without merging their cards or interfaces. See "Relationship with Hyperion-Zero" below.</p>
+  </div>
+
+  <!-- 3. Sentinel Shield -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Sentinel Shield <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>Input Immunity screens for prompt injection, tool poisoning, malicious requests and suspicious instructions,
+      before any dangerous tool executes.</p>
+    <div class="sm-flow mono">Request <span class="sm-arrow">→</span> Sentinel <span class="sm-arrow">→</span>
+      Security analysis <span class="sm-arrow">→</span> SAFE / SUSPICIOUS <span class="sm-arrow">→</span>
+      ALLOW / BLOCK</div>
+  </div>
+
+  <!-- 4. Orchestrator -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Orchestrator <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <div class="sm-flow mono">Understand request <span class="sm-arrow">→</span> Plan <span class="sm-arrow">→</span>
+      Select data/source <span class="sm-arrow">→</span> Check permissions <span class="sm-arrow">→</span>
+      Retrieve information <span class="sm-arrow">→</span> Delegate task <span class="sm-arrow">→</span>
+      Monitor worker <span class="sm-arrow">→</span> Validate result <span class="sm-arrow">→</span>
+      Recover if needed <span class="sm-arrow">→</span> Return result</div>
+    <div class="sm-flow mono sm-flow-emph">PLAN · DELEGATE · MONITOR · VALIDATE · RECOVER</div>
+  </div>
+
+  <!-- 5. Worker Fleet detail -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Worker Fleet <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>Parallel execution · isolation · fault tolerance · specialization · scaling.</p>
+    <div id="sm-workers" class="detail-registry"></div>
+  </div>
+
+  <!-- 6. Cloud Run Sandbox -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Cloud Run Sandbox <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>LLM-generated code is not automatically trusted. It runs isolated, and cleans up after.</p>
+    <div class="sm-flow mono">Generated/untrusted code <span class="sm-arrow">→</span> isolated sandbox
+      <span class="sm-arrow">→</span> execution <span class="sm-arrow">→</span> result
+      <span class="sm-arrow">→</span> cleanup</div>
+    <p class="sm-note">No sandboxed execution environment exists in this repository. Any recovery/controller logic
+      described elsewhere on this page is application-level orchestration <i>around</i> a sandbox, not evidence of
+      one running.</p>
+  </div>
+
+  <!-- 7. MCP layer -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">MCP Layer <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p><b>MCP = Model Context Protocol</b> — standardized agent-to-tool/data communication, so an agent never gets
+      direct, unrestricted database access.</p>
+    <div id="sm-mcp-flow" class="sm-flow mono"></div>
+  </div>
+
+  <!-- 8. Knowledge Catalog -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Knowledge Catalog <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>LLM ≠ direct database administrator. The agent accesses governed capabilities/data through the approved
+      interface only.</p>
+    <div id="sm-catalog" class="sm-flow mono"></div>
+  </div>
+
+  <!-- 9. Model Armor -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Model Armor <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <div id="sm-armor-flow" class="sm-flow mono"></div>
+    <p>Threat: prompt injection / malicious tool request. Result: <b>BLOCK · LOG · ALERT · NO TOOL EXECUTION</b>.
+      No Model Armor API is called anywhere in this repository — this is architecture, not a live integration.</p>
+  </div>
+
+  <!-- 10. Agent Gateway -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Agent Gateway <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>"No uncontrolled agent interaction bypasses the controlled entry point."</p>
+    <div id="sm-gateway-resp" class="sm-flow mono"></div>
+  </div>
+
+  <!-- 11. IAM / Agent Identity -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">IAM / Agent Identity <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <p>"Every agent has an identity. Every identity has minimum permissions."</p>
+    <div id="sm-iam" class="detail-registry"></div>
+  </div>
+
+  <!-- 12. Agent Memory -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Agent Memory <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <div id="sm-memory-chain" class="sm-flow mono"></div>
+  </div>
+
+  <!-- 13. Self-Healing / Recovery -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Self-Healing / Recovery</h3>
+    <div id="sm-recovery-flow" class="sm-flow-steps"></div>
+    <p class="sm-note">Represented as an application-level recovery controller wrapped around a sandbox — DETECT and
+      BLOCK are live decisions from Behavioral DNA and Capability Genome above; ISOLATE through SUCCESS are
+      architecture only.</p>
+  </div>
+
+  <!-- 14. Agent-to-Agent Communication -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Agent-to-Agent Communication <span class="sm-status arch">ARCHITECTURE</span></h3>
+    <div id="sm-a2a-chain" class="sm-flow mono"></div>
+    <p>Each component carries its own identity, capability, policy, state and communication channel — a true
+      multi-agent architecture, not one model wearing different hats.</p>
+  </div>
+
+  <!-- 19. Governed Autonomy -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Governed Autonomy</h3>
+    <p class="sm-hero-statement serif">"More autonomy without governance creates more risk."</p>
+    <div id="sm-governed-stack" class="sm-eq mono"></div>
+  </div>
+
+  <!-- 20. Seven Architecture Layers -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Seven Architecture Layers</h3>
+    <div id="sm-layers" class="sm-layers"></div>
+  </div>
+
+  <!-- 21. Complete Architecture -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Complete Architecture</h3>
+    <div class="sm-flow-steps sm-arch-flow mono">
+      <div>USER</div><div>↓</div><div>AGENT GATEWAY</div><div>↓</div><div>SENTINEL</div><div>↓</div>
+      <div>MODEL ARMOR / POLICY</div><div>↓</div><div class="amber">CAPABILITY GENOME</div><div>↓</div>
+      <div>ORCHESTRATOR</div><div>↓</div><div>WORKER FLEET</div><div>↓</div><div>CLOUD RUN SANDBOXES</div>
+      <div>↓</div><div>MCP LAYER</div><div>↓</div><div>KNOWLEDGE CATALOG / GOVERNED DATA</div>
+    </div>
+    <p class="mono sm-crosscut">cross-cutting: IAM · MEMORY · OBSERVABILITY · <span class="amber">BEHAVIORAL
+      DNA</span> · RECOVERY CONTROLLER</p>
+  </div>
+
+  <!-- 22. Attack → Block → Isolate → Recover → Resume -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Attack → Block → Isolate → Recover → Resume</h3>
+    <div id="sm-recovery-detail" class="sm-flow-steps"></div>
+  </div>
+
+  <!-- 23. Observability -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Observability</h3>
+    <p>Event fields: <span class="mono">timestamp · agent_id · session_id · task_id · tool · decision · latency ·
+      security_result · worker_id</span></p>
+    <div id="sm-observability" class="detail-registry"></div>
+    <p id="sm-observability-empty" class="sm-note" hidden>No mesh events logged yet — run a Capability Genome or
+      Behavioral DNA probe above, or reload after one has run elsewhere.</p>
+  </div>
+
+  <!-- 24. 3-Minute Demo -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">3-Minute Demo</h3>
+    <div id="sm-demo-phases"></div>
+  </div>
+
+  <!-- 25. Why This Is Agentic AI -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Why This Is Agentic AI</h3>
+    <div id="sm-agentic-chain" class="sm-flow mono"></div>
+    <p class="sm-hero-statement serif">"This is not a chatbot. This is an autonomous multi-agent system."</p>
+  </div>
+
+  <!-- 26. Innovation -->
+  <div class="detail-notes sm-section sm-hero">
+    <h3 class="mono h-h">Innovation</h3>
+    <div id="sm-innovation-stack" class="sm-eq mono"></div>
+    <p class="sm-hero-statement serif">"We don't just inspect what an agent says. We govern what an agent is
+      allowed to do and detect what the agent is becoming."</p>
+    <p>Prompt security protects the request. Capability governance protects the action. Behavioral immunity
+      protects the agent itself.</p>
+  </div>
+
+  <!-- 27. Relationship with Hyperion-Zero -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Relationship With Hyperion-Zero</h3>
+    <p><b>HYPERION-ZERO:</b> agent runtime immune/security control layer over Card 2's real Gateway.</p>
+    <p><b>SINGULARITY-MESH:</b> broader autonomous agent fleet architecture and governed-autonomy framework.
+      Capability Genome and Behavioral DNA are this card's own new innovation layer.</p>
+    <p>The two systems complement each other conceptually but share no code path, no collection and no API route —
+      Hyperion's card and endpoints are untouched by this card's existence.</p>
+  </div>
+
+  <!-- 28. Technical Honesty / implementation status -->
+  <div class="detail-notes sm-section">
+    <h3 class="mono h-h">Technical Honesty — Implementation Status</h3>
+    <p>Every claim on this page is labelled <span class="sm-status live">LIVE</span> (a real, deterministic,
+      tested engine — Capability Genome, Behavioral DNA, and their append-only event log),
+      <span class="sm-status arch">ARCHITECTURE</span> (documented design, not a running system in this
+      repository), or <span class="sm-status demo">DEMO/SIMULATION</span> (a scripted scenario used to exercise a
+      live engine). See <span class="mono">singularity/DESIGN.md</span> for the full accounting.</p>
+    <div id="sm-status-table" class="mono sm-status-table"></div>
+  </div>
+</section>
+
+<div id="replay-banner" class="replay mono" hidden></div>
+
+<script src="/static/app.js?v=7"></script>
+</body>
+</html>

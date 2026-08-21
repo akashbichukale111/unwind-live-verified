@@ -1,0 +1,17 @@
+{
+  "description": "A regulatory retraction with no judgement tier available.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_tariff_bulletin",
+    "claim_id": "clm_000001",
+    "new_value": 0,
+    "reason": "A regulatory retraction with no judgement tier available.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "regulatory-vertex-down",
+  "class": "tool_failure"
+}

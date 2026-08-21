@@ -1,0 +1,28 @@
+{
+  "name": "hub-retraction-clean",
+  "class": "clean",
+  "description": "The hub premise supplier_K.lead_time_days moves 11 -> 20, retracted by the supplier that has standing over it. The full blast radius must be traversed structurally, scored arithmetically, and split into the four regimes with zero model calls.",
+  "retraction": {
+    "source_id": "src_supplier_K",
+    "claim_id": "clm_000000",
+    "new_value": 20,
+    "reason": "Supplier notified a revised standard lead time following a foundry changeover.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "ground_truth": "corpus/data/radius_truth.jsonl",
+  "expect": {
+    "authority": "allow",
+    "model_calls": 0,
+    "tier_reached": "T1",
+    "blast_radius_recall": 1.0,
+    "blast_radius_precision": 1.0,
+    "materiality_accuracy": 1.0,
+    "false_retraction_rate": 0.0,
+    "escapement_accuracy": 1.0
+  },
+  "notes": [
+    "Written BEFORE the scorer existed. Its first run failed with the cascade unimplemented; that red bar is the point.",
+    "The cascade must reach this result from claims.jsonl, conclusions.jsonl and reverse_index.jsonl ONLY. radius_truth.jsonl is the marking scheme and is read by the harness, never by the cascade.",
+    "triggered_at is pinned to the corpus retraction instant. A cascade whose verdicts depend on wall-clock time is not reproducible, and 'already closed out' is a time-dependent verdict."
+  ]
+}

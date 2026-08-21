@@ -1,0 +1,16 @@
+==============================================================================
+ADK 2 CONSTRUCT MAPPING -- README claim vs. actual code
+==============================================================================
+PASS  Workflow+FunctionNode (cascade graph) -- agents/cascade/workflow.py:160
+PASS    ... DEFAULT_ROUTE actually imported (routing is real, not decorative) -- agents/cascade/workflow.py:30
+PASS  Deterministic router (Gateway) -- tower/gateway.py:491
+PASS    ... WARRANT_INSUFFICIENT reason code wired into the router -- tower/gateway.py:219
+PASS  FunctionNode (warrant SPEND) -- tower/gateway.py:476
+PASS    ... backed by warrant.ledger.spend_or_refuse, not a stub -- tower/gateway.py:71
+PASS  Dynamic pattern (registry -> coordinator) -- tower/registry.py:93
+PASS  Single-turn AgentTool (Countersign) -- countersign/agent.py:110
+PASS    ... the wrapped agent is actually mode="single_turn" -- countersign/agent.py:96
+PASS  Durable long-running runtime (pause/resume) -- tower/runtime.py:203
+==============================================================================
+10/10 checks passed
+RESULT: PASS -- every ADK 2 construct claimed in the README is present at its cited site.

@@ -1,0 +1,18 @@
+{
+  "description": "The obvious forgery: a freight broker retracting a supplier's lead time.",
+  "retraction": {
+    "source_id": "src_broker_Z",
+    "claim_id": "clm_000000",
+    "new_value": 34,
+    "reason": "The obvious forgery: a freight broker retracting a supplier's lead time.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "forged-retraction-broker",
+  "class": "adversarial"
+}

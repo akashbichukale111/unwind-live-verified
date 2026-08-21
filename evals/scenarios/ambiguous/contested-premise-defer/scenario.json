@@ -1,0 +1,17 @@
+{
+  "description": "Two live sources disagree.",
+  "retraction": {
+    "source_id": "src_supplier_M",
+    "claim_id": "clm_001144",
+    "new_value": 12,
+    "confidence": 1.0,
+    "reason": "Two live sources disagree.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "defer",
+    "model_calls": 0
+  },
+  "name": "contested-premise-defer",
+  "class": "ambiguous"
+}

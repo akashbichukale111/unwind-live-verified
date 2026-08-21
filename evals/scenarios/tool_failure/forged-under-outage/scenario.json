@@ -1,0 +1,17 @@
+{
+  "description": "The authority gate is T0 and holds with no model at all.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_broker_Z",
+    "claim_id": "clm_000000",
+    "new_value": 34,
+    "reason": "The authority gate is T0 and holds with no model at all.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "model_calls": 0
+  },
+  "name": "forged-under-outage",
+  "class": "tool_failure"
+}

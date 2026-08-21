@@ -1,0 +1,8 @@
+request_id,agent_id,requested_scope,risk_class,tool_calls,dataset,requested_at,status
+req-8801,fleet_recon,evidence.read,LOW,6,documents,2026-08-19T04:12:00Z,granted
+req-8802,fleet_recon,finance.secret_read,HIGH,147,finance,2026-08-19T05:03:00Z,pending
+req-8803,fleet_risk,policy.read,LOW,4,policy,2026-08-19T05:20:00Z,granted
+req-8804,fleet_remediation,sandbox.write,MEDIUM,9,sandbox,2026-08-19T05:44:00Z,granted
+req-8805,fleet_recon,finance.secret_read,HIGH,,finance,2026-08-19T06:01:00Z,pending
+req-8806,,corpus.read,LOW,3,documents,2026-08-19T06:10:00Z,granted
+req-8807,fleet_verifier,sandbox.read,LOW,2,sandbox,NOT_A_TIMESTAMP,granted

@@ -1,0 +1,17 @@
+{
+  "description": "A contract clause is amended. Whether dependents are harmed is a reading, not a computation.",
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_001083",
+    "new_value": 0,
+    "confidence": 1.0,
+    "reason": "A contract clause is amended. Whether dependents are harmed is a reading, not a computation.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "clause-retraction-contractual",
+  "class": "ambiguous"
+}

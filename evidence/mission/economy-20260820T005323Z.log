@@ -1,0 +1,11 @@
+WARRANT ECONOMY over 4 consecutive missions, no reset between them.
+Spend happens per step; MINT settles a verified outcome. Net positive for good work.
+
+mission 1: COMPLETED_WITH_RESTRICTIONS    settle=MINT   warrant   80bp ->  280bp  external=sbx-f57b5d4a0449 verified=True
+mission 2: COMPLETED_WITH_RESTRICTIONS    settle=MINT   warrant  160bp ->  360bp  external=sbx-f2a1e0464628 verified=True
+mission 3: COMPLETED_WITH_RESTRICTIONS    settle=MINT   warrant  240bp ->  440bp  external=sbx-f17bb3a19407 verified=True
+mission 4: COMPLETED_WITH_RESTRICTIONS    settle=MINT   warrant  320bp ->  520bp  external=sbx-19a67fbc4d57 verified=True
+
+SANDBOX SYSTEM OF RECORD (.sandbox/actions.jsonl) -- real file, outside this process:
+{"acting_principal": "agent::fleet_remediation", "action": "REVOKE_CAPABILITY_REQUEST", "backend": "sandbox_file", "cost_bp": 123, "external_id": "sbx-f57b5d4a0449", "human_principal": "human::kim@ops.example", "idempotency_key": "mission_d4e7d5b7f6:req-8802:revoke", "mission_id": "mission_d4e7d5b7f6", "reason": "'finance.secret_read' is outside fleet_recon's registered scope ['corpus.read', 'evidence.read']", "recorded_at": "2026-08-20T00:54:52.293571+00:00", "reversal": "re-grant 'finance.secret_read' to fleet_recon", "revoke_scope": "finance.secret_read", "target_agent_id": "fleet_recon", "target_request_id": "req-8802", "title": "Revoke out-of-scope request req-8802 from fleet_recon"}
+{"acting_principal": "agent::fleet_remediation", "action": "REVOKE_CAPABILITY_REQUEST", "backend": "sandbox_file", "cost_bp": 123, "external_id": "sbx-f2a1e0464628", "human_principal": "human::kim@ops.example", "idempotency_key": "mission_de5c790922:req-8802:revoke", "mission_id": "mission_de5c790922", "reason": "'finance.secret_read' is outside fleet_recon's registered scope ['corpus.read', 'evidence.read']", "recorded_at": "2026-08-20T00:54:52.538992+00:00", "reversal": "re-grant 'finance.secret

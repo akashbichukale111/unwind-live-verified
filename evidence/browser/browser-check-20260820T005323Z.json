@@ -1,0 +1,108 @@
+{
+  "results": [
+    {
+      "check": "Command OS panel visible",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "auth mode line rendered",
+      "pass": true,
+      "detail": "env development \u00b7 1 bearer token(s) configured \u00b7 anonymous mutation: refused"
+    },
+    {
+      "check": "agent fleet rendered (5 roles)",
+      "pass": true,
+      "detail": "5 rows"
+    },
+    {
+      "check": "warrant market priced",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "prices change when drift changes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "anonymous mission refused in the UI",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "mission ran and rendered stages",
+      "pass": true,
+      "detail": "12 stages"
+    },
+    {
+      "check": "PLAN panel rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "plan shows provenance",
+      "pass": true,
+      "detail": "ZERO_MODEL"
+    },
+    {
+      "check": "report shows a truthful status",
+      "pass": true,
+      "detail": "MISSION: COMPLETED WITH RESTRICTIONS"
+    },
+    {
+      "check": "report names the authenticated principal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "external action panel rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "independently verified shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "trusted state rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "a different objective produces a different plan",
+      "pass": true,
+      "detail": "PREMISE_IMPACT_TRACE"
+    },
+    {
+      "check": "human gate pauses the mission",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "approve resumes to a final state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "resumed report present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "zero UNEXPECTED console/page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "the only console errors are the deliberately-provoked 401s",
+      "pass": true,
+      "detail": "2 total, 0 unexpected"
+    }
+  ],
+  "errors": [
+    "console.error: Failed to load resource: net::ERR_CONNECTION_RESET",
+    "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ]
+}

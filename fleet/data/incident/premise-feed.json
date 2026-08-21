@@ -1,0 +1,12 @@
+{
+  "feed": "premise-feed",
+  "emitted_at": "2026-08-19T06:30:00Z",
+  "records": [
+    {"claim_id": "clm_supplier_K_lead_time", "subject": "supplier_K", "predicate": "lead_time_days", "value": 20, "source": "src_procurement", "recorded_at": "2026-08-18T15:02:00Z", "authority": "procurement"},
+    {"claim_id": "clm_supplier_K_lead_time", "subject": "supplier_K", "predicate": "lead_time_days", "value": 11, "source": "src_planning_sheet", "recorded_at": "2026-06-30T09:00:00Z", "authority": "planning"},
+    {"claim_id": "clm_tariff_rate_K", "subject": "line_K", "predicate": "tariff_rate_pct", "value": 8.0, "source": "src_erp", "recorded_at": "2026-07-01T08:00:00Z", "authority": "erp"},
+    {"claim_id": "clm_tariff_rate_K", "subject": "line_K", "predicate": "tariff_rate_pct", "value": 8.5, "source": "src_compliance_note", "recorded_at": "2026-05-02T11:30:00Z", "authority": "compliance"},
+    {"claim_id": "clm_hub_cutoff", "subject": "carrier_hub", "predicate": "cutoff_local", "value": "14:00", "source": "src_carrier_portal", "recorded_at": "2026-08-19T06:05:00Z", "authority": "carrier"},
+    {"claim_id": "clm_broken", "subject": "", "predicate": "lead_time_days", "value": null, "source": "", "recorded_at": "2026-08-19T06:20:00Z"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "description": "THE DEMO CASE. A legitimate source with genuine authority over contract clauses reaches one step outside it.",
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_000000",
+    "new_value": 45,
+    "reason": "THE DEMO CASE. A legitimate source with genuine authority over contract clauses reaches one step outside it.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "partial-authority-msa",
+  "class": "adversarial"
+}

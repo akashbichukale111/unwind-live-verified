@@ -1,0 +1,17 @@
+{
+  "description": "Same retraction, thin extraction confidence. Must refuse on the floor.",
+  "retraction": {
+    "source_id": "src_supplier_K",
+    "claim_id": "clm_000000",
+    "new_value": 20,
+    "confidence": 0.4,
+    "reason": "Same retraction, thin extraction confidence. Must refuse on the floor.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "model_calls": 0
+  },
+  "name": "hub-low-confidence",
+  "class": "ambiguous"
+}

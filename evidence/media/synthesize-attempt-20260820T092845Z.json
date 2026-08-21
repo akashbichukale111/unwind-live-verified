@@ -1,0 +1,1 @@
+{"modality":"gemini","model":"gemini-3.6-flash","status":"NOT_CONFIGURED","mission_id":"mission_628ee1fb5b","prompt_sha256":"11f602c994452b6f","artifact_path":"","text":"","reason":"UNWIND_VERTEX_DISABLED=1","latency_ms":0,"requested_at":"2026-08-20T09:28:45.974063+00:00","detail":{}}

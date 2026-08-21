@@ -1,0 +1,233 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python 3.12
+        run: uv venv --python 3.12 .venv
+
+      - name: Install
+        run: uv pip install --python .venv/bin/python -e ".[dev]"
+
+      - name: Lint
+        run: |
+          .venv/bin/ruff check .
+          .venv/bin/ruff format --check .
+
+      # Java is needed for the Firestore emulator jar. ubuntu-latest ships a JDK,
+      # but pinning it means a runner image change cannot silently skip the only
+      # test that touches a database.
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Start Firestore emulator
+        run: |
+          ./infra/emulator.sh &
+          for _ in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/ >/dev/null 2>&1; then
+              echo "emulator up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "emulator did not start in time" >&2
+          exit 1
+
+      - name: Test
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+        run: .venv/bin/python -m pytest -q
+
+      # The committed corpus must be reproducible from the committed generator.
+      # If this fails, corpus/README.md is stating properties the data no longer has.
+      - name: Corpus is deterministic
+        run: .venv/bin/python -m corpus.generate --verify --out corpus/data
+
+      - name: Eval harness runs
+        run: .venv/bin/python -m evals.harness --scenarios evals/scenarios --out evals/results
+
+      # ---------------------------------------------------------------------
+      # THE GUARANTEE, as a required check rather than a demo moment.
+      #
+      # T0 and T1 must survive a total Vertex outage. A guarantee that only gets
+      # exercised when somebody remembers to try it is a guarantee that rots, so
+      # the full cascade runs here with the single door to a model closed, and
+      # the job fails if any scenario needs one.
+      # ---------------------------------------------------------------------
+      - name: Cascade completes with Vertex disabled
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+        run: |
+          .venv/bin/python -m evals.harness \
+            --scenarios evals/scenarios --out evals/results --quiet
+
+      - name: Zero model calls during a full cascade
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+        run: |
+          calls=$(.venv/bin/python -c "import json; print(json.load(open('evals/results/latest.json'))['total_model_calls'])")
+          echo "model calls during the eval: $calls"
+          if [ "$calls" != "0" ]; then
+            echo "a supposedly model-free cascade made $calls model call(s)" >&2
+            exit 1
+          fi
+
+      # docs/COVERAGE.md is the honesty instrument. If it drifts from what the
+      # extractor actually does, the committed recall numbers are false.
+      - name: Coverage report still matches the extractor
+        run: |
+          .venv/bin/python -m judgment.cli coverage >/dev/null
+          if ! git diff --quiet -- docs/COVERAGE.md; then
+            echo "docs/COVERAGE.md is stale:" >&2
+            git --no-pager diff -- docs/COVERAGE.md >&2
+            echo "Run 'make coverage' and commit the result." >&2
+            exit 1
+          fi
+
+      # Both attacks must be refused, by reason code, on every push.
+      - name: Adversarial retractions are refused
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+          UNWIND_OTEL_CONSOLE: "0"
+        run: |
+          for src in src_broker_Z src_msa_K; do
+            out=$(.venv/bin/python -m spine.cli cascade --source "$src" --new-value 45)
+            state=$(echo "$out" | .venv/bin/python -c "import json,sys; print(json.load(sys.stdin)['decision']['state'])")
+            code=$(echo "$out" | .venv/bin/python -c "import json,sys; print(json.load(sys.stdin)['authority']['reason_code'])")
+            echo "$src -> $state ($code)"
+            if [ "$state" != "refuse" ] || [ "$code" != "source_outside_claim_scope" ]; then
+              echo "$src was NOT refused with a scope reason" >&2; exit 1
+            fi
+          done
+
+      # summary.json is the deterministic slice of the report -- no timestamps,
+      # no wall-clock. If it drifts, the committed numbers no longer describe
+      # the committed code, which is the one failure this project cannot afford.
+      - name: Committed eval results still match the code
+        run: |
+          if ! git diff --quiet -- evals/results/summary.json; then
+            echo "evals/results/summary.json differs from the committed copy:" >&2
+            git --no-pager diff -- evals/results/summary.json >&2
+            echo "Run 'make eval' and commit the result." >&2
+            exit 1
+          fi
+
+      # The court must reach a verdict with the single door to a model CLOSED.
+      # Owners plead from arithmetic and the arbiter rules on the tally; only the
+      # prose degrades. If this needs Vertex, the tier discipline has regressed.
+      - name: The court sits with Vertex disabled
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+          UNWIND_OTEL_CONSOLE: "0"
+        run: |
+          out=$(.venv/bin/python -m settle.cli settle)
+          turns=$(echo "$out" | .venv/bin/python -c "import json,sys; print(json.load(sys.stdin)['court']['turns_used'])")
+          conv=$(echo "$out" | .venv/bin/python -c "import json,sys; print(json.load(sys.stdin)['court']['converged'])")
+          obs=$(echo "$out" | .venv/bin/python -c "import json,sys; print(len(json.load(sys.stdin)['obligations']))")
+          echo "turns=$turns converged=$conv obligations=$obs"
+          if [ "$turns" != "4" ] || [ "$conv" != "True" ] || [ "$obs" -lt 1 ]; then
+            echo "the court did not complete four turns and raise an obligation" >&2
+            exit 1
+          fi
+
+      # The product's actual output, end to end: a named counterparty, something
+      # still reversible, and something that is not.
+      - name: An obligation names a counterparty and both fates
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+          UNWIND_OTEL_CONSOLE: "0"
+        run: |
+          out=$(.venv/bin/python -m settle.cli obligation --pick cnc_001211)
+          echo "$out"
+          echo "$out" | grep -q "counterparty::" || { echo "no counterparty named" >&2; exit 1; }
+          echo "$out" | grep -q "^  \[ \]" || { echo "no reversible action listed" >&2; exit 1; }
+          echo "$out" | grep -q "^  \[X\]" || { echo "no unrecoverable item listed" >&2; exit 1; }
+          echo "$out" | grep -q "human::" || { echo "no human signatory" >&2; exit 1; }
+
+      # The golden transcript is the court's regression surface. If it drifts,
+      # the committed transcript no longer describes the committed code.
+      - name: Court transcript still matches the code
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+          UNWIND_OTEL_CONSOLE: "0"
+        run: |
+          .venv/bin/python -m settle.cli golden --out evals/golden/court.txt >/dev/null
+          if ! git diff --quiet -- evals/golden/court.txt; then
+            echo "evals/golden/court.txt is stale:" >&2
+            git --no-pager diff -- evals/golden/court.txt >&2
+            echo "Run 'make golden' and commit the result." >&2
+            exit 1
+          fi
+
+      # The palette and the 4.5:1 floor are in tension, and the resolution is
+      # load-bearing rather than cosmetic: on the dark field only two of the
+      # seven tokens are legible as text. This recomputes every pair and parses
+      # the stylesheet, so a future edit cannot quietly put rust on ink.
+      - name: Contrast, palette, gradient and radius
+        run: .venv/bin/python scripts/check_contrast.py
+
+      # `make verify-live` must FAIL without credentials rather than falling
+      # back to the stub. CI has no credentials, which makes it the ideal place
+      # to prove the refusal actually happens.
+      # Two properties, and the second is checked by CONTENT HASH rather than
+      # by grepping for a placeholder string.
+      #
+      # The original form required docs/LIVE-VERIFICATION.md to contain
+      # "NOT YET RUN". That was a proxy for "the script wrote nothing", and it
+      # stopped being true the moment a REAL credentialed run legitimately
+      # replaced the placeholder with measured results (commit ba46aaa). The
+      # step then failed on every push -- invisibly, because CI was dying at
+      # the Lint step before ever reaching it. Fixing the lint gate is what
+      # surfaced it.
+      #
+      # Hashing before and after tests the property the step actually cares
+      # about ("an uncredentialed run must not modify this file") and keeps
+      # working whether the file holds a placeholder or real results. It is
+      # strictly stronger than the grep: the grep would have passed a run that
+      # appended garbage while leaving the placeholder line intact.
+      - name: verify-live refuses to run without credentials
+        env:
+          UNWIND_OTEL_CONSOLE: "0"
+        run: |
+          test -f docs/LIVE-VERIFICATION.md || { echo "the doc is missing" >&2; exit 1; }
+          before=$(sha256sum docs/LIVE-VERIFICATION.md | cut -d" " -f1)
+          if .venv/bin/python scripts/verify_live.py; then
+            echo "verify_live.py exited 0 with no credentials; it must not" >&2
+            exit 1
+          fi
+          echo "verify-live exited non-zero as required"
+          after=$(sha256sum docs/LIVE-VERIFICATION.md | cut -d" " -f1)
+          if [ "$before" != "$after" ]; then
+            echo "verify-live modified docs/LIVE-VERIFICATION.md without credentials" >&2
+            exit 1
+          fi
+          echo "docs/LIVE-VERIFICATION.md unchanged ($before)"
+
+      # infra/deploy.sh has never executed. The preflight is the only thing
+      # standing between a bad input and a Cloud Build that fails six minutes
+      # in, so it runs on every push -- it needs no credentials by design.
+      - name: Deploy preflight
+        run: .venv/bin/python scripts/deploy_check.py
+
+      # `make demo` is unbuilt and MUST fail. A green CI that let it pass
+      # silently would be the exact dishonesty it exists to prevent.
+      - name: Unbuilt targets fail loudly
+        run: |
+          if make demo >/dev/null 2>&1; then
+            echo "make demo exited 0; it is not built and must fail" >&2; exit 1
+          fi
+          echo "the unbuilt target failed as required"

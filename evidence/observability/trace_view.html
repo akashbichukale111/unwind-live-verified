@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UNWIND — one full reasoning chain</title>
+<style>
+  :root {
+    --ink: #12151A; --slate: #262C34; --graphite: #4A535E; --bone: #EDE8DE;
+    --amber: #C88A2E; --oxide: #8C3A2B; --verdigris: #3E7A6E;
+  }
+  body { background: var(--ink); color: var(--bone); font-family: 'JetBrains Mono', ui-monospace, monospace; margin: 0; padding: 32px; }
+  h1 { font-size: 18px; margin: 0 0 4px 0; }
+  .sub { color: var(--bone); opacity: 0.62; font-size: 12px; margin-bottom: 24px; }
+  .note { color: var(--amber); font-size: 11px; margin-bottom: 20px; max-width: 900px; line-height: 1.5; }
+  .trace-id { color: var(--bone); opacity: 0.5; font-size: 10px; margin-bottom: 20px; }
+  .row { display: flex; align-items: baseline; padding: 3px 0; border-bottom: 1px solid #1c2027; font-size: 12px; }
+  .row .indent { white-space: pre; opacity: 0.35; }
+  .row .name { min-width: 360px; }
+  .row .kind { color: var(--graphite); font-size: 10px; min-width: 90px; }
+  .row .attrs { color: var(--bone); opacity: 0.65; font-size: 10.5px; }
+  .kind-policy_gate .name { color: var(--amber); }
+  .kind-tool_call .name { color: #7FA8C9; }
+  .kind-agent_decision .name { color: var(--verdigris); }
+  .kind-root .name { color: var(--bone); font-weight: 700; }
+  .pass { color: var(--verdigris); font-weight: 700; }
+  .fail { color: var(--oxide); font-weight: 700; }
+  .count-tag { color: var(--bone); opacity: 0.4; font-size: 10px; margin-left: 6px; }
+  .section-gap { height: 14px; }
+  .branch-label { color: var(--bone); opacity: 0.7; font-size: 11px; margin: 14px 0 4px 0; padding-left: 20px; border-left: 3px solid var(--oxide); }
+  .branch-label.ok { border-left-color: var(--verdigris); }
+</style>
+</head>
+<body>
+<h1>UNWIND — one full reasoning chain, real spans</h1>
+<div class="sub">Captured from a live run: `spine.cascade.run_cascade` (hub retraction, radius 2,594) followed by two real `tower.gateway.evaluate_gateway` calls, one ALLOWED and one refused SCOPE_EXCEEDED. Every span below is copied from <code>evidence/observability/captured-spans-2026-08-15.json</code> — nothing on this page was typed by hand.</div>
+<div class="trace-id">trace_id: 698f22a5126986024bcd6187a4ed1a28 · exporter: cloud-trace (BatchSpanProcessor → Cloud Trace v2 batchWriteSpans) · confirmed readable back through the real Cloud Trace API: get_trace() returns FOUND, 2,660 spans (see evidence/observability/README.md) · 7,898 spans captured locally for this page; the 2,594-repeated T1 spans are collapsed below with a ×2,594 tag rather than listed individually.</div>
+
+<div class="row kind-root"><span class="indent"></span><span class="name">unwind.demo.full_reasoning_chain</span><span class="kind">root</span><span class="attrs">the whole run below is one trace</span></div>
+
+<div class="row kind-policy_gate"><span class="indent">  └─</span><span class="name">policy_gate:retraction_authority</span><span class="kind">T0</span><span class="attrs">allowed=True reason=source_in_claim_scope</span></div>
+<div class="row kind-tool_call"><span class="indent">    └─</span><span class="name">tool_call:t0_traverse</span><span class="kind">T0</span><span class="attrs">radius_size=2594 max_depth=5 cycles_detected=0</span></div>
+<div class="row kind-policy_gate"><span class="indent">      └─</span><span class="name">policy_gate:gate_admissibility</span><span class="kind">T0</span><span class="attrs">admissible=True</span></div>
+<div class="row kind-tool_call"><span class="indent">        └─</span><span class="name">tool_call:temporal_truth_propagation</span><span class="kind">T0</span><span class="attrs">value_before=11.0 value_after=20</span></div>
+<div class="row kind-tool_call"><span class="indent">        └─</span><span class="name">tool_call:t1_materiality</span><span class="kind">T1</span><span class="attrs">shock &gt; slack, subtraction<span class="count-tag">× 2,594 (one per node)</span></span></div>
+<div class="row kind-tool_call"><span class="indent">        └─</span><span class="name">tool_call:escapement_lookup</span><span class="kind">T0</span><span class="attrs">did this already leave the building<span class="count-tag">× 2,690</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">        └─</span><span class="name">policy_gate:four_regime_router</span><span class="kind">T1</span><span class="attrs">materiality × escapement → one of 4 regimes<span class="count-tag">× 2,594</span></span></div>
+<div class="row kind-tool_call"><span class="indent">        └─</span><span class="name">tool_call:t1_score_radius</span><span class="kind">T1</span><span class="attrs">nodes=2594</span></div>
+<div class="row kind-tool_call"><span class="indent">        └─</span><span class="name">tool_call:impact_cartographer</span><span class="kind">T1</span><span class="attrs">nodes=2594 top_exposure=0.690</span></div>
+<div class="row kind-policy_gate"><span class="indent">        └─</span><span class="name">policy_gate:cascade_budgeter</span><span class="kind">T1</span><span class="attrs">policy_tier=CRITICAL tier_reached=T1</span></div>
+<div class="row kind-policy_gate"><span class="indent">        └─</span><span class="name">policy_gate:confidence_floor</span><span class="kind">T0</span><span class="attrs">required=0.8573 actual=1.0 distinct_sources=1</span></div>
+<div class="row kind-policy_gate"><span class="indent">        └─</span><span class="name">policy_gate:confidence_gate</span><span class="kind">T0</span><span class="attrs">gate_state=ask_human awaiting_answer=True</span></div>
+<div class="row kind-policy_gate"><span class="indent">        └─</span><span class="name">policy_gate:gate_authorisation</span><span class="kind">T0</span><span class="attrs">proceeds=False reason=single_source_above_threshold</span></div>
+<div class="row kind-agent_decision"><span class="indent">        └─</span><span class="name">agent_decision:cascade-spine@0.2.0</span><span class="kind">T0</span><span class="attrs">decision_state=ask_human alert_count=48 radius_size=2594</span></div>
+
+<div class="branch-label ok">Gateway call 1 — task=draft_correction_for_cascade → ALLOWED</div>
+<div class="row kind-policy_gate"><span class="indent">  └─</span><span class="name">policy_gate:agent_gateway</span><span class="kind">T0</span><span class="attrs">reason_code=<span class="pass">ALLOWED</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    ├─</span><span class="name">policy_gate:agent_gateway.check_principal</span><span class="kind">T0</span><span class="attrs">passed=<span class="pass">True</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    ├─</span><span class="name">policy_gate:agent_gateway.check_scope</span><span class="kind">T0</span><span class="attrs">passed=<span class="pass">True</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    ├─</span><span class="name">policy_gate:agent_gateway.check_budget</span><span class="kind">T0</span><span class="attrs">passed=<span class="pass">True</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    └─</span><span class="name">policy_gate:agent_gateway.check_warrant</span><span class="kind">T0</span><span class="attrs">passed=<span class="pass">True</span> [STUB — Card 0 not built]</span></div>
+
+<div class="branch-label">Gateway call 2 — task=draft_correction_for_cascade_signing → SCOPE_EXCEEDED</div>
+<div class="row kind-policy_gate"><span class="indent">  └─</span><span class="name">policy_gate:agent_gateway</span><span class="kind">T0</span><span class="attrs">reason_code=<span class="fail">SCOPE_EXCEEDED</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    ├─</span><span class="name">policy_gate:agent_gateway.check_principal</span><span class="kind">T0</span><span class="attrs">passed=<span class="pass">True</span></span></div>
+<div class="row kind-policy_gate"><span class="indent">    └─</span><span class="name">policy_gate:agent_gateway.check_scope</span><span class="kind">T0</span><span class="attrs">passed=<span class="fail">False</span> — requested obligation.sign, outside granted scope</span></div>
+<div class="row"><span class="indent">        </span><span class="name" style="opacity:0.4">(check_budget, check_warrant: never ran — refused before any work, per the fixed order)</span></div>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+
+==============================================================================
+ACT 1 -- BURN drops a risk-class bar below the routing line
+==============================================================================
+[SYNTHETIC seeded history] extractor_veteran HIGH-risk warrant: 264bp
+case case_6c38a505: gateway decision = ALLOWED (allowed=True)
+
+>>> A human overturns this agent's judgement on that case. BURN. <<<
+[EARNED -- real BURN, this run] extractor_veteran HIGH-risk warrant: 0bp (was 144bp)
+case case_657c1fd9: gateway decision = WARRANT_INSUFFICIENT (allowed=False)
+>>> WARRANT_INSUFFICIENT -- routed to a human, no cache, visible on the very next call. <<<
+
+==============================================================================
+ACT 2 -- cold start, earning up, live on this run
+==============================================================================
+[cold start, no seeding at all] extractor_rookie LOW-risk warrant: 0bp
+case case_46cdbc48: gateway decision = WARRANT_INSUFFICIENT (allowed=False)
+
+>>> A human grants concurrence on camera. <<<
+>>> Countersign recorded [SIMULATED -- Gemma countersign is not wired up yet (Card 3)]. <<<
+[EARNED -- real MINT, this run] extractor_rookie LOW-risk warrant: 500bp (+500bp)
+case case_46cdbc48: gateway decision = ALLOWED (allowed=True)
+>>> Threshold crossed live. First delegation permitted, on camera. <<<
+
+==============================================================================
+Next: python scripts/rederive_warrant.py -- proves nothing drifted.
+==============================================================================
+
+agent_id                 key                          stored  rederived prov        events  match
+extractor_rookie         extract::LOW                    400        400 SYNTHETIC        2  PASS
+extractor_rookie         extract::HIGH                     0          0 SYNTHETIC        0  PASS
+extractor_veteran        extract::LOW                    633        633 SYNTHETIC        4  PASS
+extractor_veteran        extract::HIGH                     0          0 SYNTHETIC        6  PASS
+----------------------------------------------------------------------------------------------------
+RESULT: PASS -- 4/4 balances bit-equal to a fresh fold of the log.

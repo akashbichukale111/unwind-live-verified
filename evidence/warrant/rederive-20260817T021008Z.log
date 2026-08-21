@@ -1,0 +1,7 @@
+agent_id                 key                          stored  rederived prov        events  match
+extractor_rookie         extract::HIGH                     0          0 SYNTHETIC        0  PASS
+extractor_rookie         extract::LOW                    400        400 SYNTHETIC        2  PASS
+extractor_veteran        extract::HIGH                     0          0 SYNTHETIC        4  PASS
+extractor_veteran        extract::LOW                    730        730 SYNTHETIC        3  PASS
+----------------------------------------------------------------------------------------------------
+RESULT: PASS -- 4/4 balances bit-equal to a fresh fold of the log.

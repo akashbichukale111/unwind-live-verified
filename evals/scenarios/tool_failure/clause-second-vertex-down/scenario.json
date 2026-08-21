@@ -1,0 +1,17 @@
+{
+  "description": "A second clause under outage.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_001084",
+    "new_value": 0,
+    "reason": "A second clause under outage.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "clause-second-vertex-down",
+  "class": "tool_failure"
+}

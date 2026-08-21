@@ -1,0 +1,17 @@
+{
+  "description": "A third clause.",
+  "retraction": {
+    "source_id": "src_msa_K",
+    "claim_id": "clm_001085",
+    "new_value": 0,
+    "confidence": 1.0,
+    "reason": "A third clause.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "clause-third",
+  "class": "ambiguous"
+}

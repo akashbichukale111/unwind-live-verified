@@ -1,0 +1,18 @@
+{
+  "description": "An entirely invented source.",
+  "retraction": {
+    "source_id": "src_does_not_exist",
+    "claim_id": "clm_000000",
+    "new_value": 30,
+    "reason": "An entirely invented source.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "no_such_source",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "unknown-source",
+  "class": "adversarial"
+}

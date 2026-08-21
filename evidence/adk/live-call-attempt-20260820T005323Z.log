@@ -1,0 +1,455 @@
+Direct use of automatic function calling (AFC) in AsyncModels.generate_content is not recommended. Instead, we recommend to use AFC in AsyncChat.send_message. Similarly, direct use of AFC in AsyncModels.generate_content_stream is not recommended. Instead, we recommend to use AFC in AsyncChat.send_message_stream.
+Node execution failed with exception
+Traceback (most recent call last):
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 136, in run
+    await self._execute_node(ctx, node_input)
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 274, in _execute_node
+    await self._run_node_loop(ctx, node_input)
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 288, in _run_node_loop
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_base_node.py", line 166, in run
+    async for item in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py", line 599, in _run_impl
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_llm_agent_wrapper.py", line 326, in run_llm_agent_as_node
+    async for event in run_iter:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/base_agent.py", line 306, in run_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py", line 548, in _run_async_impl
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 956, in run_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1036, in _run_one_step_async
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1483, in _call_llm_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1461, in _call_llm_with_tracing
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1544, in _run_and_handle_error
+    async for response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 419, in _run_and_handle_error
+    raise model_error
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 396, in _run_and_handle_error
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py", line 256, in generate_content_async
+    async for response in super().generate_content_async(llm_request, stream):
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py", line 282, in generate_content_async
+    response = await self.api_client.aio.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py", line 8740, in generate_content
+    response = await self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py", line 7185, in _generate_content
+    response = await self._api_client.async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1793, in async_request
+    result = await self._async_request(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1726, in _async_request
+    return await self._async_retry(  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 112, in __call__
+    do = await self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 157, in iter
+    result = await action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py", line 111, in inner
+    return call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 116, in __call__
+    result = await fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1544, in _async_request_once
+    f'Bearer {await self._async_access_token()}'
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1332, in _async_access_token
+    self._credentials, project = await asyncio.to_thread(
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 227, in load_auth
+    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py", line 748, in default
+    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)
+google.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+Root node countersign_verification failed.
+Traceback (most recent call last):
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py", line 601, in _drive_root_node
+    await root_ctx._run_node_internal(
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/context.py", line 603, in _run_node_internal
+    raise DynamicNodeFailError(
+google.adk.workflow._errors.DynamicNodeFailError: Dynamic node countersign_verification failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py", line 906, in _cleanup_root_task
+    await task
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py", line 610, in _drive_root_node
+    raise e.error
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 136, in run
+    await self._execute_node(ctx, node_input)
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 274, in _execute_node
+    await self._run_node_loop(ctx, node_input)
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py", line 288, in _run_node_loop
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_base_node.py", line 166, in run
+    async for item in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py", line 599, in _run_impl
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_llm_agent_wrapper.py", line 326, in run_llm_agent_as_node
+    async for event in run_iter:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/base_agent.py", line 306, in run_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py", line 548, in _run_async_impl
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 956, in run_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1036, in _run_one_step_async
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1483, in _call_llm_async
+    async for event in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1461, in _call_llm_with_tracing
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 1544, in _run_and_handle_error
+    async for response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 419, in _run_and_handle_error
+    raise model_error
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 396, in _run_and_handle_error
+    async for llm_response in agen:
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py", line 256, in generate_content_async
+    async for response in super().generate_content_async(llm_request, stream):
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py", line 282, in generate_content_async
+    response = await self.api_client.aio.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py", line 8740, in generate_content
+    response = await self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py", line 7185, in _generate_content
+    response = await self._api_client.async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1793, in async_request
+    result = await self._async_request(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1726, in _async_request
+    return await self._async_retry(  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 112, in __call__
+    do = await self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 157, in iter
+    result = await action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py", line 111, in inner
+    return call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py", line 116, in __call__
+    result = await fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1544, in _async_request_once
+    f'Bearer {await self._async_access_token()}'
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 1332, in _async_access_token
+    self._credentials, project = await asyncio.to_thread(
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py", line 227, in load_auth
+    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py", line 748, in default
+    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)
+google.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+
+=== RESULT ===
+available : False
+agrees    : None   <- MUST be None, never True
+model     : gemma-3-27b-it
+reason    : DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+
+ASSERTION HELD: an unreachable verifier reports UNAVAILABLE, not AGREE.
+{
+    "name": "generate_content gemma-3-27b-it",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0xf94f743b2c7d964d",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0x6495cdb01ea6360f",
+    "start_time": "2026-08-20T00:54:32.766303Z",
+    "end_time": "2026-08-20T00:54:33.119891Z",
+    "status": {
+        "status_code": "ERROR",
+        "description": "DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information."
+    },
+    "attributes": {
+        "gen_ai.system": "vertex_ai",
+        "gen_ai.operation.name": "generate_content",
+        "gen_ai.request.model": "gemma-3-27b-it",
+        "gen_ai.agent.name": "countersign_gemma",
+        "gen_ai.conversation.id": "91d6cae0-87af-42e8-9b69-d5f23ff183fc",
+        "gcp.vertex.agent.event_id": "7376f072-ff80-4192-9fba-492399d6360d",
+        "gcp.vertex.agent.invocation_id": "e-1b8833ca-93ea-4081-818d-5f94305aaecb"
+    },
+    "events": [
+        {
+            "name": "exception",
+            "timestamp": "2026-08-20T00:54:33.119849Z",
+            "attributes": {
+                "exception.type": "google.auth.exceptions.DefaultCredentialsError",
+                "exception.message": "Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.",
+                "exception.stacktrace": "Traceback (most recent call last):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/trace/__init__.py\", line 608, in use_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1177, in start_as_current_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/tracing.py\", line 801, in _use_native_generate_content_span_stable_semconv\n    yield gc_span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/tracing.py\", line 818, in _use_native_generate_content_span\n    yield gc_span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/tracing.py\", line 657, in use_inference_span\n    yield gc_span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/_instrumentation.py\", line 267, in record_inference_telemetry\n    yield tel_ctx\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 396, in _run_and_handle_error\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py\", line 256, in generate_content_async\n    async for response in super().generate_content_async(llm_request, stream):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py\", line 282, in generate_content_async\n    response = await self.api_client.aio.models.generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 8740, in generate_content\n    response = await self._generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 7185, in _generate_content\n    response = await self._api_client.async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1793, in async_request\n    result = await self._async_request(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1726, in _async_request\n    return await self._async_retry(  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 112, in __call__\n    do = await self.iter(retry_state=retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 413, in exc_check\n    raise retry_exc.reraise()\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 184, in reraise\n    raise self.last_attempt.result()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 116, in __call__\n    result = await fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1544, in _async_request_once\n    f'Bearer {await self._async_access_token()}'\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1332, in _async_access_token\n    self._credentials, project = await asyncio.to_thread(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 227, in load_auth\n    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]\n                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py\", line 748, in default\n    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)\ngoogle.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.\n",
+                "exception.escaped": "False"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}
+{
+    "name": "call_llm",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0x6495cdb01ea6360f",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0x550b38ecec814275",
+    "start_time": "2026-08-20T00:54:32.766048Z",
+    "end_time": "2026-08-20T00:54:33.122707Z",
+    "status": {
+        "status_code": "ERROR",
+        "description": "DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information."
+    },
+    "attributes": {},
+    "events": [
+        {
+            "name": "exception",
+            "timestamp": "2026-08-20T00:54:33.122681Z",
+            "attributes": {
+                "exception.type": "google.auth.exceptions.DefaultCredentialsError",
+                "exception.message": "Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.",
+                "exception.stacktrace": "Traceback (most recent call last):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/trace/__init__.py\", line 608, in use_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1177, in start_as_current_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1461, in _call_llm_with_tracing\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1544, in _run_and_handle_error\n    async for response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 419, in _run_and_handle_error\n    raise model_error\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 396, in _run_and_handle_error\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py\", line 256, in generate_content_async\n    async for response in super().generate_content_async(llm_request, stream):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py\", line 282, in generate_content_async\n    response = await self.api_client.aio.models.generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 8740, in generate_content\n    response = await self._generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 7185, in _generate_content\n    response = await self._api_client.async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1793, in async_request\n    result = await self._async_request(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1726, in _async_request\n    return await self._async_retry(  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 112, in __call__\n    do = await self.iter(retry_state=retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 413, in exc_check\n    raise retry_exc.reraise()\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 184, in reraise\n    raise self.last_attempt.result()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 116, in __call__\n    result = await fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1544, in _async_request_once\n    f'Bearer {await self._async_access_token()}'\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1332, in _async_access_token\n    self._credentials, project = await asyncio.to_thread(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 227, in load_auth\n    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]\n                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py\", line 748, in default\n    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)\ngoogle.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.\n",
+                "exception.escaped": "False"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}
+{
+    "name": "invoke_agent countersign_gemma",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0x550b38ecec814275",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0x715d447ef8047d5b",
+    "start_time": "2026-08-20T00:54:32.724758Z",
+    "end_time": "2026-08-20T00:54:33.126569Z",
+    "status": {
+        "status_code": "ERROR",
+        "description": "DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information."
+    },
+    "attributes": {
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.agent.description": "Independent-family verifier gating warrant mints (Card 3). Never chosen by, or able to influence, the judgement it reviews.",
+        "gen_ai.agent.name": "countersign_gemma",
+        "gen_ai.conversation.id": "91d6cae0-87af-42e8-9b69-d5f23ff183fc"
+    },
+    "events": [
+        {
+            "name": "exception",
+            "timestamp": "2026-08-20T00:54:33.126550Z",
+            "attributes": {
+                "exception.type": "google.auth.exceptions.DefaultCredentialsError",
+                "exception.message": "Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.",
+                "exception.stacktrace": "Traceback (most recent call last):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/trace/__init__.py\", line 608, in use_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1177, in start_as_current_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/_instrumentation.py\", line 188, in record_agent_invocation\n    yield tel_ctx\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/base_agent.py\", line 306, in run_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py\", line 548, in _run_async_impl\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 956, in run_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1036, in _run_one_step_async\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1483, in _call_llm_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1461, in _call_llm_with_tracing\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1544, in _run_and_handle_error\n    async for response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 419, in _run_and_handle_error\n    raise model_error\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 396, in _run_and_handle_error\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py\", line 256, in generate_content_async\n    async for response in super().generate_content_async(llm_request, stream):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py\", line 282, in generate_content_async\n    response = await self.api_client.aio.models.generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 8740, in generate_content\n    response = await self._generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 7185, in _generate_content\n    response = await self._api_client.async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1793, in async_request\n    result = await self._async_request(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1726, in _async_request\n    return await self._async_retry(  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 112, in __call__\n    do = await self.iter(retry_state=retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 413, in exc_check\n    raise retry_exc.reraise()\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 184, in reraise\n    raise self.last_attempt.result()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 116, in __call__\n    result = await fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1544, in _async_request_once\n    f'Bearer {await self._async_access_token()}'\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1332, in _async_access_token\n    self._credentials, project = await asyncio.to_thread(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 227, in load_auth\n    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]\n                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py\", line 748, in default\n    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)\ngoogle.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.\n",
+                "exception.escaped": "False"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}
+{
+    "name": "invoke_workflow countersign_verification",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0x715d447ef8047d5b",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0x4ff9c05efc93ab28",
+    "start_time": "2026-08-20T00:54:32.721559Z",
+    "end_time": "2026-08-20T00:54:33.131026Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {
+        "gen_ai.operation.name": "invoke_workflow",
+        "gen_ai.conversation.id": "91d6cae0-87af-42e8-9b69-d5f23ff183fc",
+        "gen_ai.workflow.name": "countersign_verification"
+    },
+    "events": [],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}
+{
+    "name": "invocation",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0x4ff9c05efc93ab28",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "0xcaa1bceeece76a73",
+    "start_time": "2026-08-20T00:54:32.718893Z",
+    "end_time": "2026-08-20T00:54:33.138458Z",
+    "status": {
+        "status_code": "ERROR",
+        "description": "DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information."
+    },
+    "attributes": {},
+    "events": [
+        {
+            "name": "exception",
+            "timestamp": "2026-08-20T00:54:33.138434Z",
+            "attributes": {
+                "exception.type": "google.auth.exceptions.DefaultCredentialsError",
+                "exception.message": "Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.",
+                "exception.stacktrace": "Traceback (most recent call last):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py\", line 601, in _drive_root_node\n    await root_ctx._run_node_internal(\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/context.py\", line 603, in _run_node_internal\n    raise DynamicNodeFailError(\ngoogle.adk.workflow._errors.DynamicNodeFailError: Dynamic node countersign_verification failed\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/trace/__init__.py\", line 608, in use_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1177, in start_as_current_span\n    yield span\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/telemetry/_instrumentation.py\", line 72, in record_invocation\n    yield\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py\", line 628, in _run_node_async\n    await self._cleanup_root_task(task, self.agent.name)\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py\", line 906, in _cleanup_root_task\n    await task\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/runners.py\", line 610, in _drive_root_node\n    raise e.error\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py\", line 136, in run\n    await self._execute_node(ctx, node_input)\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py\", line 274, in _execute_node\n    await self._run_node_loop(ctx, node_input)\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_node_runner.py\", line 288, in _run_node_loop\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_base_node.py\", line 166, in run\n    async for item in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py\", line 599, in _run_impl\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/workflow/_llm_agent_wrapper.py\", line 326, in run_llm_agent_as_node\n    async for event in run_iter:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/base_agent.py\", line 306, in run_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/agents/llm_agent.py\", line 548, in _run_async_impl\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 956, in run_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1036, in _run_one_step_async\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1483, in _call_llm_async\n    async for event in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1461, in _call_llm_with_tracing\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 1544, in _run_and_handle_error\n    async for response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 419, in _run_and_handle_error\n    raise model_error\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/flows/llm_flows/base_llm_flow.py\", line 396, in _run_and_handle_error\n    async for llm_response in agen:\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/gemma_llm.py\", line 256, in generate_content_async\n    async for response in super().generate_content_async(llm_request, stream):\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/adk/models/google_llm.py\", line 282, in generate_content_async\n    response = await self.api_client.aio.models.generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 8740, in generate_content\n    response = await self._generate_content(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/models.py\", line 7185, in _generate_content\n    response = await self._api_client.async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1793, in async_request\n    result = await self._async_request(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1726, in _async_request\n    return await self._async_retry(  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 112, in __call__\n    do = await self.iter(retry_state=retry_state)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 157, in iter\n    result = await action(retry_state)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/_utils.py\", line 111, in inner\n    return call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 413, in exc_check\n    raise retry_exc.reraise()\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/__init__.py\", line 184, in reraise\n    raise self.last_attempt.result()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 449, in result\n    return self.__get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/_base.py\", line 401, in __get_result\n    raise self._exception\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/tenacity/asyncio/__init__.py\", line 116, in __call__\n    result = await fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1544, in _async_request_once\n    f'Bearer {await self._async_access_token()}'\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 1332, in _async_access_token\n    self._credentials, project = await asyncio.to_thread(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/genai/_api_client.py\", line 227, in load_auth\n    credentials, loaded_project_id = google.auth.default(  # type: ignore[no-untyped-call]\n                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/unwind/.venv/lib/python3.12/site-packages/google/auth/_default.py\", line 748, in default\n    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)\ngoogle.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.\n",
+                "exception.escaped": "False"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}
+{
+    "name": "model_call:gemma-3-27b-it",
+    "context": {
+        "trace_id": "0xdb4f5fad1afee0beb78fb1b66af8b213",
+        "span_id": "0xcaa1bceeece76a73",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": null,
+    "start_time": "2026-08-20T00:54:31.238738Z",
+    "end_time": "2026-08-20T00:54:33.140065Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {
+        "unwind.span_kind": "model_call",
+        "unwind.tier": "T2",
+        "unwind.model": "gemma-3-27b-it",
+        "unwind.purpose": "countersign",
+        "unwind.case_id": "evidence-case",
+        "unwind.model_available": false,
+        "unwind.error": "DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information."
+    },
+    "events": [],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "telemetry.sdk.language": "python",
+            "telemetry.sdk.name": "opentelemetry",
+            "telemetry.sdk.version": "1.42.1",
+            "service.name": "unwind",
+            "service.version": "0.1.0",
+            "unwind.project_id": "unwind-local",
+            "unwind.vertex_location": "global"
+        },
+        "schema_url": ""
+    }
+}

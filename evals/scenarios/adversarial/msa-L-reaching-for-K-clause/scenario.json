@@ -1,0 +1,18 @@
+{
+  "description": "The wrong master agreement amending the other supplier's clause.",
+  "retraction": {
+    "source_id": "src_msa_L",
+    "claim_id": "clm_001083",
+    "new_value": 0,
+    "reason": "The wrong master agreement amending the other supplier's clause.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "msa-L-reaching-for-K-clause",
+  "class": "adversarial"
+}

@@ -1,0 +1,17 @@
+{
+  "description": "The silent path: small radius, nothing escaped, zero alerts.",
+  "vertex_disabled": false,
+  "retraction": {
+    "source_id": "src_supplier_L",
+    "claim_id": "clm_001143",
+    "new_value": 6,
+    "reason": "The silent path: small radius, nothing escaped, zero alerts.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "execute",
+    "model_calls": 0
+  },
+  "name": "low-severity-completes",
+  "class": "tool_failure"
+}

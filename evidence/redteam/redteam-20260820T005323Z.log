@@ -1,0 +1,32 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/user/unwind/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/unwind
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 21 items
+
+tests/test_adversarial.py::test_attack_01_prompt_injection_cannot_widen_scope PASSED [  4%]
+tests/test_adversarial.py::test_attack_02_prompt_injection_cannot_invent_an_action_kind PASSED [  9%]
+tests/test_adversarial.py::test_attack_03_tool_poisoning_unknown_tool_is_dropped PASSED [ 14%]
+tests/test_adversarial.py::test_attack_04_a_role_cannot_borrow_another_roles_tool PASSED [ 19%]
+tests/test_adversarial.py::test_attack_05_fake_approval_anonymous_caller PASSED [ 23%]
+tests/test_adversarial.py::test_attack_06_forged_principal_in_the_request_body PASSED [ 28%]
+tests/test_adversarial.py::test_attack_07_service_token_escalating_to_a_human_decision PASSED [ 33%]
+tests/test_adversarial.py::test_attack_08_resume_without_a_principal_is_refused PASSED [ 38%]
+tests/test_adversarial.py::test_attack_09_simulation_contamination_in_production PASSED [ 42%]
+tests/test_adversarial.py::test_attack_10_the_application_cannot_set_its_own_simulation_flag PASSED [ 47%]
+tests/test_adversarial.py::test_attack_11_memory_poisoning_via_a_forged_countersign PASSED [ 52%]
+tests/test_adversarial.py::test_attack_12_minting_without_human_concurrence PASSED [ 57%]
+tests/test_adversarial.py::test_attack_13_zero_authority_cannot_execute_a_paid_action PASSED [ 61%]
+tests/test_adversarial.py::test_attack_14_warrant_burn_is_visible_to_the_very_next_route PASSED [ 66%]
+tests/test_adversarial.py::test_attack_15_worker_loop_terminates_as_a_routed_branch PASSED [ 71%]
+tests/test_adversarial.py::test_attack_16_hallucinated_tool_result_is_not_accepted_as_a_decision PASSED [ 76%]
+tests/test_adversarial.py::test_attack_17_unauthorized_external_action PASSED [ 80%]
+tests/test_adversarial.py::test_attack_18_replay_attack_duplicates_nothing PASSED [ 85%]
+tests/test_adversarial.py::test_attack_19_unavailable_model_never_becomes_agreement PASSED [ 90%]
+tests/test_adversarial.py::test_attack_20_challenger_cannot_be_talked_into_agreeing PASSED [ 95%]
+tests/test_adversarial.py::test_known_gap_cross_tenant_isolation_is_not_implemented PASSED [100%]
+
+============================== 21 passed in 2.70s ==============================

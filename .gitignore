@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Firestore emulator jar, fetched on demand by infra/emulator.sh
+.cache/
+
+# Node (web/ has its own .gitignore too)
+node_modules/
+.next/
+
+# ⚠ Poetry is not used here (PEP 621 + hatchling, no [tool.poetry]). A stray
+# poetry.lock is a high-precedence marker that diverts the Cloud Run buildpack
+# onto a Poetry path this project cannot satisfy. Ignored so it can never be
+# committed; also excluded in .gcloudignore so it can never be uploaded.
+poetry.lock
+
+# Local secrets. `adk create` writes .env files; none belongs in this repo.
+.env
+.env.*
+*.pem
+*-key.json
+
+# corpus/data/ IS COMMITTED ON PURPOSE. A cold clone must not need a generation
+# step, and the manifest is how the committed bytes are proven reproducible.
+!corpus/data/
+
+# Runtime sandbox system of record (command_os/external.py). Real side effects
+# from local mission runs; runtime state, never source.
+.sandbox/
+
+# Generated media artefacts (Mission Media Lab). Output, never source:
+# a generated video/audio file is not reproducible by any test and must not
+# be committed as if it were evidence of a call that this repo can re-run.
+.media/

@@ -1,0 +1,29 @@
+{
+  "name": "supplier-L-and-erp-overlap",
+  "class": "multi_premise",
+  "description": "Two small radii overlapping on a single commitment, with no hub involved.",
+  "retractions": [
+    {
+      "claim_id": "clm_000115",
+      "source_id": "src_supplier_L",
+      "new_value": 26,
+      "reason": "supplier L notified a revised lead time",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    },
+    {
+      "claim_id": "clm_000958",
+      "source_id": "src_erp_internal",
+      "new_value": 40.0,
+      "reason": "ERP feed corrected a stale schedule",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    }
+  ],
+  "vertex_disabled": true,
+  "expect": {
+    "radii_merge": true,
+    "max_duplicate_obligations": 0,
+    "arbiter_must_rule": true,
+    "must_converge": true,
+    "team_must_dissolve": true
+  }
+}

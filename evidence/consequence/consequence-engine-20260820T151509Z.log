@@ -1,0 +1,48 @@
+==========================================================================
+1. RECON parses messy evidence into premises
+==========================================================================
+  parsed 16/20 records (completeness 80%)
+  claims: 5  contradictions: ['clm_supplier_K_lead_time', 'clm_tariff_rate_K']
+
+==========================================================================
+2. CONSEQUENCE: the real reverse-index traversal on those premises
+==========================================================================
+  resolved   : True
+  radius     : 2594
+    closed_out               874
+    immaterial_contained     535
+    immaterial_escaped       933
+    material_contained       30
+    material_escaped         48
+    unresolved               174
+  MATERIAL   : 78  (30 correctable, 48 ALREADY ESCAPED)
+  reversible : False
+  -> matches the README's own 2,594 -> 78 figures, from the AGENT side
+
+==========================================================================
+3. UNWIND RISK INDEX (a heuristic, decomposed)
+==========================================================================
+  TOTAL 91 (SEVERE)
+    security         95
+    data             86
+    financial        78
+    operational      100
+    privilege        100
+    irreversibility  90
+    · requests secret-bearing scope: security 95
+    · 2594 dependent decisions in radius: data 86
+    · 78 material consequences: financial 78
+    · 174 handed to judgement: operational 100
+    · action kind SECRET_ACCESS: privilege 100
+    · 48 consequences ALREADY ESCAPED (un-recallable): irreversibility 80
+    · secret disclosure cannot be undone: irreversibility floored at 90 despite the action writing nothing
+
+==========================================================================
+4. CAUSALITY: the band PRICES the action, it does not merely describe it
+==========================================================================
+  WRITE_SANDBOX    no consequence data   25bp -> band SEVERE   48bp  (+90%)
+  CREATE_TICKET    no consequence data   50bp -> band SEVERE   95bp  (+90%)
+  -> a severe blast radius makes the SAME action cost more, so the same
+     balance buys fewer such actions and the Gateway refuses sooner.
+
+ALL ASSERTIONS HELD. Zero model calls were made anywhere in this run.

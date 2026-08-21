@@ -1,0 +1,8 @@
+{
+  "name": "unwind-scripts",
+  "private": true,
+  "description": "Node-side tooling for UNWIND (scripts/fps_probe.js only). Not the web app -- web/ has its own package.json, unused, kept only as a documented dead skeleton (see web/README.md).",
+  "dependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-08-21T02:51:46.626929+00:00",
+  "media_requested": true,
+  "sentinel": "UNWIND_VERTEX_LIVE",
+  "results": [
+    {
+      "check": "auth",
+      "status": "LIVE_VERIFIED",
+      "auth_mode": "adc",
+      "project": "project-895d4ca8-d301-447d-916",
+      "source": "credentials"
+    },
+    {
+      "check": "gemini",
+      "status": "LIVE_VERIFIED",
+      "model": "gemini-3.6-flash",
+      "latency_ms": 10844,
+      "echo": "UNWIND_VERTEX_LIVE"
+    },
+    {
+      "check": "gemma",
+      "status": "UNAVAILABLE",
+      "model": "gemma-3-27b-it",
+      "reason": "The model ID or endpoint does not exist for this project and region. Check the model is available in your Vertex region and that the ID in lib/config.py is current. Verbatim: ClientError: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'Publisher model `projects/project-895d4ca8-d301-447d-916/locations/global/publishers/google/models/gemma-3-27b-it` was not found or your project does not have access to it. Ensure you are using a valid model name and that the model is available in the specified region. For more information, see: https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations.', 'status': 'NOT_FOUND'}}"
+    },
+    {
+      "check": "veo",
+      "status": "ERROR",
+      "model": "veo-3.1-generate-001",
+      "reason": "ValueError: This method is only supported in the Gemini Developer client."
+    },
+    {
+      "check": "lyria",
+      "status": "ERROR",
+      "model": "lyria-002",
+      "reason": "AttributeError: 'Models' object has no attribute 'generate_music'"
+    }
+  ]
+}

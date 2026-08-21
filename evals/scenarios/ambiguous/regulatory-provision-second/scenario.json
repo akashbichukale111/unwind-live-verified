@@ -1,0 +1,17 @@
+{
+  "description": "A second provision.",
+  "retraction": {
+    "source_id": "src_tariff_bulletin",
+    "claim_id": "clm_000011",
+    "new_value": 0,
+    "confidence": 1.0,
+    "reason": "A second provision.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "regulatory-provision-second",
+  "class": "ambiguous"
+}

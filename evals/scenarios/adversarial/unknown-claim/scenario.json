@@ -1,0 +1,18 @@
+{
+  "description": "A retraction against a claim that does not exist.",
+  "retraction": {
+    "source_id": "src_supplier_K",
+    "claim_id": "clm_999999",
+    "new_value": 30,
+    "reason": "A retraction against a claim that does not exist.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "no_such_claim",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "unknown-claim",
+  "class": "adversarial"
+}

@@ -1,0 +1,169 @@
+{
+  "adversarial": {
+    "artifacts": 2,
+    "kinds": [
+      "forged_retraction",
+      "partial_authority_overreach"
+    ],
+    "note": "stored under corpus/data/adversarial/, absent from claims.jsonl and reverse_index.jsonl",
+    "present": true,
+    "processed": false
+  },
+  "artifacts": {
+    "count": 64,
+    "gold_claim_total": 44,
+    "with_gold_claims": 44
+  },
+  "contested_premise": {
+    "canonical": "supplier_M.expedite_window_days",
+    "claim_ids": [
+      "clm_001144",
+      "clm_001145"
+    ],
+    "dependents": 18,
+    "note": "Two live claims, one fact, two sources. Must route to DEFER.",
+    "values": [
+      9,
+      16
+    ]
+  },
+  "counts": {
+    "claims": 1146,
+    "conclusions": 4206,
+    "derived_claims": 128,
+    "reverse_index_edges": 10744,
+    "sources": 10
+  },
+  "demonstrative_reversibility": {
+    "compensable": "cnc_001967",
+    "idempotent": "cnc_000079",
+    "irreversible": "cnc_002416",
+    "mixed": "cnc_001211"
+  },
+  "depth": {
+    "by_depth": {
+      "1": 882,
+      "2": 1088,
+      "3": 424,
+      "4": 150,
+      "5": 50
+    },
+    "max_premise_chain_depth": 5
+  },
+  "die_back": {
+    "die_back_pct": 95.165,
+    "immaterial_by_arithmetic": 2303,
+    "material_by_arithmetic": 117,
+    "radius": 2594,
+    "rule": "material <=> shock_days > (committed_lead_days - hub_value)",
+    "scoreable": 2420,
+    "unscoreable_unresolved": 174
+  },
+  "generated_window": {
+    "days": 182,
+    "retraction_at": "2026-07-06T09:00:00Z",
+    "start": "2026-01-05T09:00:00Z"
+  },
+  "hub_claim": {
+    "canonical": "supplier_K.lead_time_days",
+    "claim_id": "clm_000000",
+    "direct_dependents": 882,
+    "shock_days": 9,
+    "transitive_dependents": 2594,
+    "value_after": 20,
+    "value_before": 11
+  },
+  "long_dated": {
+    "counts": {
+      "framework_promise": 150,
+      "long_lead_order": 140,
+      "standing_price": 130
+    },
+    "escaped_survivors": 23,
+    "escaped_survivors_120d_or_more": 12,
+    "in_radius": 420,
+    "live_material": 23,
+    "material": 23,
+    "total": 420
+  },
+  "low_severity_scenario": {
+    "canonical": "supplier_L.calibration_offset_days",
+    "claim_id": "clm_001143",
+    "dependents": 14,
+    "escaped_dependents": 0,
+    "min_committed_lead_days": 60,
+    "value": 4
+  },
+  "seed": 20260831,
+  "survivors": {
+    "already_closed_material": 39,
+    "escaped": 48,
+    "live_material": 78,
+    "not_escaped": 30
+  },
+  "t2_queue": {
+    "clause_governed_conclusions": 170,
+    "contractual_claims": 40,
+    "in_hub_radius_undecidable": 170,
+    "regulatory_claims": 20,
+    "total_hub_radius_undecidable": 174
+  },
+  "temporal_gap": {
+    "decision_gap_histogram_days": {
+      "0-30": 11,
+      "120-150": 4,
+      "150-183": 11,
+      "183+": 0,
+      "30-60": 7,
+      "60-90": 10,
+      "90-120": 5
+    },
+    "escape_gap_histogram_days": {
+      "0-30": 12,
+      "120-150": 3,
+      "150-183": 11,
+      "183+": 0,
+      "30-60": 7,
+      "60-90": 12,
+      "90-120": 3
+    },
+    "escaped_survivors": 48,
+    "max_decision_to_retraction_days": 182,
+    "median_decision_to_retraction_days": 85.5,
+    "min_decision_to_retraction_days": 3,
+    "survivors_decided_120d_or_more_before": 15,
+    "survivors_decided_120d_or_more_ids": [
+      "cnc_000341",
+      "cnc_001448",
+      "cnc_001513",
+      "cnc_002034",
+      "cnc_002084",
+      "cnc_002086",
+      "cnc_002124",
+      "cnc_002168",
+      "cnc_002178",
+      "cnc_002208",
+      "cnc_002222",
+      "cnc_002240",
+      "cnc_002310",
+      "cnc_002362",
+      "cnc_002371"
+    ]
+  },
+  "timing": {
+    "max_escape_to_retraction_days": 181,
+    "median_decision_to_retraction_days": 91.0,
+    "median_escape_to_retraction_days": 82.0,
+    "min_escape_to_retraction_days": 1
+  },
+  "unresolved": {
+    "conclusions": [
+      "cnc_002802",
+      "cnc_002803",
+      "cnc_002804",
+      "cnc_002805"
+    ],
+    "count": 4,
+    "reason": "premise clause carries no machine-checkable value"
+  }
+}

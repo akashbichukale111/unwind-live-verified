@@ -1,0 +1,18 @@
+{
+  "description": "One supplier asserting a competitor's lead time.",
+  "retraction": {
+    "source_id": "src_supplier_L",
+    "claim_id": "clm_000000",
+    "new_value": 28,
+    "reason": "One supplier asserting a competitor's lead time.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "supplier-L-reaching-for-K",
+  "class": "adversarial"
+}

@@ -1,0 +1,18 @@
+{
+  "description": "Logistics owns transit time, not supplier lead time. One step outside.",
+  "retraction": {
+    "source_id": "src_logistics_ops",
+    "claim_id": "clm_000000",
+    "new_value": 26,
+    "reason": "Logistics owns transit time, not supplier lead time. One step outside.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "logistics-reaching-for-lead-time",
+  "class": "adversarial"
+}

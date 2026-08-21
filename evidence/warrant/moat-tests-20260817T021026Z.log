@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.1, pytest-9.1.1, pluggy-1.6.0 -- /workspaces/unwind/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /workspaces/unwind
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+tests/test_warrant_ledger.py::test_burn_causes_immediate_revocation_visible_to_next_routing_decision PASSED [ 20%]
+tests/test_warrant_ledger.py::test_spend_or_refuse_cold_start_refuses PASSED [ 40%]
+tests/test_warrant_ledger.py::test_earn_up_across_n_cases_crosses_threshold PASSED [ 60%]
+tests/test_countersign_verify.py::test_disagree_freezes_minting_with_challenge PASSED [ 80%]
+tests/test_warrant_ledger.py::test_rederive_bit_equality_over_500_mixed_events PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/test_warrant_ledger.py::test_burn_causes_immediate_revocation_visible_to_next_routing_decision
+tests/test_warrant_ledger.py::test_spend_or_refuse_cold_start_refuses
+tests/test_warrant_ledger.py::test_earn_up_across_n_cases_crosses_threshold
+tests/test_countersign_verify.py::test_disagree_freezes_minting_with_challenge
+  /workspaces/unwind/.venv/lib/python3.12/site-packages/google/cloud/firestore_v1/base_collection.py:317: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    return query.where(field_path, op_string, value)
+
+tests/test_warrant_ledger.py::test_burn_causes_immediate_revocation_visible_to_next_routing_decision
+tests/test_warrant_ledger.py::test_spend_or_refuse_cold_start_refuses
+tests/test_warrant_ledger.py::test_earn_up_across_n_cases_crosses_threshold
+  /workspaces/unwind/warrant/ledger.py:424: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    query = query.where("capability", "==", capability)
+
+tests/test_warrant_ledger.py::test_burn_causes_immediate_revocation_visible_to_next_routing_decision
+tests/test_warrant_ledger.py::test_spend_or_refuse_cold_start_refuses
+tests/test_warrant_ledger.py::test_earn_up_across_n_cases_crosses_threshold
+  /workspaces/unwind/warrant/ledger.py:426: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+    query = query.where("risk_class", "==", risk_class)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 5 passed, 10 warnings in 1.77s ========================

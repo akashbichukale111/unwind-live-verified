@@ -1,0 +1,18 @@
+{
+  "description": "Treasury reaching into procurement.",
+  "retraction": {
+    "source_id": "src_fx_desk",
+    "claim_id": "clm_000000",
+    "new_value": 22,
+    "reason": "Treasury reaching into procurement.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "fx-desk-out-of-lane",
+  "class": "adversarial"
+}

@@ -1,0 +1,17 @@
+{
+  "description": "The other side of the same disagreement. Must also defer.",
+  "retraction": {
+    "source_id": "src_erp_internal",
+    "claim_id": "clm_001145",
+    "new_value": 12,
+    "confidence": 1.0,
+    "reason": "The other side of the same disagreement. Must also defer.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "defer",
+    "model_calls": 0
+  },
+  "name": "contested-premise-other-side",
+  "class": "ambiguous"
+}

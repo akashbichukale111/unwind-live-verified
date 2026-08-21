@@ -1,0 +1,31 @@
+==> project=project-895d4ca8-d301-447d-916 run_region=us-central1 vertex_location=global
+==> service=unwind runtime_sa=unwind-run@project-895d4ca8-d301-447d-916.iam.gserviceaccount.com
+==> Enabling the four approved services (and the build service Cloud Run needs)
+Operation "operations/acat.p2-31434968338-dfd1a6b9-ea21-4bed-91fb-75cbab1ce57f" finished successfully.
+==> Runtime service account (least privilege: three roles, no Owner/Editor)
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/aiplatform.user
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/datastore.user
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/pubsub.publisher
+==> Pub/Sub topics
+==> Cloud Run (source deploy; buildpacks read the Procfile at the repo root)
+Building using Buildpacks and deploying container to Cloud Run service [[1munwind[m] in project [[1mproject-895d4ca8-d301-447d-916[m] region [[1mus-central1[m]
+Building and deploying...
+Validating configuration......................done
+Uploading sources.................................................done
+Building Container.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done
+Setting IAM Policy...........................................done
+Creating Revision.........................................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [[1munwind[m] revision [[1munwind-00006-stk[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://unwind-31434968338.us-central1.run.app[m
+
+==> Deployed: https://unwind-hgeodtazqq-uc.a.run.app
+==> NOW PROVE IT COMPUTES, not merely renders:
+      make deploy-verify URL=https://unwind-hgeodtazqq-uc.a.run.app
+
+Firestore rules and composite indexes are NOT deployed by this script.
+They need the Firebase CLI -- see docs/DEPLOY.md step 6.

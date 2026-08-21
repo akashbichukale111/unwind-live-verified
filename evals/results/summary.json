@@ -1,0 +1,1063 @@
+{
+  "by_class": {
+    "adversarial": {
+      "failed": 0,
+      "passed": 10,
+      "routed_to_human": 0,
+      "total": 10
+    },
+    "ambiguous": {
+      "failed": 0,
+      "passed": 10,
+      "routed_to_human": 3,
+      "total": 10
+    },
+    "clean": {
+      "failed": 0,
+      "passed": 1,
+      "routed_to_human": 0,
+      "total": 1
+    },
+    "multi_premise": {
+      "failed": 0,
+      "passed": 10,
+      "routed_to_human": 0,
+      "total": 10
+    },
+    "tool_failure": {
+      "failed": 0,
+      "passed": 10,
+      "routed_to_human": 3,
+      "total": 10
+    }
+  },
+  "false_retraction_rate": 0.0,
+  "harness_version": "0.2.0",
+  "metrics_computed": [
+    "blast_radius_precision",
+    "blast_radius_recall",
+    "cost_per_cascade",
+    "escapement_accuracy",
+    "false_retraction_rate",
+    "human_escalation_precision",
+    "materiality_accuracy",
+    "unresolved_rate"
+  ],
+  "outcomes": [
+    {
+      "authority_reason": null,
+      "cascade_id": "6acd4adf242d5c13866c639daf4ef5fe",
+      "class": "clean",
+      "decision_state": null,
+      "ground_truth_size": 2594,
+      "metrics": {
+        "blast_radius_precision": 1.0,
+        "blast_radius_recall": 1.0,
+        "cost_per_cascade": 0.0,
+        "escapement_accuracy": 1.0,
+        "false_retraction_rate": 0.0,
+        "materiality_accuracy": 1.0,
+        "unresolved_rate": 0.06707787201233616
+      },
+      "model_calls": 0,
+      "name": "hub-retraction-clean",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 874,
+        "immaterial_contained": 534,
+        "immaterial_escaped": 934,
+        "material_contained": 30,
+        "material_escaped": 48,
+        "unresolved": 174
+      },
+      "status": "passed",
+      "tier_reached": "T1"
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "e6e35fac2b0956168de3f2f970e8cafb",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "clause-retraction-contractual",
+      "radius_size": 8,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 8
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "f2be082c58b15e2db12add44cbdb14da",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "clause-retraction-second",
+      "radius_size": 8,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 8
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "484ed79b857657ff964c5cacb72c404e",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "clause-third",
+      "radius_size": 8,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 8
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "d0a34df275d750fb8ca1212b0dfe2c84",
+      "class": "ambiguous",
+      "decision_state": "defer",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "contested-premise-defer",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "e00817e882b25f4eafafb3c8cc4f40a0",
+      "class": "ambiguous",
+      "decision_state": "defer",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "contested-premise-other-side",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "6acd4adf242d5c13866c639daf4ef5fe",
+      "class": "ambiguous",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.067078
+      },
+      "model_calls": 0,
+      "name": "hub-low-confidence",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 874,
+        "immaterial_contained": 534,
+        "immaterial_escaped": 934,
+        "material_contained": 30,
+        "material_escaped": 48,
+        "unresolved": 174
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "6acd4adf242d5c13866c639daf4ef5fe",
+      "class": "ambiguous",
+      "decision_state": "ask_human",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.067078
+      },
+      "model_calls": 0,
+      "name": "hub-needs-human",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 874,
+        "immaterial_contained": 534,
+        "immaterial_escaped": 934,
+        "material_contained": 30,
+        "material_escaped": 48,
+        "unresolved": 174
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "46600ffb561d59a098a632c3fb16ac7a",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "regulatory-provision",
+      "radius_size": 72,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 72
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "d1fca5b7b4ba5a488bde4052c161ca8e",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "regulatory-provision-second",
+      "radius_size": 18,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 18
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "3a3faf6a6de257b19ec80a70247e730c",
+      "class": "ambiguous",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "regulatory-third",
+      "radius_size": 6,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 6
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "aa67d4de1e13512dac294e910fd15b36",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "broker-reaching-for-clause",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "7835269e53ea5832a93f351fc552f084",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "erp-reaching-for-supplier-fact",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "eb628fc5347c5351af5adb30560b012a",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "forged-retraction-broker",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "3a5535731e5b57c48c7d4df7e34236ea",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "fx-desk-out-of-lane",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "b97d120b50e859cab07e49895f873a22",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "logistics-reaching-for-lead-time",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "9e8450192d855babb94102b88afd23a5",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "msa-L-reaching-for-K-clause",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "7b74eb7cc9b85c098c467208fb4bf8d8",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "partial-authority-msa",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "ddec9d9a2817588eafbfe27ead00d629",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "supplier-L-reaching-for-K",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "no_such_claim",
+      "cascade_id": "ce75ba77f66a5616beb9a8c630c5cbf6",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "unknown-claim",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "no_such_source",
+      "cascade_id": "ba5a5148bdc3559aab3cb48edd0961fe",
+      "class": "adversarial",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "unknown-source",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "f2be082c58b15e2db12add44cbdb14da",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "clause-second-vertex-down",
+      "radius_size": 8,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 8
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "e6e35fac2b0956168de3f2f970e8cafb",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "clause-with-vertex-down",
+      "radius_size": 8,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 8
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "d0a34df275d750fb8ca1212b0dfe2c84",
+      "class": "tool_failure",
+      "decision_state": "defer",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "contested-under-outage",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_outside_claim_scope",
+      "cascade_id": "eb628fc5347c5351af5adb30560b012a",
+      "class": "tool_failure",
+      "decision_state": "refuse",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "forged-under-outage",
+      "radius_size": 0,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "6acd4adf242d5c13866c639daf4ef5fe",
+      "class": "tool_failure",
+      "decision_state": "ask_human",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.067078
+      },
+      "model_calls": 0,
+      "name": "hub-single-source-outage",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 874,
+        "immaterial_contained": 534,
+        "immaterial_escaped": 934,
+        "material_contained": 30,
+        "material_escaped": 48,
+        "unresolved": 174
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "2bda182438335a6dbcc551dda7813d01",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "low-severity-completes",
+      "radius_size": 14,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 14,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "2bda182438335a6dbcc551dda7813d01",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "low-severity-larger-move",
+      "radius_size": 14,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 14,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "46600ffb561d59a098a632c3fb16ac7a",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 1.0
+      },
+      "model_calls": 0,
+      "name": "regulatory-vertex-down",
+      "radius_size": 72,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 0,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 72
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "6acd4adf242d5c13866c639daf4ef5fe",
+      "class": "tool_failure",
+      "decision_state": "ask_human",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.067078
+      },
+      "model_calls": 0,
+      "name": "vertex-unavailable-hub",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 874,
+        "immaterial_contained": 534,
+        "immaterial_escaped": 934,
+        "material_contained": 30,
+        "material_escaped": 48,
+        "unresolved": 174
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": "source_in_claim_scope",
+      "cascade_id": "2bda182438335a6dbcc551dda7813d01",
+      "class": "tool_failure",
+      "decision_state": "execute",
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": 0,
+      "name": "vertex-unavailable-mid-cascade",
+      "radius_size": 14,
+      "reason": null,
+      "regime_counts": {
+        "closed_out": 0,
+        "immaterial_contained": 14,
+        "immaterial_escaped": 0,
+        "material_contained": 0,
+        "material_escaped": 0,
+        "unresolved": 0
+      },
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "contested-capacity-across-two-premises",
+      "radius_size": 50,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "contested-line-capacity-three-owners",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "contested-line-capacity-two-owners",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "disjoint-radii-still-one-hearing",
+      "radius_size": 144,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "hub-and-erp-overlap",
+      "radius_size": 2594,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "hub-and-supplier-L-overlap",
+      "radius_size": 2601,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "same-source-two-claims",
+      "radius_size": 60,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "silent-partner-premise",
+      "radius_size": 2658,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "supplier-L-and-erp-overlap",
+      "radius_size": 50,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    },
+    {
+      "authority_reason": null,
+      "cascade_id": null,
+      "class": "multi_premise",
+      "decision_state": null,
+      "ground_truth_size": null,
+      "metrics": {
+        "cost_per_cascade": 0.0,
+        "false_retraction_rate": 0.0,
+        "human_escalation_precision": 1.0,
+        "unresolved_rate": 0.0
+      },
+      "model_calls": null,
+      "name": "three-premises-same-week",
+      "radius_size": 2601,
+      "reason": null,
+      "regime_counts": null,
+      "status": "passed",
+      "tier_reached": null
+    }
+  ],
+  "scenarios_discovered": 41,
+  "scenarios_failed": 0,
+  "scenarios_passed": 41,
+  "scenarios_skipped": 0,
+  "stage": "task-2-deterministic-spine",
+  "total_model_calls": 0
+}

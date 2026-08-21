@@ -1,0 +1,141 @@
+{
+  "base_url": "http://127.0.0.1:8099",
+  "results": [
+    {
+      "check": "[1/7] AGENTIC COMMAND OS renders",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      fleet: 5 bounded identities",
+      "pass": true,
+      "detail": "5 rows"
+    },
+    {
+      "check": "      warrant market prices live",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      anonymous mutation refused",
+      "pass": true,
+      "detail": "env development \u00b7 1 bearer token(s) configured \u00b7 anonymous mutation: r"
+    },
+    {
+      "check": "      System Reality panel populated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      Gemini labelled CONFIGURED_NOT_EXERCISED",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      mission runs end to end",
+      "pass": true,
+      "detail": "12 stages"
+    },
+    {
+      "check": "      report is truthful",
+      "pass": true,
+      "detail": "MISSION: COMPLETED WITH RESTRICTIONS"
+    },
+    {
+      "check": "      external action recorded",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "[2/7] six-layer INSTRUMENT renders",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "[3/7] WARRANT opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      WARRANT renders real content",
+      "pass": true,
+      "detail": "811 chars"
+    },
+    {
+      "check": "      WARRANT detail body populated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "[4/7] CONTROL TOWER opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      CONTROL TOWER renders real content",
+      "pass": true,
+      "detail": "911 chars"
+    },
+    {
+      "check": "[5/7] COUNTERSIGN opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      COUNTERSIGN renders real content",
+      "pass": true,
+      "detail": "962 chars"
+    },
+    {
+      "check": "[6/7] HYPERION-ZERO opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      HYPERION-ZERO renders real content",
+      "pass": true,
+      "detail": "1994 chars"
+    },
+    {
+      "check": "[7/7] SINGULARITY-MESH opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      SINGULARITY-MESH renders real content",
+      "pass": true,
+      "detail": "13190 chars"
+    },
+    {
+      "check": "[7/7] UNWIND CORE opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      returns to the instrument / command os",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "      every failed request identified by URL",
+      "pass": true,
+      "detail": "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:"
+    },
+    {
+      "check": "      no failed request is a product defect",
+      "pass": true,
+      "detail": "only the deliberate 401 and the sandbox-blocked font host"
+    },
+    {
+      "check": "      zero server-side errors",
+      "pass": true,
+      "detail": "1 console error(s), all traced to the requests above"
+    }
+  ],
+  "console_errors": [
+    "console.error: Failed to load resource: net::ERR_CONNECTION_RESET"
+  ],
+  "failed_requests": [
+    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CONNECTION_RESET"
+  ]
+}

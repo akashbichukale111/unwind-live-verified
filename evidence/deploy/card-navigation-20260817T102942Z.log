@@ -1,0 +1,31 @@
+PASS  fresh load shows instrument body
+PASS  no visible 'CARD 0' label
+PASS  no visible 'CARD 1' label
+PASS  no visible 'CARD 2' label
+PASS  no visible 'CARD 3' label
+PASS  WARRANT visible
+PASS  UNWIND CORE visible
+PASS  CONTROL TOWER visible
+PASS  COUNTERSIGN visible
+PASS  WARRANT opens detail
+PASS  warrant detail has bars
+PASS  ESC from warrant-detail returns home
+PASS  UNWIND CORE opens Core
+PASS  ESC from Core returns home
+PASS  CONTROL TOWER opens detail
+PASS  tower detail has registry rows
+PASS  ESC from tower-detail returns home
+PASS  COUNTERSIGN opens detail
+PASS  countersign detail has agreement rate text
+PASS  countersign honesty disclosure visible
+PASS  ESC from countersign-detail returns home
+PASS  T returns to instrument from Core
+PASS  refresh returns to instrument
+PASS  BURN produced a route/reason-code result
+  BURN result: WARRANT_INSUFFICIENT — 0bp → 0bp · routed to a human, no cache, visible on the very next call
+PASS  EARN produced a route/reason-code result
+  EARN result: ALLOWED — 300bp → 300bp · delegation permitted
+PASS  warrant detail shows EARNED/SYNTHETIC tags
+PASS  no page errors
+
+27/27 checks passed

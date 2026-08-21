@@ -1,0 +1,18 @@
+{
+  "description": "The broker reaching for a contract clause instead.",
+  "retraction": {
+    "source_id": "src_broker_Z",
+    "claim_id": "clm_001083",
+    "new_value": 0,
+    "reason": "The broker reaching for a contract clause instead.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "refuse",
+    "authority_reason_code": "source_outside_claim_scope",
+    "radius_size": 0,
+    "model_calls": 0
+  },
+  "name": "broker-reaching-for-clause",
+  "class": "adversarial"
+}

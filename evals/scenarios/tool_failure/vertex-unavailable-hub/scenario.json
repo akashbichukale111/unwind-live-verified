@@ -1,0 +1,17 @@
+{
+  "description": "The full hub cascade with Vertex gone.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_supplier_K",
+    "claim_id": "clm_000000",
+    "new_value": 20,
+    "reason": "The full hub cascade with Vertex gone.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "ask_human",
+    "model_calls": 0
+  },
+  "name": "vertex-unavailable-hub",
+  "class": "tool_failure"
+}

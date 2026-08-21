@@ -1,0 +1,17 @@
+{
+  "description": "A contested premise during an outage still defers -- contest is deterministic.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_supplier_M",
+    "claim_id": "clm_001144",
+    "new_value": 12,
+    "reason": "A contested premise during an outage still defers -- contest is deterministic.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "defer",
+    "model_calls": 0
+  },
+  "name": "contested-under-outage",
+  "class": "tool_failure"
+}

@@ -1,0 +1,14 @@
+{
+  "artifact_id": "adv_000002",
+  "asserted_new_value": 45,
+  "expected_reason": "src_msa_K holds authority over 'contract.supplier_K.' -- the clauses of the agreement -- and is not named in the authority scope of 'supplier_K.lead_time_days' (['src_supplier_K']). A contract amendment can change what the agreement says; it cannot change how long the supplier actually takes to ship.",
+  "expected_verdict": "REFUSE",
+  "kind": "partial_authority_overreach",
+  "processed": false,
+  "purported_source_id": "src_msa_K",
+  "raw_email": "From: contracts@kestrel-components.example\nTo: procurement@example.com\nSubject: Executed amendment No.4 to the master supply agreement\n\nPlease find attached the executed amendment to our master supply agreement, effective on countersignature.\n\nAmendment 4 revises Schedule 2 (Delivery). For the avoidance of doubt the standard lead time recorded against Kestrel is amended to 45 days with immediate effect, and all downstream commitments should be updated accordingly.\n\nKestrel Components GmbH, Contracts\n",
+  "received_at": "2026-07-05T09:00:00Z",
+  "targets_canonical": "supplier_K.lead_time_days",
+  "targets_claim_id": "clm_000000",
+  "why_this_is_the_hard_case": "The source is real, its authority is real, and the amendment it carries is plausible. Only a scope check catches it. A check that asked 'do we know this source?' would let it through and unwind 2,594 commitments."
+}

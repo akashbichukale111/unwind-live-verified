@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" font-family="'DejaVu Sans','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3A3A3A"/>
+    </marker>
+    <marker id="arrowLight" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6E6E6E"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="860" fill="#FAF8F3"/>
+
+  <!-- ================= TITLE ================= -->
+  <text x="40" y="46" font-size="30" font-weight="700" fill="#1A1A1A">UNWIND — Consequence Clearing</text>
+  <text x="40" y="72" font-size="14.5" fill="#4A4A4A">When a fact turns out false, every decision that rested on it raises its hand.</text>
+  <text x="1240" y="46" font-size="12.5" fill="#6E6E6E" text-anchor="end">Google “All Things Agentic” Hackathon</text>
+  <text x="1240" y="66" font-size="12.5" fill="#6E6E6E" text-anchor="end">Fortified Enterprise Fleet</text>
+
+  <!-- ================= FOUR-CARD OVERLAY ================= -->
+  <text x="40" y="106" font-size="11.5" font-weight="700" fill="#6E6E6E" letter-spacing="1.2">THE FOUR CARDS</text>
+
+  <rect x="40" y="116" width="290" height="62" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="2.2"/>
+  <text x="54" y="138" font-size="13.5" font-weight="700" fill="#2E6B5E">CARD 0 — WARRANT</text>
+  <text x="54" y="155" font-size="11" fill="#4A4A4A">Decaying, capability-scoped authority.</text>
+  <text x="54" y="170" font-size="10.5" font-weight="700" fill="#2E6B5E">BUILT · 37 TESTS · warrant/ledger.py</text>
+
+  <rect x="340" y="116" width="290" height="62" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="2.2"/>
+  <text x="354" y="138" font-size="13.5" font-weight="700" fill="#2E6B5E">CARD 1 — UNWIND CORE</text>
+  <text x="354" y="155" font-size="11" fill="#4A4A4A">Reverse-index traversal · 2,594 → 78.</text>
+  <text x="354" y="170" font-size="10.5" font-weight="700" fill="#2E6B5E">BUILT · FROZEN · 261 TESTS</text>
+
+  <rect x="640" y="116" width="290" height="62" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="2.2"/>
+  <text x="654" y="138" font-size="13.5" font-weight="700" fill="#2E6B5E">CARD 2 — CONTROL TOWER</text>
+  <text x="654" y="155" font-size="11" fill="#4A4A4A">Registry · gateway · memory · runtime.</text>
+  <text x="654" y="170" font-size="10.5" font-weight="700" fill="#2E6B5E">BUILT · 44 TESTS · tower/</text>
+
+  <rect x="940" y="116" width="300" height="62" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="2.2"/>
+  <text x="954" y="138" font-size="13.5" font-weight="700" fill="#2E6B5E">CARD 3 — COUNTERSIGN</text>
+  <text x="954" y="155" font-size="11" fill="#4A4A4A">Gemma gates every warrant mint.</text>
+  <text x="954" y="170" font-size="10.5" font-weight="700" fill="#2E6B5E">BUILT · 16 TESTS · countersign/</text>
+
+  <!-- ================= REQUEST PATH ================= -->
+  <text x="40" y="214" font-size="11.5" font-weight="700" fill="#6E6E6E" letter-spacing="1.2">REQUEST PATH — follow the arrows left to right</text>
+
+  <!-- zero-model tint -->
+  <rect x="424" y="230" width="438" height="250" rx="5" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1"/>
+  <text x="438" y="250" font-size="12.5" font-weight="700" fill="#2E6B5E">ZERO MODEL CALLS — the cull is arithmetic</text>
+
+  <!-- hard zero-model boundary -->
+  <line x1="868" y1="240" x2="868" y2="486" stroke="#1A1A1A" stroke-width="4" stroke-dasharray="12 6"/>
+  <rect x="872" y="252" width="16" height="196" fill="#FAF8F3"/>
+  <text x="880" y="350" font-size="12" font-weight="700" fill="#1A1A1A" text-anchor="middle" transform="rotate(-90 880 350)">ZERO-MODEL BOUNDARY</text>
+
+  <!-- UI -->
+  <rect x="40" y="272" width="160" height="104" rx="4" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="2"/>
+  <text x="120" y="299" font-size="14" font-weight="700" fill="#1A1A1A" text-anchor="middle">UI</text>
+  <text x="120" y="318" font-size="11" fill="#4A4A4A" text-anchor="middle">web/static — canvas</text>
+  <text x="120" y="334" font-size="11" fill="#4A4A4A" text-anchor="middle">4,206 nodes · 60 fps</text>
+  <text x="120" y="356" font-size="10.5" fill="#2E6B5E" text-anchor="middle">SSE stream in</text>
+
+  <!-- FastAPI / Cloud Run -->
+  <rect x="230" y="272" width="164" height="104" rx="4" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="2"/>
+  <text x="312" y="299" font-size="14" font-weight="700" fill="#1A1A1A" text-anchor="middle">FastAPI</text>
+  <text x="312" y="318" font-size="11" fill="#4A4A4A" text-anchor="middle">services/api/main.py</text>
+  <text x="312" y="336" font-size="11" font-weight="700" fill="#A03C1E" text-anchor="middle">Cloud Run · us-central1</text>
+  <text x="312" y="356" font-size="10.5" fill="#4A4A4A" text-anchor="middle">UI + API, one origin</text>
+
+  <!-- Gateway -->
+  <rect x="440" y="272" width="152" height="104" rx="4" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="2"/>
+  <text x="516" y="297" font-size="14" font-weight="700" fill="#1A1A1A" text-anchor="middle">GATEWAY</text>
+  <text x="516" y="315" font-size="11" fill="#4A4A4A" text-anchor="middle">spine/authority.py</text>
+  <text x="516" y="331" font-size="11" fill="#4A4A4A" text-anchor="middle">spine/decision.py</text>
+  <text x="516" y="350" font-size="10.5" fill="#A03C1E" text-anchor="middle">refuse at radius 0</text>
+  <text x="516" y="366" font-size="10.5" fill="#4A4A4A" text-anchor="middle">5 states · reason codes</text>
+
+  <!-- spine -->
+  <rect x="620" y="272" width="222" height="104" rx="4" fill="#FFFFFF" stroke="#2E6B5E" stroke-width="2.4"/>
+  <text x="731" y="297" font-size="14" font-weight="700" fill="#1A1A1A" text-anchor="middle">spine/ — T0 + T1</text>
+  <text x="731" y="316" font-size="11" fill="#4A4A4A" text-anchor="middle">traversal → materiality → regimes</text>
+  <text x="731" y="341" font-size="19" font-weight="700" fill="#2E6B5E" text-anchor="middle">2,594 → 78</text>
+  <text x="731" y="362" font-size="10.5" fill="#4A4A4A" text-anchor="middle">graph walk + subtraction · no model</text>
+
+  <!-- court / judgment -->
+  <rect x="890" y="272" width="164" height="104" rx="4" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="2"/>
+  <text x="972" y="297" font-size="14" font-weight="700" fill="#1A1A1A" text-anchor="middle">court/ · judgment/</text>
+  <text x="972" y="316" font-size="11" fill="#4A4A4A" text-anchor="middle">T2 — only the 78</text>
+  <text x="972" y="334" font-size="11" fill="#4A4A4A" text-anchor="middle">owners argue, arbiter rules</text>
+  <text x="972" y="356" font-size="10.5" fill="#2E6B5E" text-anchor="middle">separate principals</text>
+
+  <!-- Vertex -->
+  <rect x="1086" y="272" width="154" height="104" rx="4" fill="#FFFFFF" stroke="#A03C1E" stroke-width="2.2"/>
+  <text x="1163" y="297" font-size="14" font-weight="700" fill="#A03C1E" text-anchor="middle">Vertex AI</text>
+  <text x="1163" y="316" font-size="11" fill="#4A4A4A" text-anchor="middle">Gemini · lib/vertex.py</text>
+  <text x="1163" y="334" font-size="11" fill="#4A4A4A" text-anchor="middle">second pass only</text>
+  <text x="1163" y="356" font-size="10.5" font-weight="700" fill="#2E6B5E" text-anchor="middle">81.8% → 100.0%</text>
+
+  <!-- arrows along the request path -->
+  <line x1="200" y1="324" x2="228" y2="324" stroke="#3A3A3A" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="394" y1="324" x2="438" y2="324" stroke="#3A3A3A" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="592" y1="324" x2="618" y2="324" stroke="#3A3A3A" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="842" y1="324" x2="888" y2="324" stroke="#3A3A3A" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <line x1="1054" y1="324" x2="1084" y2="324" stroke="#3A3A3A" stroke-width="2.2" marker-end="url(#arrow)"/>
+
+  <!-- the cull breakdown -->
+  <rect x="440" y="398" width="402" height="66" rx="4" fill="#FFFFFF" stroke="#2E6B5E" stroke-width="1.2"/>
+  <text x="452" y="418" font-size="11.5" font-weight="700" fill="#2E6B5E">THE CULL — where 2,594 goes, all of it arithmetic</text>
+  <text x="452" y="437" font-size="11.5" fill="#4A4A4A">1,468 immaterial (buffer absorbed it) · 874 already closed out</text>
+  <text x="452" y="454" font-size="11.5" fill="#4A4A4A">174 handed to judgement · <tspan font-weight="700" fill="#1A1A1A">78 material — these reach a human</tspan></text>
+
+  <!-- ================= PERSISTENCE ================= -->
+  <rect x="230" y="506" width="612" height="62" rx="4" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="1.6"/>
+  <text x="244" y="527" font-size="12.5" font-weight="700" fill="#1A1A1A">Firestore</text>
+  <text x="244" y="545" font-size="11" fill="#4A4A4A">reverse index (the edge nobody records) · cascade node records · idempotency keys</text>
+  <text x="244" y="561" font-size="11" fill="#4A4A4A">Pub/Sub — cascade fan-out, at-least-once, wrapped in IdempotentConsumer</text>
+  <line x1="312" y1="376" x2="312" y2="504" stroke="#6E6E6E" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowLight)"/>
+  <line x1="731" y1="376" x2="731" y2="504" stroke="#6E6E6E" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowLight)"/>
+
+  <!-- output: obligation -->
+  <rect x="890" y="506" width="350" height="62" rx="4" fill="#FFF6E6" stroke="#B07500" stroke-width="2"/>
+  <text x="904" y="527" font-size="12.5" font-weight="700" fill="#8A5A00">OUTPUT — the correction obligation</text>
+  <text x="904" y="545" font-size="11" fill="#4A4A4A">named counterparty · what is reversible · what is not</text>
+  <text x="904" y="561" font-size="11" fill="#4A4A4A">exposure as a range · a <tspan font-weight="700">human</tspan> signs it — settle/obligation.py</text>
+  <line x1="972" y1="376" x2="972" y2="504" stroke="#6E6E6E" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowLight)"/>
+
+  <!-- ================= ADK 2 CONSTRUCT MAPPING ================= -->
+  <text x="40" y="612" font-size="11.5" font-weight="700" fill="#6E6E6E" letter-spacing="1.2">ADK 2 CONSTRUCT MAPPING — verified against code by scripts/verify_adk_mapping.sh</text>
+
+  <rect x="40" y="624" width="238" height="60" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1.8"/>
+  <text x="52" y="643" font-size="11.5" font-weight="700" fill="#2E6B5E">Workflow + FunctionNode</text>
+  <text x="52" y="659" font-size="10.5" fill="#4A4A4A">cascade graph, four-regime route</text>
+  <text x="52" y="675" font-size="10.5" font-weight="700" fill="#2E6B5E">IN USE — agents/cascade/workflow.py</text>
+
+  <rect x="292" y="624" width="238" height="60" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1.8"/>
+  <text x="304" y="643" font-size="11.5" font-weight="700" fill="#2E6B5E">Deterministic router</text>
+  <text x="304" y="659" font-size="10.5" fill="#4A4A4A">Gateway reason codes (Card 2)</text>
+  <text x="304" y="675" font-size="10.5" font-weight="700" fill="#2E6B5E">IN USE — tower/gateway.py:491</text>
+
+  <rect x="544" y="624" width="238" height="60" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1.8"/>
+  <text x="556" y="643" font-size="11.5" font-weight="700" fill="#2E6B5E">FunctionNode — warrant SPEND</text>
+  <text x="556" y="659" font-size="10.5" fill="#4A4A4A">spend-or-refuse (Card 0)</text>
+  <text x="556" y="675" font-size="10.5" font-weight="700" fill="#2E6B5E">IN USE — tower/gateway.py:476</text>
+
+  <rect x="796" y="624" width="220" height="60" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1.8"/>
+  <text x="808" y="643" font-size="11.5" font-weight="700" fill="#2E6B5E">Dynamic pattern</text>
+  <text x="808" y="659" font-size="10.5" fill="#4A4A4A">registry → coordinator (Card 2)</text>
+  <text x="808" y="675" font-size="10.5" font-weight="700" fill="#2E6B5E">IN USE — tower/registry.py:93</text>
+
+  <rect x="1030" y="624" width="210" height="60" rx="4" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="1.8"/>
+  <text x="1042" y="643" font-size="11.5" font-weight="700" fill="#2E6B5E">Single-turn AgentTool</text>
+  <text x="1042" y="659" font-size="10.5" fill="#4A4A4A">Countersign / Gemma (Card 3)</text>
+  <text x="1042" y="675" font-size="9.8" font-weight="700" fill="#2E6B5E">IN USE — countersign/agent.py:110</text>
+
+  <text x="40" y="700" font-size="10" fill="#4A4A4A">A sixth construct, not boxed above for space — <tspan font-weight="700">durable long-running runtime</tspan> (case pause/resume): IN USE — tower/runtime.py:203, a real <tspan font-style="italic">LongRunningFunctionTool</tspan>.</text>
+
+  <!-- ================= LEGEND / MOATS ================= -->
+  <line x1="40" y1="708" x2="1240" y2="708" stroke="#D8D2C6" stroke-width="1.4"/>
+
+  <rect x="40" y="726" width="16" height="12" rx="2" fill="#EAF3EF" stroke="#2E6B5E" stroke-width="2"/>
+  <text x="64" y="737" font-size="11.5" fill="#4A4A4A">solid = built and tested today — every box on this page is solid; nothing is drawn dashed</text>
+  <text x="700" y="737" font-size="11.5" fill="#4A4A4A">boundary enforced by <tspan font-weight="700">tests/test_zero_model.py</tspan> — an AST walk of spine/ imports</text>
+
+  <text x="40" y="766" font-size="11.5" font-weight="700" fill="#6E6E6E" letter-spacing="1.2">THE FIVE MOATS</text>
+  <text x="40" y="787" font-size="11.5" fill="#4A4A4A"><tspan font-weight="700">1.</tspan> zero-model guarantee, enforced by an AST import-graph walk  <tspan fill="#C9C2B4">|</tspan>  <tspan font-weight="700">2.</tspan> refusal before traversal, at radius 0  <tspan fill="#C9C2B4">|</tspan>  <tspan font-weight="700">3.</tspan> 78 = 78, asserted by a real headless browser</text>
+  <text x="40" y="807" font-size="11.5" fill="#4A4A4A"><tspan font-weight="700">4.</tspan> principal separation — an arbiter may not share a principal with any owner  <tspan fill="#C9C2B4">|</tspan>  <tspan font-weight="700">5.</tspan> the honesty apparatus — this repository publishes its own worst class</text>
+
+  <text x="40" y="836" font-size="10.5" fill="#8A8A8A">Models: Gemini + Gemma only. Veo and Lyria were cut for failing a five-point necessity test — the cut is stated, not hidden.</text>
+</svg>

@@ -1,0 +1,12 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+node_modules/
+web/app/
+web/node_modules/
+docs/shots/
+evals/results/
+.cache/

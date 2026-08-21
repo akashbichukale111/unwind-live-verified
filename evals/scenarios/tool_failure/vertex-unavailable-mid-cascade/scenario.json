@@ -1,0 +1,17 @@
+{
+  "description": "Vertex disabled. T0/T1 must complete; nothing may silently resolve.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_supplier_L",
+    "claim_id": "clm_001143",
+    "new_value": 6,
+    "reason": "Vertex disabled. T0/T1 must complete; nothing may silently resolve.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "execute",
+    "model_calls": 0
+  },
+  "name": "vertex-unavailable-mid-cascade",
+  "class": "tool_failure"
+}

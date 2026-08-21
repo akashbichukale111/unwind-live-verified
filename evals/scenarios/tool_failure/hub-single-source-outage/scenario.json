@@ -1,0 +1,17 @@
+{
+  "description": "Corroboration is deterministic and holds during an outage.",
+  "vertex_disabled": true,
+  "retraction": {
+    "source_id": "src_supplier_K",
+    "claim_id": "clm_000000",
+    "new_value": 20,
+    "reason": "Corroboration is deterministic and holds during an outage.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "ask_human",
+    "model_calls": 0
+  },
+  "name": "hub-single-source-outage",
+  "class": "tool_failure"
+}

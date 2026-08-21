@@ -1,0 +1,38 @@
+========================================================================
+MEDIA STATUS with UNWIND_VERTEX_DISABLED unset
+========================================================================
+available : False
+reason    : no Google Cloud credentials in this environment (GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_APPLICATION_CREDENTIALS_JSON / an attached service account are all absent)
+  gemini   gemini-3.6-flash         CONFIGURED_NOT_EXERCISED
+  veo      veo-3.1-generate-001     CONFIGURED_NOT_EXERCISED
+  lyria    lyria-002                CONFIGURED_NOT_EXERCISED
+
+========================================================================
+THREE REAL ATTEMPTS on mission_628ee1fb5b
+========================================================================
+
+--- gemini ---
+  status   : NOT_CONFIGURED
+  model    : gemini-3.6-flash
+  artifact : (none — nothing was generated)
+  text     : (none)
+  reason   : no Google Cloud credentials in this environment (GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_APPLICATION_CREDENTIALS_JSON / an attached service account are all absent)
+
+--- veo ---
+  status   : NOT_CONFIGURED
+  model    : veo-3.1-generate-001
+  artifact : (none — nothing was generated)
+  text     : (none)
+  reason   : no Google Cloud credentials in this environment (GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_APPLICATION_CREDENTIALS_JSON / an attached service account are all absent)
+
+--- lyria ---
+  status   : NOT_CONFIGURED
+  model    : lyria-002
+  artifact : (none — nothing was generated)
+  text     : (none)
+  reason   : no Google Cloud credentials in this environment (GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_APPLICATION_CREDENTIALS_JSON / an attached service account are all absent)
+
+ASSERTIONS HELD:
+  - no adapter reported GENERATED without credentials
+  - no artifact_path was set
+  - every reason is the real environment condition, not a placeholder

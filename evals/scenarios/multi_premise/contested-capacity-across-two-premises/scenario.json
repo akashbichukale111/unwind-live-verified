@@ -1,0 +1,33 @@
+{
+  "name": "contested-capacity-across-two-premises",
+  "class": "multi_premise",
+  "description": "The contested slot is claimed by commitments that came from two different failing premises; both are small enough radii that both contenders are seated.",
+  "retractions": [
+    {
+      "claim_id": "clm_000115",
+      "source_id": "src_supplier_L",
+      "new_value": 26,
+      "reason": "supplier L notified a revised lead time",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    },
+    {
+      "claim_id": "clm_000958",
+      "source_id": "src_erp_internal",
+      "new_value": 40.0,
+      "reason": "ERP feed corrected a stale schedule",
+      "triggered_at": "2026-07-06T09:00:00Z"
+    }
+  ],
+  "vertex_disabled": true,
+  "contested_resources": {
+    "cnc_002069": "expedite-slot-Q3",
+    "cnc_002004": "expedite-slot-Q3"
+  },
+  "expect": {
+    "radii_merge": true,
+    "arbiter_must_rule": true,
+    "must_allocate": true,
+    "max_duplicate_obligations": 0,
+    "team_must_dissolve": true
+  }
+}

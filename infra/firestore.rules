@@ -1,0 +1,108 @@
+rules_version = '2';
+
+// UNWIND Firestore rules.
+//
+// Everything UNWIND writes is derived from attacker-controlled text: supplier
+// emails, vendor PDFs, broker notices. The rules below therefore treat the
+// client as untrusted for every collection and route all writes through the
+// service identity, which is the only principal that has passed a retraction
+// through the authority gate.
+//
+// [VERIFIED] Deployed 2026-08-15 via `firebase deploy --only firestore:rules`
+// (project project-895d4ca8-d301-447d-916) -- `gcloud firestore rules release`
+// is not a real gcloud subcommand; the Firebase CLI is what actually ships
+// Firestore security rules. See evidence/firestore/deploy-2026-08-15.md.
+// Redeploy with: firebase deploy --project <id> --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isService() {
+      return request.auth != null
+          && request.auth.token.get('unwind_service', false) == true;
+    }
+
+    function isOperator() {
+      return request.auth != null
+          && request.auth.token.get('unwind_operator', false) == true;
+    }
+
+    // Premises. An operator may read the load lines; nobody but the service may
+    // move a claim's status, because that is what starts a cascade.
+    match /claims/{claimId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+    }
+
+    // Decisions and their premise edge sets.
+    match /conclusions/{conclusionId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+    }
+
+    // The reverse index. Read-heavy for the UI, service-only for writes.
+    match /reverse_index/{claimId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+
+      match /dependents/{conclusionId} {
+        allow read: if isOperator() || isService();
+        allow write: if isService();
+      }
+    }
+
+    // Cascades: runtime records of one traversal. Read-only to operators, and
+    // service-only for writes, because a cascade is evidence of what the system
+    // concluded and when -- an editable cascade is not evidence of anything.
+    match /cascades/{cascadeId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+
+      match /nodes/{conclusionId} {
+        allow read: if isOperator() || isService();
+        allow write: if isService();
+      }
+    }
+
+    // Idempotency keys. Never readable by an operator: the only thing anyone can
+    // do with this collection is delete a key to make a duplicate correction go
+    // out a second time.
+    match /idempotency/{key} {
+      allow read, write: if isService();
+    }
+
+    // Correction obligations. An operator signs one by updating `approver` and
+    // `status` only; every other field stays under the service's control so a
+    // signature cannot quietly restate the exposure it is signing off.
+    match /obligations/{obligationId} {
+      allow read: if isOperator() || isService();
+      allow create, delete: if isService();
+      allow update: if isService()
+        || (isOperator()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['approver', 'status']));
+    }
+
+    match /repairs/{repairId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+    }
+
+    // Source authority. Read-only to operators: an operator who could widen a
+    // source's authority could authorise any retraction they liked.
+    match /sources/{sourceId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+    }
+
+    match /agent_trust/{agentId} {
+      allow read: if isOperator() || isService();
+      allow write: if isService();
+    }
+
+    // Anything not named above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

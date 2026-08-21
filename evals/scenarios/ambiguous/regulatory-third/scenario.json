@@ -1,0 +1,17 @@
+{
+  "description": "A third provision.",
+  "retraction": {
+    "source_id": "src_tariff_bulletin",
+    "claim_id": "clm_000021",
+    "new_value": 0,
+    "confidence": 1.0,
+    "reason": "A third provision.",
+    "triggered_at": "2026-07-06T09:00:00Z"
+  },
+  "expect": {
+    "outcome": "unresolved-dominant",
+    "model_calls": 0
+  },
+  "name": "regulatory-third",
+  "class": "ambiguous"
+}

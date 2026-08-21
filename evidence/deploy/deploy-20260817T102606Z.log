@@ -1,0 +1,38 @@
+==> project=project-895d4ca8-d301-447d-916 run_region=us-central1 vertex_location=global
+==> service=unwind runtime_sa=unwind-run@project-895d4ca8-d301-447d-916.iam.gserviceaccount.com
+==> Enabling the four approved services (and the build service Cloud Run needs)
+Operation "operations/acat.p2-31434968338-fe29fbf6-883c-427a-830c-4d3e5e14f7b2" finished successfully.
+==> Runtime service account (least privilege: three roles, no Owner/Editor)
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/aiplatform.user
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/datastore.user
+Updated IAM policy for project [project-895d4ca8-d301-447d-916].
+    bound roles/pubsub.publisher
+==> Pub/Sub topics
+==> Cloud Run (source deploy; buildpacks read the Procfile at the repo root)
+Building using Buildpacks and deploying container to Cloud Run service [unwind] in project [project-895d4ca8-d301-447d-916] region [us-central1]
+Building and deploying...
+Validating configuration......................done
+Uploading sources................................................done
+Building Container..............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done
+Setting IAM Policy.........................................done
+Creating Revision..................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [unwind] revision [unwind-00008-6b8] has been deployed and is serving 100 percent of traffic.
+Service URL: https://unwind-31434968338.us-central1.run.app
+
+==> Deployed: https://unwind-hgeodtazqq-uc.a.run.app
+==> NOW PROVE IT COMPUTES, not merely renders:
+      make deploy-verify URL=https://unwind-hgeodtazqq-uc.a.run.app
+
+Firestore rules and composite indexes are NOT deployed by this script.
+They need the Firebase CLI -- see docs/DEPLOY.md step 6.
+
+--- post-deploy confirmation (this pass) ---
+$ gcloud run services describe unwind --region=us-central1 --format="value(status.url,status.latestReadyRevisionName,status.traffic)"
+https://unwind-hgeodtazqq-uc.a.run.app	unwind-00008-6b8	{'latestRevision': True, 'percent': 100, 'revisionName': 'unwind-00008-6b8'}
+
+$ gcloud run revisions describe unwind-00008-6b8 --region=us-central1 --format="value(metadata.creationTimestamp)"
+2026-08-17T10:26:38.667582Z

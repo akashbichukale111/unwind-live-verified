@@ -621,3 +621,105 @@ unchanged) and `tests/test_api.py` gained two new tests, nothing else in
 `web/static/index.html`, `web/static/style.css`, `services/api/main.py`,
 `tests/test_api.py`, `evidence/browser/verify_timemachine_and_media.py`,
 `evidence/browser/verify_all_cards.py`.
+
+## 15. The live deployment was silently broken by a same-day upstream release; found, root-caused and fixed (2026-08-25)
+
+This section's own §14 work exposed real GCP credentials in this
+environment (`gcloud auth list`: `bichukaleakash80@gmail.com`, project
+`project-895d4ca8-d301-447d-916` -- the same project every prior deploy in
+this file targets) that earlier passes in this repository's history did
+not have. That made it possible, for the first time in this environment, to
+actually redeploy and click-test the live URL rather than only the local
+dev server -- which is how this section's bug was found at all: it was
+invisible to every check that only ever ran against the Firestore emulator.
+
+### The bug, as a judge would have hit it
+
+`https://unwind-hgeodtazqq-uc.a.run.app` — click **the six-layer
+instrument**: the panel opened (§14's show-first fix), but every card
+stayed empty, silently. `curl .../api/instrument` returned `available:
+false, "reason": "Firestore emulator not reachable. Start it with `make
+emulator`."` — a nonsensical instruction for a production URL with no
+emulator anywhere in the picture, and (per `/api/healthz`) `"firestore":
+"cloud"` the whole time. Every endpoint gated by `_firestore_available()`
+was affected: the instrument, Mission Time Machine's mission/checkpoint
+lists, Hyperion, Singularity — not merely a display bug on one card.
+
+### Fix 1 (real, necessary, not sufficient alone) — stop swallowing the exception
+
+`_firestore_available()` (`services/api/main.py`) caught every exception
+and returned `False` with no trace. Added `_LAST_FIRESTORE_ERROR` (module
+state) and `_firestore_unavailable_reason()`, wired into all 8 call sites
+that used to hardcode the emulator message. This alone did not fix
+anything — it made the NEXT redeploy diagnosable, which is exactly what it
+was for: the honest reason it started reporting was
+`InvalidArgument: 400 Invalid database id %28default%29`.
+
+### Fix attempt 2 (disproved, kept in the record rather than deleted)
+
+Read `%28default%29` as "the literal string `(default)` should not have
+been passed explicitly" and changed `lib/firestore.py` to omit the
+`database=` kwarg when it equals `"(default)"`. Redeployed (revision
+`unwind-00017-t2v`). **The live error was byte-for-byte identical
+afterward.** Reading `google.cloud.firestore_v1.base_client`'s own source
+explained why before a third guess was made: `database = database or
+DEFAULT_DATABASE` where `DEFAULT_DATABASE = "(default)"` — passing it
+explicitly and letting the client substitute it are the same call. Reverted
+that change (kept the corrected comment explaining why it does not need
+"fixing" a second time) rather than leave a disproved theory looking like
+the shipped fix.
+
+### Fix attempt 3 (real, partial) — pin `google-cloud-firestore`
+
+Hypothesis: `pyproject.toml` pinned `google-cloud-firestore>=2.19.0` with
+no ceiling, and `gcloud run deploy --source .` re-resolves dependencies on
+every build, so a routine redeploy could have silently pulled a new,
+regressed release. PyPI confirms `google-cloud-firestore` 2.29.0 was
+published `2026-08-24T21:55:36Z` — the day before this pass. Pinned
+`<2.29.0`, redeployed (revision `unwind-00018-qpt`). **Still byte-for-byte
+identical.**
+
+### Fix 4 (the diagnostic that actually settled it) — report installed versions
+
+Rather than guess a fourth time, added `dependency_versions` to
+`/api/healthz` (Python + google-cloud-firestore + google-api-core + grpcio,
+via `importlib.metadata.version`) and redeployed (revision
+`unwind-00019-8nb`) purely to read it. Result: `google-cloud-firestore:
+2.28.1` — **the pin worked exactly as intended** — and the live error was
+*still* unchanged. `google-api-core: 2.35.0`, never listed as a direct
+dependency, was the actual carrier: PyPI shows it published
+`2026-08-24T21:55:02Z` — 34 seconds before `google-cloud-firestore`
+2.29.0, an unmistakably coordinated Google release train, the day before
+this pass, and this project had pinned one sibling of that train without
+the other.
+
+### Fix 5 — pin `google-api-core` directly, and the fix actually lands
+
+Added `google-api-core>=2.19.0,<2.35.0` as a direct dependency (previously
+transitive-only). Redeployed (revision `unwind-00020-27t`). `/api/healthz`
+now reports `"google-api-core": "2.34.0"` — matching this dev environment
+exactly — and:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Instrument returns real data live | `curl .../api/instrument` | `"available": true`, real warrant bars, real registry, real agreement rate |
+| Full deploy verification, incl. real headless-browser click-through | `UNWIND_CHROME=<local chromium> python scripts/deploy_verify.py https://unwind-hgeodtazqq-uc.a.run.app` | **5/5** (was 4/5 before this pass, on the pre-existing `#bar` navigation gap §14 also fixed) |
+| Direct live click-through: instrument, Media Lab, Real Verified Evidence, Time Machine | `evidence/browser/live-instrument.png`, `live-media-lab.png`, `live-timemachine.png` | real warrant/Hyperion/Control-Tower/Singularity data; real Veo/Lyria players with correct `src`; Time Machine opens instantly and states `NOT AUTHENTICATED` honestly (no token supplied) rather than a blank panel |
+| Traffic | `gcloud run services describe unwind --region us-central1` | revision `unwind-00020-27t`, **100% traffic** |
+
+### What this means for every prior "LIVE" claim in this file
+
+Nothing in §1–§14's own local/emulator evidence was wrong — the regression
+only reached the deployed service, and only because this was the first
+pass with credentials to redeploy and click-test it at all. Every
+`available: false` a judge would have hit live between whichever earlier
+redeploy first pulled the 2026-08-24 release train and revision
+`unwind-00020-27t` was a real, live, judge-visible defect, now fixed and
+verified — not a claim this file needs to walk back.
+
+Full regression after all five fixes: **636 passed, 1 skipped, 0 failed**;
+`ruff check`/`format --check` clean; `deploy_check.py` 15/15. Changed files
+this section: `services/api/main.py` (`_firestore_unavailable_reason`,
+`_dependency_versions`/`/api/healthz`), `lib/firestore.py` (comment only —
+the code is unchanged from before this section), `pyproject.toml`
+(`google-cloud-firestore<2.29.0`, `google-api-core<2.35.0`).

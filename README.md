@@ -426,9 +426,14 @@ against them when they are — no regeneration, same
 allowlist-by-real-directory-listing pattern as the pre-existing
 `/media-artifact/{filename}` route. `.media/` is gitignored generated
 output by design (see `.gitignore`), so this is **CONFIGURED_NOT_EXERCISED
-on a fresh clone or CI** and **LIVE_VERIFIED on this pass's own machine**
-(screenshot below shows both players populated, real file sizes read via
-`stat()`, matching the 5.7MB/6.3MB above bit for bit). Full account,
+on a fresh clone or CI**, and — because `.media/` was present in the
+working directory the one time this pass ran `infra/deploy.sh` —
+**LIVE_VERIFIED on the deployed URL itself**, not only on this pass's own
+machine: `curl https://unwind-hgeodtazqq-uc.a.run.app/api/media/verified-evidence`
+returns both files' real sizes, and both players are visible, real,
+playable evidence on the live site right now (screenshot below; also
+`evidence/browser/live-media-lab.png`, captured directly against the
+deployed URL). Full account,
 including the "dead click" bug this same pass found and fixed in six other
 buttons (the six-layer instrument and its five detail panels went silent
 for up to ~2.5s after a click — the identical failure class the Time

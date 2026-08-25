@@ -1681,20 +1681,39 @@
   };
 
   //: Held so the Media Lab cards can render their committed player without a
-  //: second round-trip -- one fetch fills both.
+  //: second round-trip -- one fetch fills both. renderModelRoster() and
+  //: renderMediaLab() are both fired without awaiting each other (see
+  //: showCommandOS()), so whichever of their two independent fetches
+  //: resolves first must not decide whether the players show up: both go
+  //: through this single memoized promise, and renderMediaLab() awaits it
+  //: before building any card so demoBundle is never read before it is set.
   let demoBundle = null;
+  let demoBundlePromise = null;
+
+  function loadModelRoster() {
+    if (!demoBundlePromise) {
+      demoBundlePromise = fetch("/api/media/model-roster")
+        .then((r) => r.json())
+        .then((d) => {
+          demoBundle = d.demo_bundle || null;
+          return d;
+        })
+        .catch(() => {
+          demoBundle = null;
+          return null;
+        });
+    }
+    return demoBundlePromise;
+  }
 
   async function renderModelRoster() {
     const host = $("model-roster");
     if (!host) return;
-    let d;
-    try {
-      d = await (await fetch("/api/media/model-roster")).json();
-    } catch (err) {
+    const d = await loadModelRoster();
+    if (!d) {
       host.innerHTML = "<div class='cmdos-hint mono'>model roster unavailable</div>";
       return;
     }
-    demoBundle = d.demo_bundle || null;
     host.innerHTML =
       d.models
         .map(
@@ -1824,6 +1843,11 @@
   async function renderMediaLab() {
     const host = $("media-lab");
     if (!host) return;
+    // Both fetches run concurrently (fired from showCommandOS() without
+    // awaiting each other); wait for demoBundle here so the two orders --
+    // model-roster resolving first or /api/media/status resolving first --
+    // render identically instead of only one of them showing the players.
+    await loadModelRoster();
     let d;
     try {
       d = await (await fetch("/api/media/status")).json();

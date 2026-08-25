@@ -9,7 +9,8 @@ claim site.
 A screenshot in this repository proves what its own caption says and
 nothing more. There are no decorative screenshots.
 
-**Generated / last refreshed:** 2026-08-25 (§14 added; §1–13 unchanged since
+**Generated / last refreshed:** 2026-08-25 (§17 added — §16 merged to `main`
+and deployed as revision `unwind-00021-nwl`; §1–13 unchanged since
 2026-08-21). Timestamps in filenames are the actual run time, not an edit
 time.
 
@@ -783,3 +784,96 @@ No Veo or Lyria call was made for this change — no GCP credential existed in
 the environment it was built in. §13 remains the only real media generation
 this project has run. And this does not deploy itself: the bytes go live on
 the next `gcloud run deploy`.
+
+---
+
+## 17. §16 merged into `main` and deployed; a real race condition found and fixed; live verification against the deployed URL (2026-08-25)
+
+§16 landed on a feature branch (`claude/video-player-bonus-model-nmwlbp`) and
+was never merged into `main` or deployed — the deployed service was still
+serving the pre-§16 UI (Time Machine as a separate button, no Media Lab
+players, revision `unwind-00020-27t`). This pass fast-forward-merged that one
+commit into `main` (`main` and the branch shared the same parent, so this
+was a clean fast-forward, not a merge commit — history fully preserved) and
+pushed it, then worked through the repository's own verification pipeline
+before redeploying.
+
+### Bug found and fixed — the Media Lab's players lost a race on page load
+
+`showCommandOS()` (`web/static/app.js`) fires `renderModelRoster()` and
+`renderMediaLab()` without awaiting either. `demoBundle` — the data that
+tells `demoStrip()` whether to build a `<video>`/`<audio>`/narration
+element for each of the three modality cards — was set only inside
+`renderModelRoster()`'s own fetch callback. Whenever `renderMediaLab()`'s own
+fetch (`/api/media/status`) resolved before `renderModelRoster()`'s
+(`/api/media/model-roster`) did, `renderMediaLab()` built every card with
+`demoBundle` still `null`, `demoStrip()` returned `""` for all three
+modalities, and the video/audio/narration players silently never
+rendered — no console error, no failed request, nothing in the DOM to
+distinguish it from a page that had never had a player in the first place.
+
+Found by direct reproduction, not inspection: the same local page load put
+the Veo `<video>` element in the DOM roughly half the time across five
+consecutive loads and omitted it the other half, with identical network
+conditions each time. `evidence/browser/verify_timemachine_and_media.py`
+itself failed non-deterministically on this exact selector
+(`.media-card[data-modality=gemini] .media-demo`) across repeated runs
+before the cause was isolated.
+
+**Fix**: both functions now await one memoized fetch (`loadModelRoster()`)
+for `demoBundle`, so whichever of the two network calls actually resolves
+first no longer decides whether a judge sees a playable video. Changed
+files: `web/static/app.js` (`loadModelRoster()`, both render functions),
+`web/static/index.html` (`app.js?v=8`, cache-bust). Commit `14c0626`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Full suite, emulator up | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` | **644 passed, 1 skipped, 0 failed** on a fresh Windows checkout (one additional failure on an earlier run, `test_every_manifest_entry_has_bytes_on_disk`, was `core.autocrlf` converting `mission-narration.txt` to CRLF in the *local working tree only* — 1234 bytes locally vs. the committed 1217; confirmed byte-identical again from a clean `git archive main` export, which is what was actually deployed) |
+| Lint + format | `ruff check . && ruff format --check .` | clean |
+| Repo's own browser evidence, post-fix | `FIRESTORE_EMULATOR_HOST=localhost:8080 python evidence/browser/verify_timemachine_and_media.py` | **55/55**, reproduced (previously flaky on the exact selector above, pre-fix) |
+
+### Deployed and verified live
+
+Deployed from a clean `git archive main` export (not the Windows working
+tree directly, to avoid `core.autocrlf` CRLF conversion reaching the
+uploaded source) via `gcloud run deploy unwind --source . --project
+project-895d4ca8-d301-447d-916 --region us-central1 --service-account
+unwind-run@project-895d4ca8-d301-447d-916.iam.gserviceaccount.com
+--allow-unauthenticated --set-env-vars
+UNWIND_PROJECT_ID=...,UNWIND_VERTEX_LOCATION=global,UNWIND_OTEL_CONSOLE=0
+--memory 1Gi --cpu 1 --timeout 300 --max-instances 4` — the same existing
+service, region and configuration §15 recorded, no new resource created.
+
+| Claim | Command | Result |
+| --- | --- | --- |
+| Deployed | `gcloud run services describe unwind --region us-central1` | revision `unwind-00021-nwl`, **100% traffic** |
+| Healthy | `curl https://unwind-hgeodtazqq-uc.a.run.app/api/healthz` | `firestore: cloud`, `pubsub: cloud`, `google-api-core: 2.34.0` (§15's pin holding) |
+| No dead Time Machine button, live | Playwright against the live URL | `#cmdos-open-timemachine` count `0` |
+| Media Lab renders, live | same | 3 modality cards, twice in a row |
+| **VIDEO really plays, live** | same | `1280x720`, `currentTime` past `2.2s` and `2.4s` on two separate loads, not paused, no decode error |
+| **AUDIO really plays, live** | same | `35.0s` track, unmuted, `currentTime` past `2.9s` on both loads, not paused |
+| Six-Layer Instrument opens with real content, live | same | `#instrument` visible, `>1000` chars of real Warrant/Hyperion/Control-Tower/Countersign/Singularity-Mesh data by ~3s after the click |
+| Real Verified Evidence panel, live | same | honestly hidden — `.media/verification-replay.mp4` / `-signal.wav` are gitignored generated output, never committed, absent on this (or any) fresh deployment |
+| No unexpected failed requests or console errors, live | same | the one console `401` observed is the anonymous visitor's own expected, already-handled "NOT AUTHENTICATED" Time Machine read — Chrome logs any non-2xx response to console regardless of the app catching it; not a JS bug, and the repo's own `verify_timemachine_and_media.py` does not assert against console output for the same reason |
+| **Repeated twice**, full clean run | `live_verify.py` (ad hoc, this pass; same assertions as the repo's own evidence script, scoped to read-only + safe-playback checks against production) | **34/34** across both rounds |
+
+Screenshots, captured directly against the live URL this pass (replacing the
+2026-08-21 captures at the same paths, now stale):
+`evidence/browser/live-page-top.png` (no dead button, model stack + Media
+Lab above the fold), `evidence/browser/live-media-lab.png` (all three cards,
+Veo mid-playback), `evidence/browser/live-veo-playing.png`,
+`evidence/browser/live-lyria-playing.png`, `evidence/browser/live-timemachine.png`
+(inline, honest `NOT AUTHENTICATED` — no operator token was supplied),
+`evidence/browser/live-instrument.png` (real Warrant/Hyperion/Control-Tower/
+Countersign/Singularity-Mesh data).
+
+### New Veo/Lyria credits spent this pass: 0
+
+Every check above plays the committed deterministic bundle
+(`kind: DETERMINISTIC_LOCAL_RENDER`, labelled `NOT a VEO/LYRIA generation`
+in its own markup) or reads already-recorded verification JSON. No
+`--media` flag was passed to any script, no live-call button was clicked
+against a credentialed environment, and this environment's real Vertex
+credentials were deliberately kept out of the local verification path
+(`UNWIND_VERTEX_DISABLED=1`) specifically so that a `media-go` click during
+testing could not accidentally trigger a real, paid generation.

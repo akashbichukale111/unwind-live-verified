@@ -20,6 +20,40 @@ Google "All Things Agentic" Hackathon
 
 ---
 
+## Live demo / verified media
+
+| | |
+| --- | --- |
+| GitHub (`main`) | https://github.com/akashbichukale111/unwind-live-verified |
+| **Live Cloud Run URL** | **https://unwind-hgeodtazqq-uc.a.run.app** |
+| Mission Time Machine | inline on the Agentic Command OS page — no button, no navigation (see [§16](evidence/INDEX.md#16-the-media-lab-plays-media-with-no-credential-the-time-machine-button-is-retired-2026-08-25) below) |
+| Six-Layer Instrument | `the six-layer instrument ▶` on the same page opens a real panel — Warrant, Control Tower, Countersign, Hyperion-Zero, Singularity-Mesh, Unwind Core |
+| Mission Media Lab | inline, above the mission panels — three modality cards (Gemini / Veo / Lyria), each with a playable committed render |
+| Gemini | mission intelligence — text explanation grounded in real checkpoints; `LIVE_VERIFIED` on 2026-08-21 ([evidence](evidence/models/)), `CONFIGURED_NOT_EXERCISED` on this deployment (no credential) |
+| Veo | mission visual replay — real HTML5 `<video>`, plays the committed **DEMO MEDIA — NOT A VEO GENERATION** render on every deployment; the one genuine `veo-3.1-generate-001` generation is `LIVE_VERIFIED` evidence, gitignored bytes, not committed |
+| Lyria | mission signal — real HTML5 `<audio>`, plays the committed **DEMO AUDIO — NOT A LYRIA GENERATION** render on every deployment; the one genuine `lyria-002` generation is `LIVE_VERIFIED` evidence, gitignored bytes, not committed |
+| Bonus Google model stack | `GET /api/media/model-roster` — Gemini, Gemma, Veo, Lyria joined live to `evidence/models/verification-*.json`; a model with no verification reads `UNVERIFIED`, never a borrowed green tick |
+| Evidence | [`evidence/INDEX.md`](evidence/INDEX.md) (every claim → file → reproduction command) · [`evidence/media/demo/PROOF.md`](evidence/media/demo/PROOF.md) (checksums, stream headers, audio levels, real-vs-demo distinction) |
+| Tests | `644 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`, reproduced this pass on a fresh Windows checkout); `ruff check` / `format --check` clean |
+| Deployment status | **LIVE** — service `unwind`, project `project-895d4ca8-d301-447d-916`, region `us-central1`, revision `unwind-00021-nwl`, 100% traffic — see [Deployed](#deployed) below |
+
+**What is REAL, what is DEMO, what is ARCHITECTURE** — this project draws that
+line everywhere rather than blurring it: the Veo/Lyria players you can click
+right now are a **deterministic local render** of a real mission's checkpoints
+(`scripts/build_demo_media.py`, no model call, no credential, reproducible
+byte-for-byte from committed input) — they play on every deployment,
+including this one, and say so in their own on-screen label. The **one
+genuine Veo and one genuine Lyria generation** this project has ever run are
+real, evidenced, `LIVE_VERIFIED` — but their bytes are gitignored generated
+output (`.media/`), so they only render when physically present on the
+serving machine; the **Real Verified Evidence** panel on the same page stays
+honestly hidden rather than faking them elsewhere. Singularity-Mesh's
+Sentinel Shield, Orchestrator, MCP layer, Model Armor and Cloud Run sandbox
+are **ARCHITECTURE** — documented design, not a running system in this
+repository — labelled as such on the card itself, never claimed as live.
+
+---
+
 ## Agentic Command OS — consequence clearing for autonomous AI systems
 
 **The Unlikely Hero.** Not a CTO. The **operations coordinator who currently
@@ -577,11 +611,23 @@ AUTHENTICATED**, which is deliberately distinct from "no missions recorded".
 
 ## Deployed
 
-**This branch is now the deployed revision**, verified live 2026-08-21 — the
-first deploy this project has run from a machine with real `gcloud` and real
-Google Cloud credentials. Every prior deploy claim in this document below
-this point is historical record of an earlier revision; this one supersedes
-it.
+**`main` at `14c0626` is the deployed revision** — `unwind-00021-nwl`, 100%
+traffic, verified live 2026-08-25. This redeploy carried two changes onto the
+service: the Mission Media Lab / inline Time Machine / demo media work
+(`evidence/INDEX.md` §16) that had been sitting merged-but-undeployed on a
+feature branch, and a real bug this pass found and fixed the same day —
+`renderModelRoster()` and `renderMediaLab()` fire without awaiting each
+other, and the Veo/Lyria/Gemini demo players only rendered when
+`/api/media/model-roster` happened to resolve before `/api/media/status`;
+roughly half of page loads showed a silent gap instead of a player. Fixed by
+having both await one memoized fetch. Verified against the live URL, in a
+real Chromium session, **twice**: video plays (1280×720, clock advancing)
+and audio plays (unmuted, clock advancing) on every load, the six-layer
+instrument opens with real content, and the Real Verified Evidence panel
+honestly stays hidden (`.media/` is gitignored — no genuine Veo/Lyria bytes
+on this deployment). Full account: `evidence/INDEX.md` §17. Every prior
+deploy claim in this document below this point is historical record of an
+earlier revision; this one supersedes it.
 
 ```bash
 UNWIND_PROJECT_ID=project-895d4ca8-d301-447d-916 UNWIND_RUN_REGION=us-central1 \

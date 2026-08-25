@@ -74,6 +74,26 @@ def _stats() -> dict:
     return _CACHE["stats"]
 
 
+def _dependency_versions() -> dict[str, str]:
+    """Installed-vs-pinned, for the one class of bug a passing test suite
+    cannot catch: this project's own venv and a fresh buildpack `pip
+    install` resolving DIFFERENT versions of an unpinned or loosely-pinned
+    dependency (see pyproject.toml's google-cloud-firestore comment and
+    evidence/INDEX.md). Cheap, and the only way to tell "the code is wrong"
+    from "the environment resolved something the code was never run
+    against" without a shell into the running container."""
+    import importlib.metadata
+    import sys
+
+    out = {"python": sys.version.split()[0]}
+    for dist in ("google-cloud-firestore", "google-api-core", "grpcio"):
+        try:
+            out[dist] = importlib.metadata.version(dist)
+        except importlib.metadata.PackageNotFoundError:
+            out[dist] = "not installed"
+    return out
+
+
 @app.get("/api/healthz")
 async def healthz() -> dict[str, object]:
     cfg = get_config()
@@ -87,6 +107,7 @@ async def healthz() -> dict[str, object]:
         "pubsub": "local-shim" if cfg.pubsub_local else "cloud",
         "topics": list(ALL_TOPICS),
         "telemetry_exporter": getattr(app.state, "telemetry_exporter", "not-configured"),
+        "dependency_versions": _dependency_versions(),
     }
 
 

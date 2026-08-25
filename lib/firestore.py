@@ -58,12 +58,14 @@ def get_client() -> Any:
             # anonymous credentials; passing the project keeps paths stable.
             _CLIENT = firestore.Client(project=cfg.project_id)
         else:
-            # [ASSUMPTION] `google-cloud-firestore` is pinned `<2.29.0` in
-            # pyproject.toml specifically because 2.29.0 broke this exact
-            # call against real (non-emulator) Firestore -- see the comment
-            # there and evidence/INDEX.md. This explicit `database=` kwarg
-            # is not itself the defect (2.29.0 rejects the client library's
-            # OWN internally-substituted default identically; verified by
+            # [ASSUMPTION] `google-cloud-firestore` and `google-api-core` are
+            # both upper-bound pinned in pyproject.toml specifically because
+            # this exact call against real (non-emulator) Firestore broke
+            # live on a synchronised 2026-08-24 release of both -- see the
+            # comment there and evidence/INDEX.md for the full diagnosis.
+            # This explicit `database=` kwarg is not itself the defect
+            # (the broken versions reject the client library's OWN
+            # internally-substituted default identically; verified by
             # reading google.cloud.firestore_v1.base_client's source), so it
             # is left exactly as it reads rather than "fixed" a second time.
             _CLIENT = firestore.Client(project=cfg.project_id, database=cfg.firestore_database)

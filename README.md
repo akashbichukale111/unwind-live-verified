@@ -53,7 +53,8 @@ OBJECTIVE
   → REPORT          a status that can never read COMPLETED over a refusal
 ```
 
-### The three things a hostile judge should check first
+### The three things a hostile judge should check firstS
+
 
 **1. The plan is computed, not fixed.** Change the objective, the plan changes —
 different specialists, different tools, different action kinds. `Investigate an
@@ -203,27 +204,38 @@ Nothing here needs a Google Cloud account.
 git clone https://github.com/akashbichukale111/unwind.git
 cd unwind
 make install                              # uv venv (Python 3.12) + deps
-make test                                 # 586 passed, 1 skipped (with `make emulator` running) / 458 passed, 129 skipped (without)
+make test                                 # 636 passed, 1 skipped (with `make emulator` running)
 make ui                                   # http://127.0.0.1:8000
 ```
 
-**Re-verified 2026-08-20** after the plan-driven rewrite (real planner, five
-specialist agents, causal detection, the Warrant Market, an authenticated
-human gate and one genuine external action):
+**Re-verified 2026-08-25** (`evidence/INDEX.md` §14 — button audit, a Real
+Verified Evidence panel, two new tests; no change to `spine/`, `court/`,
+`judgment/`, `settle/` or `warrant/economics.py`'s pricing):
 
 | check | result |
 | --- | --- |
-| `make test` **with** the Firestore emulator | **586 passed, 1 skipped, 0 failed** |
-| `make test` **without** it | **458 passed, 129 skipped, 0 failed** |
+| `make test` **with** the Firestore emulator | **636 passed, 1 skipped, 0 failed** |
+| `make test` **without** it | environment-dependent, not a fixed number — see the note below |
 | `ruff check .` | clean |
 | `ruff format --check .` | clean |
 | `python scripts/check_contrast.py` | clean |
 | 20-attack red team (`make redteam`) | **21 passed** |
 | headless-Chromium click-through (`evidence/browser/`) | **20/20 checks** |
 
-Both test runs are the same clone at the same commit. The one emulator-mode
-skip is by design (`tests/test_command_os_api.py`'s no-emulator-path test
-skips itself when the emulator is up). Logs: `evidence/tests/`,
+**Without the emulator, the number depends on this machine's ambient GCP
+credentials, not just on the code**, and is not restated as a single fixed
+figure here for that reason: most Firestore-touching modules use a
+`requires_emulator` skip guard (`tests/test_command_os_api.py` and
+siblings) that checks whether anything is listening on
+`FIRESTORE_EMULATOR_HOST` and skips cleanly if not — that machine saw 458
+passed / 129 skipped on 2026-08-20. `tests/test_adversarial.py` and
+`tests/test_api_auth.py` do not use that guard; on a machine that has some
+ambient default credential but no billing access to project `unwind-local`
+(a real possibility this pass's own environment hit), those 7 tests get a
+real `PermissionDenied` instead of a clean skip — **still 0 failures
+attributable to a code defect**, but not a number this README can honestly
+promise in advance. Run `make emulator` first if in doubt; that path is the
+one fixed, reproducible number above. Logs: `evidence/tests/`,
 `evidence/redteam/`, `evidence/browser/`.
 
 **On CI:** it had been red on 25 consecutive runs since 2026-08-13, failing at
@@ -404,6 +416,25 @@ see `media/adapters.py:_run_lyria`. Same discipline as Veo: not re-clicked
 for this screenshot.
 
 ![Lyria](docs/shots/08-lyria.png)
+
+**Real Verified Evidence panel — the same two files, actually playable.**
+Added 2026-08-25: `GET /api/media/verified-evidence` reports whether the
+exact bytes from the Veo/Lyria run above (`.media/verification-replay.mp4`,
+`.media/verification-signal.wav`) are present in the running environment,
+and the Mission Media Lab renders a real HTML5 `<video>`/`<audio>` player
+against them when they are — no regeneration, same
+allowlist-by-real-directory-listing pattern as the pre-existing
+`/media-artifact/{filename}` route. `.media/` is gitignored generated
+output by design (see `.gitignore`), so this is **CONFIGURED_NOT_EXERCISED
+on a fresh clone or CI** and **LIVE_VERIFIED on this pass's own machine**
+(screenshot below shows both players populated, real file sizes read via
+`stat()`, matching the 5.7MB/6.3MB above bit for bit). Full account,
+including the "dead click" bug this same pass found and fixed in six other
+buttons (the six-layer instrument and its five detail panels went silent
+for up to ~2.5s after a click — the identical failure class the Time
+Machine fix below describes), in `evidence/INDEX.md` §14.
+
+![Real Verified Evidence](evidence/browser/media-lab.png)
 
 **The six pre-existing control layers**, all intact and reachable from the
 Command OS: HYPERION-ZERO, WARRANT, UNWIND CORE, CONTROL TOWER, COUNTERSIGN,
@@ -805,15 +836,14 @@ measurement. Full reasoning in [`docs/T2-MEASUREMENT.md`](docs/T2-MEASUREMENT.md
 
 ## What has actually been run
 
-**`make test` → 586 passed, 1 skipped** with the Firestore emulator running
-(`make emulator`); **458 passed, 129 skipped** without it (every skip is
-emulator-gated Firestore infrastructure — `tower/`, `warrant/`,
-`countersign/`, `command_os/`'s persisted-section tests). `ruff check` and
-`ruff format --check` clean.
+**`make test` → 636 passed, 1 skipped** with the Firestore emulator running
+(`make emulator`) — reproduced 2026-08-25, see `evidence/INDEX.md` §14 and
+the Quickstart section above for why "without the emulator" is not restated
+as one fixed number. `ruff check` and `ruff format --check` clean.
 
 | Command | Result |
 | --- | --- |
-| `make test` | **586 passed, 1 skipped** (emulator running) / **458 passed, 129 skipped** (without) |
+| `make test` | **636 passed, 1 skipped, 0 failed** (emulator running — see Quickstart above for the no-emulator caveat) |
 | `make eval` | **41 scenarios passed**, 0 failed, **0 model calls**; false-retraction rate **0.0** |
 | `UNWIND_VERTEX_DISABLED=1 make eval` | identical. Enforced in CI |
 | `make verify-live` | executed 2026-08-13 — Vertex call **OK**, **0 model errors**, recall **81.8% → 100.0%** |

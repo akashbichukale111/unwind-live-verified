@@ -34,6 +34,9 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 
 BASE = os.environ.get("UNWIND_BASE_URL", "http://127.0.0.1:8099")
 TOKEN = os.environ.get("UNWIND_DEMO_TOKEN", "demo-tok")
+#: Pinned path from the sandbox this was written in; used only when it
+#: exists on disk. Elsewhere (e.g. Windows) Playwright resolves its own
+#: installed browser instead -- same fallback as verify_timemachine_and_media.py.
 CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 results: list[dict] = []
@@ -55,7 +58,9 @@ def main() -> int:
     reset_for_test()
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(executable_path=CHROME)
+        browser = pw.chromium.launch(
+            **({"executable_path": CHROME} if os.path.exists(CHROME) else {})
+        )
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
         page.on(
             "console",

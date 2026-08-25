@@ -79,3 +79,47 @@ def test_a_refused_retraction_streams_a_refusal_and_no_radius() -> None:
     assert events["refused"]["reason_code"] == "source_outside_claim_scope"
     assert events["refused"]["why"], "a refusal with no stated reason is not a refusal"
     assert events["done"]["radius"] == 0
+
+
+# ---------------------------------------------------------------------------
+# GET /api/media/verified-evidence -- the one real Veo/Lyria generation
+# (evidence/INDEX.md §13), reported honestly whether or not the gitignored
+# bytes it produced happen to be present in this environment.
+# ---------------------------------------------------------------------------
+
+
+def test_verified_evidence_reports_unavailable_with_no_artifact_dir(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("media.adapters.ARTIFACT_DIR", tmp_path / "does-not-exist")
+    with TestClient(app) as client:
+        body = client.get("/api/media/verified-evidence").json()
+    assert body["veo"] == {"available": False, "filename": "verification-replay.mp4"}
+    assert body["lyria"] == {"available": False, "filename": "verification-signal.wav"}
+
+
+def test_verified_evidence_reports_real_size_when_the_files_exist(tmp_path, monkeypatch) -> None:
+    (tmp_path / "verification-replay.mp4").write_bytes(b"\x00" * 123)
+    (tmp_path / "verification-signal.wav").write_bytes(b"\x00" * 456)
+    # A file present under some OTHER name must never be reported -- this
+    # endpoint names its two files explicitly rather than scanning the
+    # directory, precisely so a later mission's own generated artefact can
+    # never be mistaken for the archived verification pass.
+    (tmp_path / "mission_abc123-replay.mp4").write_bytes(b"\x00" * 789)
+    monkeypatch.setattr("media.adapters.ARTIFACT_DIR", tmp_path)
+    with TestClient(app) as client:
+        body = client.get("/api/media/verified-evidence").json()
+    assert body["veo"] == {
+        "available": True,
+        "url": "/media-artifact/verification-replay.mp4",
+        "filename": "verification-replay.mp4",
+        "mime_type": "video/mp4",
+        "size_bytes": 123,
+    }
+    assert body["lyria"]["available"] is True
+    assert body["lyria"]["size_bytes"] == 456
+
+    # And the served bytes are the real bytes, through the pre-existing
+    # allowlist-by-directory-listing route -- not just a status claim.
+    with TestClient(app) as client:
+        res = client.get("/media-artifact/verification-replay.mp4")
+    assert res.status_code == 200
+    assert res.content == b"\x00" * 123

@@ -328,6 +328,26 @@
   <div id="media-lab" class="media-lab"></div>
   <p id="media-note" class="cmdos-hint mono"></p>
 
+  <div id="media-verified" class="media-verified" hidden>
+    <h3 class="mono cmdos-h">Real Verified Evidence — 2026-08-21</h3>
+    <p class="cmdos-hint mono">one real Veo and one real Lyria generation ran against live Vertex AI
+      this pass (not re-run since — see <span class="cond">evidence/models/verification-20260821T031634Z.json</span>).
+      Not re-triggered to render this panel: these are the actual bytes that call produced, served
+      from this environment's media directory when present.</p>
+    <div class="media-verified-row">
+      <div id="media-verified-veo" class="media-verified-item" hidden>
+        <div class="media-name">VEO — veo-3.1-generate-001</div>
+        <video id="mv-video" class="media-player" controls preload="none"></video>
+        <div id="mv-video-meta" class="media-model mono"></div>
+      </div>
+      <div id="media-verified-lyria" class="media-verified-item" hidden>
+        <div class="media-name">LYRIA — lyria-002</div>
+        <audio id="mv-audio" class="media-player" controls preload="none"></audio>
+        <div id="mv-audio-meta" class="media-model mono"></div>
+      </div>
+    </div>
+  </div>
+
   <h3 class="mono cmdos-h">System Reality</h3>
   <p class="cmdos-hint mono">every feature below carries its own honest status — nothing here claims
     to be live that is not</p>
@@ -370,6 +390,10 @@
 
   <div id="instr-offline" class="mono instr-offline" hidden>
     WARRANT LEDGER UNREACHABLE — start the Firestore emulator (<span class="cond">make emulator</span>) and reopen this panel.
+  </div>
+
+  <div id="instr-loading" class="mono instr-offline" hidden>
+    loading warrant, hyperion-zero and singularity-mesh…
   </div>
 
   <div id="instr-body" hidden>

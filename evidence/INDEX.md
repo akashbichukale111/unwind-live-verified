@@ -9,8 +9,9 @@ claim site.
 A screenshot in this repository proves what its own caption says and
 nothing more. There are no decorative screenshots.
 
-**Generated / last refreshed:** 2026-08-21. Timestamps in filenames are the
-actual run time, not an edit time.
+**Generated / last refreshed:** 2026-08-25 (§14 added; §1–13 unchanged since
+2026-08-21). Timestamps in filenames are the actual run time, not an edit
+time.
 
 ---
 
@@ -469,3 +470,154 @@ tipped a mission that had legitimately earned its warrant into a challenge —
 all. That is an outage wearing a risk control's clothes. Recalibrated to
 15/35/90, and `::test_both_outcomes_are_reachable` now guards both halves so
 the tax can never silently drift into "never blocks" or "always blocks".
+
+## 14. Button audit, the "dead click" class of bug fixed everywhere it occurred, and a Real Verified Evidence panel (2026-08-25)
+
+A full re-run of this repository's own evidence-capture scripts, on a clean
+Windows checkout with no prior `.venv` state, against the Firestore emulator
+with `UNWIND_VERTEX_DISABLED=1` (no live model credentials in this
+environment — nothing below touched Gemini, Veo or Lyria's real APIs, and
+nothing was regenerated).
+
+### Baseline reproduction, before any change
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Full suite, emulator up | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` | **634 passed, 1 skipped, 0 failed** — matches this file's own recorded baseline exactly |
+| Full suite, emulator down | `python -m pytest -q` | 627 passed, 7 failed, 1 skipped — the 7 failures are real-Firestore `PermissionDenied` from tests that require the emulator; not a regression, a missing `FIRESTORE_EMULATOR_HOST` in that specific invocation |
+| Lint + format | `ruff check . && ruff format --check .` | clean |
+
+### Bug found — "the six-layer instrument" (and five detail panels below it) went silent for up to ~2.5s after the click
+
+`showInstrument()` (`web/static/app.js`) ran three sequential, awaited
+fetches (`/api/instrument`, `/api/hyperion`, `/api/singularity`, ~0.85s each
+measured locally) and did not call `show("instrument")` until all three
+resolved. The whole overlay — including its own header and back button —
+stayed `hidden` for that entire window. Timed with a direct Playwright probe
+against a local server: `is_visible("#instrument")` was `false` at 2500ms
+and `true` at 4500ms. For that ~2.5s, a first-time user has clicked a button
+and sees literally nothing change — the exact "indistinguishable from a dead
+button" failure mode `evidence/timemachine/TIME-MACHINE-FIX.md` diagnosed
+for the Time Machine button five days earlier, recurring in a sibling
+button that fix did not touch. `showWarrantDetail`, `showTowerDetail`,
+`showCountersignDetail`, `showHyperionDetail` and `showSingularityDetail`
+had the same "fetch, then show" shape (one fetch each, so a shorter ~0.85s
+window, softened further by each panel's title/back-button/lede being
+static markup — but the same class of bug).
+
+**Fix**: all six functions now call `show(id)` *before* awaiting their data
+(the same "open first, populate after" idiom `showTimeMachine` already used
+for the Time Machine panel), and `showInstrument()`'s three fetches now run
+via `Promise.all` instead of sequentially — cutting its real latency from
+~2.5s to ~0.85s in addition to removing the blank window entirely. A new
+`#instr-loading` element (reusing the existing `.instr-offline` style
+token, no new CSS variables) covers the brief real gap. Changed files:
+`web/static/app.js`, `web/static/index.html` (`#instr-loading`).
+
+**This was the actual, reproducible cause of two flaky checks**, not a
+timing coincidence: `evidence/browser/verify_timemachine_and_media.py`'s
+CONTROL TOWER and HYPERION-ZERO detail-panel checks failed consistently
+(same two checks, same order, across three consecutive runs) against the
+pre-fix code with a 2000ms wait budget, and passed consistently (two
+separate full runs, 47/47 both times) once the show-first fix landed —
+direct inspection during triage (`tower-detail` visible with 911 real
+characters at 3000ms, not at 2000ms) had already established the content
+was correct and only the wait budget was too tight, which the fix resolved
+by removing the wait dependency rather than by lengthening it.
+
+### Addition — Real Verified Evidence panel, using the existing artefact route, no new attack surface
+
+The Mission Media Lab's own `NOT_CONFIGURED` state (honest: no live
+credentials in this environment) said nothing about the one real Veo/Lyria
+generation §13 already proved. `evidence/models/verification-20260821T031634Z.json`
+and this file are the durable record of that call; the *bytes* it produced
+(`.media/verification-replay.mp4`, `.media/verification-signal.wav`) are
+gitignored generated output by design (`.gitignore`: "a generated
+video/audio file is not reproducible by any test and must not be committed
+as if it were evidence of a call this repo can re-run") and were still
+present on the machine that ran §13, five days later, in this session.
+
+Added `GET /api/media/verified-evidence` (`services/api/main.py`): reports,
+by exact filename against `ARTIFACT_DIR`'s real directory listing (the same
+allowlist-not-sanitise pattern the pre-existing `/media-artifact/{filename}`
+route already uses), whether those two specific named files are present in
+*this* environment right now, with their real size in bytes read via
+`stat()`. It fabricates nothing and triggers no generation — a fresh clone,
+CI, or a deployment built before the files existed all get `available:
+false` for both, honestly. The frontend (`renderVerifiedEvidence` in
+`web/static/app.js`, markup in `web/static/index.html`, styles in
+`web/static/style.css`) renders a real `<video>`/`<audio>` element wired to
+the existing `/media-artifact/{filename}` route only when the endpoint says
+the bytes exist, and stays fully hidden otherwise — no broken players in an
+environment that lacks the artefacts.
+
+Verified in this environment (files present, copied here for this pass):
+
+```
+GET /api/media/verified-evidence
+{"veo":{"available":true,"url":"/media-artifact/verification-replay.mp4",
+ "filename":"verification-replay.mp4","mime_type":"video/mp4","size_bytes":5711784},
+ "lyria":{"available":true,"url":"/media-artifact/verification-signal.wav",
+ "filename":"verification-signal.wav","mime_type":"audio/wav","size_bytes":6291544}}
+```
+
+5,711,784 bytes and 6,291,544 bytes match the 5.7MB/6.3MB §13 recorded from
+`file`'s own read of the same two files. Screenshot:
+`evidence/browser/media-lab.png` (recaptured this pass, shows the panel
+live with working players below the honest `NOT_CONFIGURED` Media Lab
+cards).
+
+**This does not change what is deployed.** This environment has no
+`gcloud`/`gh` CLI, so nothing in this section was redeployed to
+`https://unwind-hgeodtazqq-uc.a.run.app`. `evidence/media/` is included in
+`.gcloudignore`'s upload (it does not exclude top-level `evidence/`), so a
+future `infra/deploy.sh` run made from a working directory that still has
+these two files in `.media/` would carry this panel live; that run did not
+happen in this session and is not claimed as having happened.
+
+### Other fixes made in passing
+
+- `evidence/browser/verify_all_cards.py` hardcoded a Linux sandbox's
+  Chromium path with no fallback (unlike its two sibling scripts, which
+  already had one — see §13's Windows-portability bugs). Same fix applied:
+  use the pinned path only when it exists, otherwise Playwright's own
+  installed browser. Confirmed by running it on Windows: 26/26.
+- `verify_timemachine_and_media.py`'s "no fake video/audio" checks
+  (`p.locator("video").count() == 0`) were page-global; the new panel adds
+  a legitimate second `<video>`/`<audio>` pair to the page, so these were
+  rescoped to the per-mission result container
+  (`#media-out-veo video` / `#media-out-lyria audio`) — the original intent
+  ("this mission's own NOT_CONFIGURED click never renders a fake player")
+  is unchanged and still enforced; a new pair of checks was added
+  confirming the verified-evidence panel itself renders correctly.
+
+### Two new unit tests for the new endpoint
+
+`tests/test_api.py` gained
+`test_verified_evidence_reports_unavailable_with_no_artifact_dir` and
+`test_verified_evidence_reports_real_size_when_the_files_exist` — the
+second also asserts a third, differently-named file dropped in the same
+directory (simulating a real mission's own generated artefact sitting
+alongside the archived pair) is never reported, and that the bytes served
+back through `/media-artifact/{filename}` are the exact bytes written. This
+is why the full-suite count below is 636, not 634: the baseline did not
+shrink, two real tests were added to it.
+
+### Full regression after the fixes above
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Full suite, emulator up | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` | **636 passed, 1 skipped, 0 failed** (634 baseline + 2 new tests for `/api/media/verified-evidence`, 0 failed either way) |
+| Lint + format | `ruff check . && ruff format --check .` | clean |
+| Mission button never looks dead | `python evidence/browser/verify_mission_button.py` | **11/11** |
+| Seven-card regression (fresh reset ledger) | `python evidence/browser/verify_all_cards.py` | **26/26** |
+| Time Machine + Media Lab + Real Verified Evidence + seven-card regression | `python evidence/browser/verify_timemachine_and_media.py` | **47/47**, reproduced twice in a row (previously 39–40/41 before the show-first fix, on the same machine, same waits) |
+
+None of `spine/`, `court/`, `judgment/`, `settle/`, `warrant/economics.py`'s
+pricing formula, or any pre-existing test file's assertions were weakened —
+two verification scripts had checks *rescoped* (see above, intent
+unchanged) and `tests/test_api.py` gained two new tests, nothing else in
+`tests/` changed. Changed files this section: `web/static/app.js`,
+`web/static/index.html`, `web/static/style.css`, `services/api/main.py`,
+`tests/test_api.py`, `evidence/browser/verify_timemachine_and_media.py`,
+`evidence/browser/verify_all_cards.py`.

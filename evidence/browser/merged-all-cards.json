@@ -34,7 +34,7 @@
     {
       "check": "      mission runs end to end",
       "pass": true,
-      "detail": "12 stages"
+      "detail": "13 stages"
     },
     {
       "check": "      report is truthful",
@@ -119,7 +119,7 @@
     {
       "check": "      every failed request identified by URL",
       "pass": true,
-      "detail": "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:"
+      "detail": "none"
     },
     {
       "check": "      no failed request is a product defect",
@@ -129,13 +129,9 @@
     {
       "check": "      zero server-side errors",
       "pass": true,
-      "detail": "1 console error(s), all traced to the requests above"
+      "detail": "0 console error(s), all traced to the requests above"
     }
   ],
-  "console_errors": [
-    "console.error: Failed to load resource: net::ERR_CONNECTION_RESET"
-  ],
-  "failed_requests": [
-    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CONNECTION_RESET"
-  ]
+  "console_errors": [],
+  "failed_requests": []
 }

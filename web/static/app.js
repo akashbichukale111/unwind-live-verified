@@ -756,11 +756,14 @@
   }
 
   async function showWarrantDetail() {
+    // Chrome (title, back link, lede) is static markup and shows on click;
+    // only the data-driven bars below populate once the fetch resolves --
+    // same "open first, populate after" fix as showInstrument/showTimeMachine.
+    show("warrant-detail");
     const d = await fetchInstrument();
     if (!d.available) { showInstrument(); return; }
     $("wd-bars").innerHTML = d.card0.bars.map(barRow).join("");
     $("wd-route").hidden = true;
-    show("warrant-detail");
   }
 
   function renderTowerDetail(card2) {
@@ -789,10 +792,10 @@
   }
 
   async function showTowerDetail() {
+    show("tower-detail");
     const d = await fetchInstrument();
     if (!d.available) { showInstrument(); return; }
     renderTowerDetail(d.card2);
-    show("tower-detail");
   }
 
   function renderCountersignDetail(c3) {
@@ -827,10 +830,10 @@
   }
 
   async function showCountersignDetail() {
+    show("countersign-detail");
     const d = await fetchInstrument();
     if (!d.available) { showInstrument(); return; }
     renderCountersignDetail(d.card3);
-    show("countersign-detail");
   }
 
   // ── HYPERION-ZERO (immune layer over Card 2's Gateway) ──────────────
@@ -898,9 +901,9 @@
   }
 
   async function showHyperionDetail() {
+    show("hyperion-detail");
     const h = await fetchHyperion();
     renderHyperionDetail(h);
-    show("hyperion-detail");
   }
 
   async function handleHyperionProbe() {
@@ -1119,9 +1122,9 @@
   }
 
   async function showSingularityDetail() {
+    show("singularity-detail");
     const d = await fetchSingularity();
     renderSingularityDetail(d);
-    show("singularity-detail");
   }
 
   $("sm-genome-normal").addEventListener("click", () => handleGenomeProbe("normal"));
@@ -1581,6 +1584,7 @@
     renderEconomics();
     renderConsequence();
     renderMediaLab();
+    renderVerifiedEvidence();
   }
 
   // ── CONSEQUENCE PREVIEW — the agent action simulator ──────────────────
@@ -1715,6 +1719,51 @@
     host.querySelectorAll(".media-go").forEach((btn) => {
       btn.addEventListener("click", () => runMedia(btn.dataset.modality, btn));
     });
+  }
+
+  // ── REAL VERIFIED EVIDENCE — the one real Veo/Lyria generation this
+  // project ran (2026-08-21), played from the actual bytes when this
+  // environment has them. `.media/` is gitignored generated output, so a
+  // fresh clone, CI, or a deployment built before that pass will not have
+  // these files -- the panel stays hidden rather than showing dead players,
+  // the same discipline the Media Lab cards use for NOT_CONFIGURED.
+  function fmtBytes(n) {
+    if (!n && n !== 0) return "";
+    const mb = n / (1024 * 1024);
+    return mb >= 1 ? mb.toFixed(1) + " MB" : (n / 1024).toFixed(0) + " KB";
+  }
+
+  async function renderVerifiedEvidence() {
+    const section = $("media-verified");
+    if (!section) return;
+    let d;
+    try {
+      d = await (await fetch("/api/media/verified-evidence")).json();
+    } catch (err) {
+      section.hidden = true;
+      return;
+    }
+    const veo = d.veo || {};
+    const lyria = d.lyria || {};
+    const veoBox = $("media-verified-veo");
+    if (veo.available) {
+      $("mv-video").src = veo.url;
+      $("mv-video-meta").textContent =
+        "real generated file · " + fmtBytes(veo.size_bytes) + " · " + veo.filename;
+      veoBox.hidden = false;
+    } else {
+      veoBox.hidden = true;
+    }
+    const lyriaBox = $("media-verified-lyria");
+    if (lyria.available) {
+      $("mv-audio").src = lyria.url;
+      $("mv-audio-meta").textContent =
+        "real generated file · " + fmtBytes(lyria.size_bytes) + " · " + lyria.filename;
+      lyriaBox.hidden = false;
+    } else {
+      lyriaBox.hidden = true;
+    }
+    section.hidden = !(veo.available || lyria.available);
   }
 
   const MEDIA_ROUTE = { gemini: "synthesize", veo: "replay", lyria: "signal" };
@@ -2112,23 +2161,44 @@
   $("mtm-back").addEventListener("click", showCommandOS);
 
   async function showInstrument() {
+    // The panel used to stay entirely hidden until three sequential,
+    // awaited fetches all resolved (~2.5s on a cold Firestore emulator) --
+    // indistinguishable, for that whole window, from a dead button. It now
+    // opens on click (the same "show first, populate after" idiom
+    // showTimeMachine uses) and the three independent reads run in
+    // parallel instead of one after another.
     hideCore();
-    const res = await fetch("/api/instrument");
-    const d = await res.json();
     const offline = $("instr-offline");
+    const loading = $("instr-loading");
     const body = $("instr-body");
+    offline.hidden = true;
+    body.hidden = true;
+    loading.hidden = false;
+    show("instrument");
+
+    let d, h, s;
+    try {
+      [d, h, s] = await Promise.all([
+        fetch("/api/instrument").then((r) => r.json()),
+        fetchHyperion(),
+        fetchSingularity(),
+      ]);
+    } catch (err) {
+      loading.hidden = true;
+      offline.hidden = false;
+      return;
+    }
+    loading.hidden = true;
     if (!d.available) {
       offline.hidden = false;
       body.hidden = true;
-      show("instrument");
       return;
     }
     offline.hidden = true;
     body.hidden = false;
     renderInstrument(d);
-    renderHyperionHome(await fetchHyperion());
-    renderSingularityHome(await fetchSingularity());
-    show("instrument");
+    renderHyperionHome(h);
+    renderSingularityHome(s);
   }
 
   async function handleBurn() {

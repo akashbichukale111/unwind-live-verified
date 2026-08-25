@@ -56,6 +56,34 @@ with sync_playwright() as pw:
     note = p.inner_text("#media-note")
     ck("note explains fail-closed", "NOT CONFIGURED" in note, note[:64])
 
+    print("\n== REAL VERIFIED EVIDENCE (the archived 2026-08-21 Veo/Lyria pass) ==")
+    p.wait_for_timeout(1500)
+    verified_json = p.evaluate("fetch('/api/media/verified-evidence').then(r => r.json())")
+    ck("endpoint reachable", isinstance(verified_json, dict), verified_json)
+    veo_v = (verified_json or {}).get("veo", {})
+    lyria_v = (verified_json or {}).get("lyria", {})
+    if veo_v.get("available") or lyria_v.get("available"):
+        ck("panel unhidden when evidence present", p.is_visible("#media-verified"))
+        if veo_v.get("available"):
+            ck("real veo video element present + sized", p.locator("#mv-video").count() == 1)
+            ck(
+                "veo byte size matches the endpoint's own stat() call",
+                p.get_attribute("#mv-video", "src") == veo_v["url"],
+                veo_v.get("size_bytes"),
+            )
+        if lyria_v.get("available"):
+            ck("real lyria audio element present", p.locator("#mv-audio").count() == 1)
+            ck(
+                "lyria src matches the endpoint's own artefact url",
+                p.get_attribute("#mv-audio", "src") == lyria_v["url"],
+                lyria_v.get("size_bytes"),
+            )
+    else:
+        ck(
+            "panel honestly stays hidden — no local .media/ artefacts in this environment",
+            not p.is_visible("#media-verified"),
+        )
+
     print("\n== MEDIA: press a button with no mission ==")
     p.locator(".media-go").first.click()
     p.wait_for_timeout(1500)
@@ -80,15 +108,21 @@ with sync_playwright() as pw:
     p.wait_for_timeout(2500)
     veo = p.inner_text("#media-out-veo")
     ck(
+        # Scoped to the per-mission result container, not the whole page:
+        # the page can legitimately hold a SEPARATE <video> for the "Real
+        # Verified Evidence" panel (the one archived 2026-08-21 Veo
+        # generation, played back regardless of this mission's own
+        # NOT_CONFIGURED status) without that counting as a fabricated
+        # result for THIS mission's own click.
         "veo NOT_CONFIGURED, no fake video",
-        "NOT_CONFIGURED" in veo and p.locator("video").count() == 0,
+        "NOT_CONFIGURED" in veo and p.locator("#media-out-veo video").count() == 0,
     )
     p.locator(".media-go").nth(2).click()
     p.wait_for_timeout(2500)
     ly = p.inner_text("#media-out-lyria")
     ck(
         "lyria NOT_CONFIGURED, no fake audio",
-        "NOT_CONFIGURED" in ly and p.locator("audio").count() == 0,
+        "NOT_CONFIGURED" in ly and p.locator("#media-out-lyria audio").count() == 0,
     )
     p.screenshot(path="evidence/browser/media-lab.png", full_page=True)
 

@@ -1570,6 +1570,52 @@ async def media_artifact(filename: str) -> FileResponse:
     return FileResponse(ARTIFACT_DIR / filename)
 
 
+#: The two fixed filenames the one real Veo/Lyria verification pass wrote
+#: (2026-08-21, `evidence/models/verification-20260821T031634Z.json`). Not a
+#: per-mission artefact -- a specific, historical, already-paid-for
+#: generation. Named here, not guessed from a directory scan, so this
+#: endpoint can only ever report on THOSE two files, never on whatever a
+#: later mission run happens to have left in ARTIFACT_DIR.
+_VERIFIED_EVIDENCE_FILES = {
+    "veo": ("verification-replay.mp4", "video/mp4"),
+    "lyria": ("verification-signal.wav", "audio/wav"),
+}
+
+
+@app.get("/api/media/verified-evidence")
+async def media_verified_evidence() -> dict[str, Any]:
+    """Whether the one real, already-paid-for Veo/Lyria generation from
+    2026-08-21 is present as bytes in this environment right now.
+
+    Generated media is gitignored output (`.gitignore`: "a generated
+    video/audio file is not reproducible by any test and must not be
+    committed as if it were evidence of a call this repo can re-run"), so
+    these files exist only where someone has actually put them -- this
+    machine after that verification pass, not a fresh clone, not CI, and not
+    a deployment built before they existed. This endpoint reports the honest
+    answer either way; it never re-generates anything to make itself true.
+    """
+    from media.adapters import ARTIFACT_DIR
+
+    present = (
+        {p.name for p in ARTIFACT_DIR.iterdir() if p.is_file()} if ARTIFACT_DIR.is_dir() else set()
+    )
+    out: dict[str, Any] = {}
+    for modality, (filename, mime) in _VERIFIED_EVIDENCE_FILES.items():
+        if filename in present:
+            size = (ARTIFACT_DIR / filename).stat().st_size
+            out[modality] = {
+                "available": True,
+                "url": f"/media-artifact/{filename}",
+                "filename": filename,
+                "mime_type": mime,
+                "size_bytes": size,
+            }
+        else:
+            out[modality] = {"available": False, "filename": filename}
+    return out
+
+
 @app.post("/api/media/mission/{mission_id}/synthesize")
 async def media_synthesize(
     mission_id: str, caller: Principal = Depends(require_principal)

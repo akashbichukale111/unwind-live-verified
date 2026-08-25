@@ -1073,6 +1073,22 @@ html, body {
   .media-lab { grid-template-columns: 1fr; }
 }
 
+/* ── REAL VERIFIED EVIDENCE — the one genuine Veo/Lyria generation this
+ * project ran, played back from the actual bytes when this environment has
+ * them (gitignored generated output; absent on a fresh clone or a
+ * not-yet-rebuilt deployment, in which case the whole block stays hidden
+ * rather than showing broken players). Same tokens as the rest of the lab. */
+.media-verified { margin-top: 6px; margin-bottom: 14px; }
+.media-verified-row {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
+}
+.media-verified-item {
+  border: 1px solid var(--slate); padding: 16px 18px;
+}
+@media (max-width: 1100px) {
+  .media-verified-row { grid-template-columns: 1fr; }
+}
+
 /* ── MISSION TIME MACHINE ────────────────────────────────────────────
  * The arc is a horizontal ladder of the checkpoints that were ACTUALLY
  * written, so its length varies per mission -- it scrolls rather than

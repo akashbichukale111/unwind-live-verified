@@ -57,21 +57,15 @@ def get_client() -> Any:
             # The library reads FIRESTORE_EMULATOR_HOST itself and uses
             # anonymous credentials; passing the project keeps paths stable.
             _CLIENT = firestore.Client(project=cfg.project_id)
-        elif cfg.firestore_database == "(default)":
-            # Deployed 2026-08-25: passing the literal string "(default)" as
-            # `database=` -- `gcloud firestore databases list` genuinely
-            # names it that -- was accepted by the client library version in
-            # this repo's own dev environment (google-cloud-firestore
-            # 2.28.1) but rejected with `InvalidArgument: 400 Invalid
-            # database id %28default%29` by whatever version pip resolved
-            # for the deployed container, because `pyproject.toml` pins this
-            # dependency as `>=2.19.0` with no upper bound. Omitting the
-            # kwarg lets the client library apply its OWN internal default
-            # rather than this process re-stating it as a string, which is
-            # the one thing that provably works across versions -- verified
-            # live 2026-08-25 (see evidence/INDEX.md).
-            _CLIENT = firestore.Client(project=cfg.project_id)
         else:
+            # [ASSUMPTION] `google-cloud-firestore` is pinned `<2.29.0` in
+            # pyproject.toml specifically because 2.29.0 broke this exact
+            # call against real (non-emulator) Firestore -- see the comment
+            # there and evidence/INDEX.md. This explicit `database=` kwarg
+            # is not itself the defect (2.29.0 rejects the client library's
+            # OWN internally-substituted default identically; verified by
+            # reading google.cloud.firestore_v1.base_client's source), so it
+            # is left exactly as it reads rather than "fixed" a second time.
             _CLIENT = firestore.Client(project=cfg.project_id, database=cfg.firestore_database)
     return _CLIENT
 

@@ -11,7 +11,20 @@ description = "Retractable decisions: when a premise dies, everything built on i
 requires-python = ">=3.12"
 dependencies = [
     "google-adk==2.6.3",
-    "google-cloud-firestore>=2.19.0",
+    # <2.29.0, DELIBERATELY -- not stylistic caution, a real regression.
+    # 2.29.0 (published 2026-08-24, PyPI upload_time) broke real (non-emulator)
+    # Firestore access: `firestore.Client(project=..., database="(default)")`
+    # -- the literal string `gcloud firestore databases list` itself reports
+    # as this project's database id -- started raising `InvalidArgument: 400
+    # Invalid database id %28default%29` under 2.29.0, live, on the deployed
+    # Cloud Run service (2026-08-25; see evidence/INDEX.md). 2.28.1 (this
+    # dev environment's own locked version) does not have the bug; verified
+    # by reproducing the exact same call locally against the exact same
+    # project and database with 2.28.1 -- it succeeds. The unpinned
+    # `>=2.19.0` this line used to read let a routine redeploy silently pull
+    # a regression the moment it hit PyPI, with no code change of this
+    # project's own to explain it.
+    "google-cloud-firestore>=2.19.0,<2.29.0",
     "google-cloud-pubsub>=2.27.0",
     "google-cloud-storage>=2.19.0",
     "fastapi>=0.115.0",

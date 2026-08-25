@@ -758,7 +758,7 @@
   async function showWarrantDetail() {
     // Chrome (title, back link, lede) is static markup and shows on click;
     // only the data-driven bars below populate once the fetch resolves --
-    // same "open first, populate after" fix as showInstrument/showTimeMachine.
+    // same "open first, populate after" fix as showInstrument.
     show("warrant-detail");
     const d = await fetchInstrument();
     if (!d.available) { showInstrument(); return; }
@@ -1230,11 +1230,20 @@
     return token ? { Authorization: "Bearer " + token } : {};
   }
 
+  //: `quietAuth: true` suppresses the page-level NOT AUTHENTICATED banner for
+  //: a read that renders its own, more specific one. The banner's text is
+  //: about MUTATING endpoints refusing an anonymous caller; raising it the
+  //: instant an anonymous visitor loads the page -- which is what the now-
+  //: inline Time Machine's passive read would otherwise do -- tells them
+  //: something was refused that they never asked for. The Time Machine still
+  //: says NOT AUTHENTICATED in its own panel, where it is true and actionable.
   async function authedFetch(url, options) {
     const opts = Object.assign({}, options || {});
+    const quiet = opts.quietAuth === true;
+    delete opts.quietAuth;
     opts.headers = Object.assign({}, opts.headers || {}, authHeaders());
     const res = await fetch(url, opts);
-    if (res.status === 401 || res.status === 403) {
+    if ((res.status === 401 || res.status === 403) && !quiet) {
       $("cmdos-authfail").hidden = false;
     }
     return res;
@@ -1583,8 +1592,10 @@
     renderFleet();
     renderEconomics();
     renderConsequence();
+    renderModelRoster();
     renderMediaLab();
     renderVerifiedEvidence();
+    renderTimeMachine();
   }
 
   // ── CONSEQUENCE PREVIEW — the agent action simulator ──────────────────
@@ -1655,6 +1666,68 @@
     if (el) el.addEventListener("change", renderConsequence);
   });
 
+  // ── GOOGLE MODEL STACK ───────────────────────────────────────────────
+  //
+  // Every model string this system pins, joined to what a real call actually
+  // did. The join happens on the server (`/api/media/model-roster`) because
+  // both halves have exactly one legitimate source -- `lib/config.py` for the
+  // ID, `evidence/models/verification-*.json` for the status -- and a list
+  // hardcoded here could drift from either. A model with no verification
+  // reads UNVERIFIED rather than borrowing a sibling's green tick.
+  const ROSTER_CLASS = {
+    LIVE_VERIFIED: "cmdos-live",
+    UNAVAILABLE: "cmdos-unavailable",
+    UNVERIFIED: "cmdos-designed",
+  };
+
+  //: Held so the Media Lab cards can render their committed player without a
+  //: second round-trip -- one fetch fills both.
+  let demoBundle = null;
+
+  async function renderModelRoster() {
+    const host = $("model-roster");
+    if (!host) return;
+    let d;
+    try {
+      d = await (await fetch("/api/media/model-roster")).json();
+    } catch (err) {
+      host.innerHTML = "<div class='cmdos-hint mono'>model roster unavailable</div>";
+      return;
+    }
+    demoBundle = d.demo_bundle || null;
+    host.innerHTML =
+      d.models
+        .map(
+          (m) =>
+            "<div class='model-chip'>" +
+            "<div class='model-chip-head'>" +
+            "<span class='model-family cond'>" + esc(m.family) + "</span>" +
+            "<span class='cmdos-tag " + (ROSTER_CLASS[m.status] || "cmdos-reference") + "'>" +
+            esc(m.status) + "</span>" +
+            "</div>" +
+            "<div class='model-id mono'>" + esc(m.model) + "</div>" +
+            "<div class='cmdos-hint mono'>" + esc(m.role) + "</div>" +
+            (m.latency_ms
+              ? "<div class='cmdos-hint mono'>real call returned in " + m.latency_ms + "ms</div>"
+              : "") +
+            // The failure reason is Google's own text, shown in full rather
+            // than summarised -- "UNAVAILABLE" without the 404 body is a
+            // status nobody can act on.
+            (m.status !== "LIVE_VERIFIED" && m.reason
+              ? "<details class='media-details'><summary class='mono'>why</summary>" +
+                "<pre class='media-text'>" + esc(m.reason) + "</pre></details>"
+              : "") +
+            "</div>"
+        )
+        .join("") +
+      "<div class='model-roster-foot cmdos-hint mono'>" +
+      esc(String(d.live_verified)) + " of " + esc(String(d.total)) +
+      " model strings have a recorded live call" +
+      (d.verification_source ? " · " + esc(d.verification_source) : "") +
+      (d.verified_at ? " · " + esc(d.verified_at) : "") +
+      "</div>";
+  }
+
   // ── MISSION MEDIA LAB ────────────────────────────────────────────────
   //
   // Three cards, one shared input. Each card's status comes from
@@ -1663,7 +1736,90 @@
   // than the call behind it. A NOT_CONFIGURED card still shows its model ID
   // and still lets you inspect the grounded brief that WOULD be sent; what
   // it does not do is pretend to have generated anything.
+  //
+  // WHAT CHANGED, AND WHY IT IS NOT A DISHONESTY
+  // --------------------------------------------
+  // Every card now also carries a player that WORKS ON ARRIVAL, sourced from
+  // the committed demo bundle (`scripts/build_demo_media.py`). Before this,
+  // a deployment with no Vertex credential rendered three buttons that all
+  // returned NOT_CONFIGURED and nothing anyone could watch or hear -- a
+  // media lab that could not show media. The committed render is a
+  // deterministic local render of the same mission brief the live call would
+  // send, and it is labelled that way on every card, in the manifest, and in
+  // the endpoint that serves it. It is not presented as model output, and
+  // the live-call button beside it still reports its own real status.
   const MEDIA_ICONS = { gemini: "◆", veo: "▶", lyria: "≋" };
+  const MEDIA_VERB = { gemini: "Synthesize", veo: "Generate replay", lyria: "Generate signal" };
+
+  function fmtBytes(n) {
+    if (!n && n !== 0) return "";
+    const mb = n / (1024 * 1024);
+    return mb >= 1 ? mb.toFixed(1) + " MB" : (n / 1024).toFixed(0) + " KB";
+  }
+
+  //: The committed-render strip for one modality. Returns "" when the bundle
+  //: is absent, so a build without it degrades to exactly the old behaviour
+  //: rather than to a broken element.
+  function demoStrip(modality) {
+    if (!demoBundle || !demoBundle.available) return "";
+    const label =
+      "<div class='media-demo-label mono'>PLAYS NOW · deterministic local render of " +
+      esc(String(demoBundle.mission_id)) + "'s " +
+      esc(String(demoBundle.checkpoint_count)) + " persisted checkpoints — " +
+      "NOT a " + esc(modality.toUpperCase()) + " generation</div>";
+
+    if (modality === "veo" && demoBundle.video) {
+      const v = demoBundle.video;
+      // ONE RENDER, TWO CONTAINERS, EMITTED AS <source> CHILDREN.
+      // A bare src= would ship a single codec, and there is no single codec
+      // every target decodes: Safari and iOS need H.264/AAC in MP4, while a
+      // Chromium built without proprietary codecs -- including the headless
+      // one this repo's own browser evidence runs in -- needs VP9/Opus in
+      // WebM. The server lists them in preference order and only lists files
+      // that are actually on disk, so the browser picks the first it can play
+      // and there is no arrangement in which it picks nothing.
+      const sources = (v.sources && v.sources.length ? v.sources : [v])
+        .map((src) =>
+          "<source src='" + esc(src.url) + "'" +
+          (src.mime_type ? " type='" + esc(src.mime_type) + "'" : "") + ">")
+        .join("");
+      const formats = (v.sources && v.sources.length ? v.sources : [v])
+        .map((src) => esc(String(src.mime_type || "").split("/").pop()))
+        .join(" + ");
+      return (
+        "<div class='media-demo'>" + label +
+        "<video class='media-player' controls playsinline preload='metadata'" +
+        (v.poster_url ? " poster='" + esc(v.poster_url) + "'" : "") + ">" +
+        sources + "</video>" +
+        "<div class='media-model mono'>" + esc(v.filename.replace(/\.[^.]+$/, "")) +
+        " · " + fmtBytes(v.size_bytes) +
+        (v.duration_seconds ? " · " + v.duration_seconds + "s" : "") +
+        " · " + formats + "</div>" +
+        "</div>"
+      );
+    }
+    if (modality === "lyria" && demoBundle.audio) {
+      const a = demoBundle.audio;
+      return (
+        "<div class='media-demo'>" + label +
+        "<audio class='media-player' controls preload='metadata' src='" + esc(a.url) + "'></audio>" +
+        "<div class='media-model mono'>" + esc(a.filename) + " · " + fmtBytes(a.size_bytes) +
+        " · 44.1kHz mono wav</div>" +
+        "</div>"
+      );
+    }
+    if (modality === "gemini" && demoBundle.narration) {
+      // Text has no transport control, so the equivalent of "press play" is
+      // "show it". It is collapsed by default only because it is long.
+      return (
+        "<div class='media-demo'>" + label +
+        "<details class='media-details' open><summary class='mono'>mission intelligence</summary>" +
+        "<pre class='media-text' id='media-demo-narration'>loading…</pre></details>" +
+        "</div>"
+      );
+    }
+    return "";
+  }
 
   async function renderMediaLab() {
     const host = $("media-lab");
@@ -1688,18 +1844,35 @@
           "<div class='cmdos-hint mono'>" + esc(m.purpose) + "</div>" +
           "<div class='media-model mono'>model <b>" + esc(m.model) + "</b>" +
           (m.auth_mode ? " · auth <b>" + esc(m.auth_mode) + "</b>" : "") + "</div>" +
+          demoStrip(m.modality) +
+          // The reason is Google's own resolver output, kept VERBATIM and in
+          // full -- but collapsed. Printed open it is the same ~90 words on
+          // all three cards, which buried the players and the live-call
+          // buttons under a wall of identical text. Collapsed, the status
+          // badge still says NOT CONFIGURED and the detail is one click away.
           (m.reason && m.status !== "CONFIGURED"
-            ? "<div class='cmdos-hint mono media-why'>" + esc(m.reason) + "</div>" : "") +
+            ? "<details class='media-details'><summary class='mono'>why this cannot make a live call</summary>" +
+              "<pre class='media-text'>" + esc(m.reason) + "</pre></details>"
+            : "") +
           "<button type='button' class='btn btn-quiet media-go' data-modality='" +
-          esc(m.modality) + "'>" + (m.modality === "gemini" ? "Synthesize" :
-            m.modality === "veo" ? "Generate replay" : "Generate signal") + "</button>" +
+          esc(m.modality) + "'>" + (MEDIA_VERB[m.modality] || "Run") + " — live call</button>" +
           "<div class='media-out mono' id='media-out-" + esc(m.modality) + "'></div>" +
           "</div>"
       )
       .join("");
 
-    // The note is the honest part: it says why the buttons will fail-closed
-    // BEFORE anyone presses one, rather than after.
+    // The narration is fetched rather than inlined so the committed text file
+    // stays the single copy -- the page cannot show a stale paraphrase of it.
+    const narrationEl = $("media-demo-narration");
+    if (narrationEl && demoBundle && demoBundle.narration) {
+      fetch(demoBundle.narration.url)
+        .then((r) => r.text())
+        .then((t) => { narrationEl.textContent = t; })
+        .catch(() => { narrationEl.textContent = "narration unavailable"; });
+    }
+
+    // The note is the honest part: it says why the LIVE buttons will
+    // fail-closed BEFORE anyone presses one, rather than after.
     // Two credential paths, reported separately -- an API key makes Gemini and
     // Veo live but cannot reach Lyria, and saying otherwise would be exactly
     // the over-reporting this panel exists to prevent.
@@ -1710,11 +1883,13 @@
     const live = d.modalities.filter((m) => m.status === "CONFIGURED").length;
     $("media-note").textContent = d.available
       ? "credential detected (" + modeLabel + ") — " + live +
-        " of 3 modalities can make a real call now"
-      : "NOT CONFIGURED — " + d.reason +
-        ". The adapters, prompts and model IDs are complete and the request path is " +
-        "verified to reach Google; pressing a button returns NOT_CONFIGURED with this " +
-        "reason rather than a fabricated artefact.";
+        " of 3 modalities can make a real call now. The players above are the committed " +
+        "deterministic render and do not depend on that credential."
+      : "NO VERTEX CREDENTIAL IN THIS ENVIRONMENT — each card's \u201cwhy\u201d carries the " +
+        "resolver's verbatim reason. The adapters, prompts and model IDs are complete and the " +
+        "request path is verified to reach Google; a live-call button returns NOT_CONFIGURED " +
+        "rather than a fabricated artefact. The players above still work regardless: they are " +
+        "a committed local render of the same mission brief, never a model call.";
 
     host.querySelectorAll(".media-go").forEach((btn) => {
       btn.addEventListener("click", () => runMedia(btn.dataset.modality, btn));
@@ -1727,12 +1902,6 @@
   // fresh clone, CI, or a deployment built before that pass will not have
   // these files -- the panel stays hidden rather than showing dead players,
   // the same discipline the Media Lab cards use for NOT_CONFIGURED.
-  function fmtBytes(n) {
-    if (!n && n !== 0) return "";
-    const mb = n / (1024 * 1024);
-    return mb >= 1 ? mb.toFixed(1) + " MB" : (n / 1024).toFixed(0) + " KB";
-  }
-
   async function renderVerifiedEvidence() {
     const section = $("media-verified");
     if (!section) return;
@@ -1877,6 +2046,16 @@
   // rendered states. An empty panel must never be able to mean two different
   // things again.
 
+  //: The arc and checkpoint columns are always on screen now that this is a
+  //: section rather than a screen behind a button. A column that renders
+  //: nothing is indistinguishable from a column that failed to render, so
+  //: every terminal state fills them in rather than leaving them blank.
+  function mtmPlaceholder(text) {
+    $("mtm-timeline").innerHTML =
+      "<li class='cmdos-hint mono mtm-empty'>" + esc(text) + "</li>";
+    $("mtm-checkpoints").innerHTML = mtmNotice(text);
+  }
+
   function mtmNotice(text, hint) {
     return (
       "<li class='cmdos-stage'><div class='cmdos-stage-summary'>" +
@@ -1887,9 +2066,11 @@
     );
   }
 
-  async function showTimeMachine() {
-    hideCore();
-    show("mission-time-machine");
+  //: RENDERS IN PLACE. This used to call hideCore()/show("mission-time-machine")
+  //: and take over the screen. The Time Machine is now a heading on the
+  //: Command OS page, so it populates its own elements and navigates nowhere.
+  async function renderTimeMachine() {
+    if (!$("mtm-missions")) return;
     $("mtm-checkpoints").innerHTML = "";
     $("mtm-detail").hidden = true;
     $("mtm-timeline").innerHTML = "";
@@ -1899,12 +2080,13 @@
 
     let res;
     try {
-      res = await authedFetch("/api/command-os/missions");
+      res = await authedFetch("/api/command-os/missions", { quietAuth: true });
     } catch (err) {
       list.innerHTML = mtmNotice(
         "could not reach the mission index",
         String(err)
       );
+      mtmPlaceholder("no mission arc — the mission index could not be reached");
       return;
     }
 
@@ -1912,13 +2094,15 @@
     if (res.status === 401 || res.status === 403) {
       list.innerHTML = mtmNotice(
         "NOT AUTHENTICATED — mission history is a protected read",
-        "enter an operator token in Agentic Command OS, then reopen the Time Machine. " +
+        "enter an operator credential at the top of this page and it loads here. " +
           "Mission history names who approved what, so it is not an anonymous read."
       );
+      mtmPlaceholder("no mission arc until mission history can be read");
       return;
     }
     if (!res.ok) {
       list.innerHTML = mtmNotice("mission index unavailable (HTTP " + res.status + ")");
+      mtmPlaceholder("no mission arc — the mission index is unavailable");
       return;
     }
 
@@ -1929,6 +2113,7 @@
         "FIRESTORE UNREACHABLE",
         d.reason || "checkpoints are persisted in Firestore; without it there is no history to show"
       );
+      mtmPlaceholder("no mission arc — checkpoints live in Firestore, which is unreachable");
       return;
     }
     // STATE 3 — genuinely empty.
@@ -1937,6 +2122,7 @@
         "no missions recorded yet",
         "run one from Agentic Command OS — every mission writes a checkpoint per phase"
       );
+      mtmPlaceholder("no mission arc yet — run a mission above and it appears here");
       return;
     }
 
@@ -1994,7 +2180,8 @@
     $("mtm-detail").hidden = true;
     const el = $("mtm-checkpoints");
     el.innerHTML = mtmNotice("loading checkpoints…");
-    const res = await authedFetch("/api/command-os/mission/" + missionId + "/checkpoints");
+    const res = await authedFetch(
+      "/api/command-os/mission/" + missionId + "/checkpoints", { quietAuth: true });
     if (res.status === 401 || res.status === 403) {
       el.innerHTML = mtmNotice("NOT AUTHENTICATED — checkpoints are a protected read");
       return;
@@ -2076,7 +2263,8 @@
     const state = $("mtm-state");
     state.hidden = false;
     state.innerHTML = "<div class='cmdos-hint mono'>reading trusted state…</div>";
-    const tRes = await authedFetch("/api/command-os/mission/" + missionId + "/trust");
+    const tRes = await authedFetch(
+      "/api/command-os/mission/" + missionId + "/trust", { quietAuth: true });
     if (!tRes.ok) {
       state.innerHTML = "<div class='cmdos-hint mono'>trusted state unavailable</div>";
       return;
@@ -2157,15 +2345,13 @@
       "</pre>";
   }
 
-  $("cmdos-open-timemachine").addEventListener("click", showTimeMachine);
-  $("mtm-back").addEventListener("click", showCommandOS);
 
   async function showInstrument() {
     // The panel used to stay entirely hidden until three sequential,
     // awaited fetches all resolved (~2.5s on a cold Firestore emulator) --
     // indistinguishable, for that whole window, from a dead button. It now
     // opens on click (the same "show first, populate after" idiom
-    // showTimeMachine uses) and the three independent reads run in
+    // renderTimeMachine uses) and the three independent reads run in
     // parallel instead of one after another.
     hideCore();
     const offline = $("instr-offline");
@@ -2220,7 +2406,7 @@
   const SCREENS = [
     "split", "obligation", "court", "loadrating", "honesty", "instrument",
     "warrant-detail", "tower-detail", "countersign-detail", "hyperion-detail",
-    "singularity-detail", "command-os", "mission-time-machine",
+    "singularity-detail", "command-os",
   ];
 
   function show(name) {
@@ -2293,12 +2479,9 @@
       // it. Honesty is the one true peek and restores whichever of
       // instrument/Core it was opened from, not always the instrument.
       if (state.screen === "honesty") { hideAll(); restorePeekedFrom(); return; }
-      // The Time Machine is opened FROM Agentic Command OS and is part of
-      // it, not part of the instrument -- so Escape returns where the user
-      // came from. Sending them to the instrument instead (the previous
-      // behaviour) stranded them one screen away from the panel they had
-      // just been on, with no indication anything had happened.
-      if (state.screen === "mission-time-machine") { showCommandOS(); return; }
+      // The Time Machine used to be its own screen, reached by a button, and
+      // needed a special Escape case to get back. It is now a section of the
+      // Command OS page, so there is nothing to escape from.
       if (state.screen !== "instrument") showInstrument();
     }
   });

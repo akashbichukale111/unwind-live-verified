@@ -1,0 +1,77 @@
+
+== MEDIA LAB (in Agentic Command OS) ==
+  PASS  media lab renders
+  PASS  three modality cards — 3
+  PASS  GEMINI card + model id — gemini-3.6-flash
+  PASS  VEO card + model id — veo-3.1-generate-001
+  PASS  LYRIA card + model id — lyria-002
+  PASS  all three CONFIGURED_NOT_EXERCISED
+  PASS  no fake LIVE claim
+  PASS  note explains fail-closed — NO VERTEX CREDENTIAL IN THIS ENVIRONMENT — each card's “why” car
+  PASS  note distinguishes the committed render from a model call
+
+== THE COMMITTED RENDER PLAYS, WITH NO CREDENTIAL ==
+  PASS  gemini: player is inside its own card
+  PASS  gemini: labelled a local render, not a generation
+  PASS  veo: player is inside its own card
+  PASS  veo: labelled a local render, not a generation
+  PASS  lyria: player is inside its own card
+  PASS  lyria: labelled a local render, not a generation
+  PASS  VIDEO really plays — decoded frames, clock advancing — 1280x720 at t=2.89s · mission-replay.webm
+  PASS  AUDIO really plays — unmuted, clock advancing — 35.0s track at t=2.91s · mission-signal.wav
+  PASS  GEMINI card shows its zero-model mission intelligence — 1187 chars
+
+== REAL VERIFIED EVIDENCE (the archived 2026-08-21 Veo/Lyria pass) ==
+  PASS  endpoint reachable — {'veo': {'available': False, 'filename': 'verification-replay.mp4'}, 'lyria': {'available': False, 'filename': 'verification-signal.wav'}}
+  PASS  panel honestly stays hidden — no local .media/ artefacts in this environment
+
+== MEDIA: press a button with no mission ==
+  PASS  refuses without a mission
+
+== run a real mission, then Media Lab ==
+  PASS  mission ran — 35 stages
+  PASS  gemini returns NOT_CONFIGURED — NOT_CONFIGURED
+  PASS  reason is real
+  PASS  shows the grounded prompt it would send
+  PASS  veo NOT_CONFIGURED, no fake video
+  PASS  lyria NOT_CONFIGURED, no fake audio
+
+== CONSEQUENCE PREVIEW (the agent action simulator) ==
+  PASS  consequence graph renders — 8 nodes
+  PASS  risk index renders
+  PASS  shows the real 2,594 radius
+  PASS  names the escaped consequences
+  PASS  risk index is decomposed
+  PASS  labelled a heuristic, not a certified score
+  PASS  changing the action changes the risk — 68
+HIGH -> 75
+SEVERE
+  PASS  untraceable premise says UNKNOWN not zero
+
+== MISSION TIME MACHINE (the reported bug) ==
+  PASS  renders inline, with no button pressed
+  PASS  no Time Machine button remains
+  PASS  did not navigate away from Agentic Command OS
+  PASS  mission list populated — 8 missions
+  PASS  checkpoints auto-load — 13 checkpoints
+  PASS  mission arc renders — 13 nodes
+  PASS  current node marked
+  PASS  RESUME labelled LIVE
+  PASS  REPLAY honestly NOT IMPLEMENTED
+  PASS  checkpoint detail opens
+
+== NO NAVIGATION HAPPENED ==
+  PASS  still on Agentic Command OS after opening a checkpoint
+  PASS  the Media Lab is still on screen alongside it
+
+== SEVEN-CARD REGRESSION ==
+  PASS  [2/7] instrument
+  PASS  WARRANT opens + renders
+  PASS  CONTROL TOWER opens + renders
+  PASS  COUNTERSIGN opens + renders
+  PASS  HYPERION-ZERO opens + renders
+  PASS  SINGULARITY-MESH opens + renders
+  PASS  UNWIND CORE opens
+  PASS  no unexpected failed requests — none
+
+55/55 checks passed

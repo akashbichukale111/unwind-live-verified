@@ -1,0 +1,37 @@
+{
+  "source_brief": "evidence/media/grounded-brief-20260820T092845Z.json",
+  "mission_id": "mission_628ee1fb5b",
+  "checkpoint_count": 12,
+  "generator": "scripts/build_demo_media.py",
+  "kind": "DETERMINISTIC_LOCAL_RENDER",
+  "not_a_model_call": true,
+  "video": {
+    "file": "mission-replay.mp4",
+    "bytes": 1106882,
+    "mime": "video/mp4",
+    "sources": [
+      {
+        "file": "mission-replay.webm",
+        "mime": "video/webm",
+        "bytes": 1155652
+      },
+      {
+        "file": "mission-replay.mp4",
+        "mime": "video/mp4",
+        "bytes": 1106882
+      }
+    ],
+    "poster": "mission-replay-poster.jpg",
+    "duration_seconds": 35.0
+  },
+  "audio": {
+    "file": "mission-signal.wav",
+    "bytes": 3087044,
+    "mime": "audio/wav"
+  },
+  "narration": {
+    "file": "mission-narration.txt",
+    "bytes": 1217,
+    "mime": "text/plain"
+  }
+}

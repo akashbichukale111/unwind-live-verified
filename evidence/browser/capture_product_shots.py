@@ -115,9 +115,10 @@ def main() -> int:
         page.wait_for_timeout(400)
         shot(page, "08-lyria.png", full=False)
 
-        # 02 — Mission Time Machine.
-        page.click("#cmdos-open-timemachine")
-        page.wait_for_timeout(5000)
+        # 02 — Mission Time Machine, now a section of this same page rather
+        # than a screen behind a button. Scroll to it instead of clicking.
+        page.evaluate("document.getElementById('mtm-heading').scrollIntoView()")
+        page.wait_for_timeout(1200)
         shot(page, "02-time-machine.png")
 
         # 03 — a checkpoint's real persisted detail.
@@ -128,8 +129,8 @@ def main() -> int:
         shot(page, "03-checkpoint-detail.png")
 
         # 09 — the six-layer instrument: all pre-existing systems intact.
-        page.keyboard.press("Escape")
-        page.wait_for_timeout(1500)
+        # No Escape first: the Time Machine is no longer a screen to leave,
+        # so the page is still Agentic Command OS and the link is right there.
         page.click("#cmdos-open-instrument")
         page.wait_for_timeout(3000)
         shot(page, "09-seven-system-instrument.png")

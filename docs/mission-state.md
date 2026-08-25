@@ -117,8 +117,9 @@ nothing behind them.
 
 ## Mission Time Machine
 
-The UI's `#mission-time-machine` screen (reachable from Agentic Command OS,
-additive — nothing under `#instrument` changed) lists real missions
+The UI's Mission Time Machine — a section at the bottom of the Agentic
+Command OS page, loaded with that page rather than opened from a button;
+additive, nothing under `#instrument` changed — lists real missions
 (`GET /api/command-os/missions`), lets you open one's real checkpoint
 history (`GET /api/command-os/mission/{id}/checkpoints`), and click into a
 checkpoint's full persisted state. This is **historical mission state

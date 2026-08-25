@@ -54,7 +54,65 @@ with sync_playwright() as pw:
     ck("all three CONFIGURED_NOT_EXERCISED", lab.count("CONFIGURED_NOT_EXERCISED") == 3)
     ck("no fake LIVE claim", "GENERATED" not in lab)
     note = p.inner_text("#media-note")
-    ck("note explains fail-closed", "NOT CONFIGURED" in note, note[:64])
+    ck(
+        "note explains fail-closed",
+        "NO VERTEX CREDENTIAL" in note and "NOT_CONFIGURED" in note,
+        note[:64],
+    )
+    ck(
+        "note distinguishes the committed render from a model call",
+        "never a model call" in note,
+    )
+
+    print("\n== THE COMMITTED RENDER PLAYS, WITH NO CREDENTIAL ==")
+    # THE POINT OF THIS BLOCK. Every check above proves the lab is HONEST
+    # about having no credential. None of them proved a visitor can actually
+    # watch or hear anything, and for a long time they could not: three
+    # buttons that all returned NOT_CONFIGURED was the entire experience of
+    # this panel on a deployment without Vertex. The committed deterministic
+    # render fixes that without touching the honesty -- so it is checked here,
+    # in the same run, that BOTH hold at once.
+    for modality in ("gemini", "veo", "lyria"):
+        strip = p.locator(f".media-card[data-modality={modality}] .media-demo")
+        ck(f"{modality}: player is inside its own card", strip.count() == 1)
+        ck(
+            f"{modality}: labelled a local render, not a generation",
+            "deterministic local render" in strip.inner_text()
+            and f"NOT a {modality.upper()}" in strip.inner_text(),
+        )
+
+    played = p.evaluate("""async () => {
+      const v = document.querySelector('.media-card[data-modality=veo] video');
+      const a = document.querySelector('.media-card[data-modality=lyria] audio');
+      await Promise.all([v.play().catch(() => {}), a.play().catch(() => {})]);
+      await new Promise(r => setTimeout(r, 3000));
+      return {
+        video: {src: v.currentSrc, w: v.videoWidth, h: v.videoHeight,
+                t: v.currentTime, err: v.error && v.error.code},
+        audio: {src: a.currentSrc, dur: a.duration, t: a.currentTime,
+                muted: a.muted, err: a.error && a.error.code},
+      };
+    }""")
+    vid, aud = played["video"], played["audio"]
+    #: currentTime > 0 with no error is the only thing that distinguishes a
+    #: video that PLAYED from one that merely loaded, and videoWidth proves
+    #: frames were actually decoded rather than a container being parsed.
+    ck(
+        "VIDEO really plays — decoded frames, clock advancing",
+        vid["err"] is None and vid["w"] > 0 and vid["t"] > 0.5,
+        f"{vid['w']}x{vid['h']} at t={vid['t']:.2f}s · {vid['src'].rsplit('/', 1)[-1]}",
+    )
+    ck(
+        "AUDIO really plays — unmuted, clock advancing",
+        aud["err"] is None and not aud["muted"] and aud["t"] > 0.5,
+        f"{aud['dur']:.1f}s track at t={aud['t']:.2f}s · {aud['src'].rsplit('/', 1)[-1]}",
+    )
+    narration = p.inner_text("#media-demo-narration")
+    ck(
+        "GEMINI card shows its zero-model mission intelligence",
+        len(narration) > 400 and "ZERO-MODEL RENDER" in narration,
+        f"{len(narration)} chars",
+    )
 
     print("\n== REAL VERIFIED EVIDENCE (the archived 2026-08-21 Veo/Lyria pass) ==")
     p.wait_for_timeout(1500)
@@ -173,9 +231,19 @@ with sync_playwright() as pw:
     p.screenshot(path="evidence/browser/consequence-preview.png", full_page=False)
 
     print("\n== MISSION TIME MACHINE (the reported bug) ==")
-    p.click("#cmdos-open-timemachine")
+    # There is no longer a button to press. The Time Machine is a section of
+    # the Agentic Command OS page and loads with it, so the check is that it
+    # is ALREADY populated -- and that the page never navigated to get there.
     p.wait_for_timeout(4500)
-    ck("opens", p.is_visible("#mission-time-machine"))
+    ck("renders inline, with no button pressed", p.is_visible("#mtm-heading"))
+    ck(
+        "no Time Machine button remains",
+        p.locator("#cmdos-open-timemachine").count() == 0,
+    )
+    ck(
+        "did not navigate away from Agentic Command OS",
+        p.evaluate("window.__unwindState.screen") == "command-os",
+    )
     ck(
         "mission list populated",
         p.locator("#mtm-missions [data-mission]").count() > 0,
@@ -203,11 +271,16 @@ with sync_playwright() as pw:
     ck("checkpoint detail opens", p.is_visible("#mtm-detail"))
     p.screenshot(path="evidence/browser/timemachine.png", full_page=True)
 
-    print("\n== ESC returns to Agentic Command OS ==")
-    p.keyboard.press("Escape")
-    p.wait_for_timeout(1500)
-    ck("ESC -> command-os", p.is_visible("#command-os"))
-    ck("ESC not -> instrument", not p.is_visible("#instrument"))
+    # The Time Machine used to be its own screen, so Escape needed a special
+    # case to get back to Agentic Command OS. Inline, there is no screen to
+    # leave -- opening a checkpoint's detail must not have navigated anywhere,
+    # and Escape from here does what it does from any Core screen.
+    print("\n== NO NAVIGATION HAPPENED ==")
+    ck(
+        "still on Agentic Command OS after opening a checkpoint",
+        p.evaluate("window.__unwindState.screen") == "command-os",
+    )
+    ck("the Media Lab is still on screen alongside it", p.is_visible("#media-lab"))
 
     print("\n== SEVEN-CARD REGRESSION ==")
     p.click("#cmdos-open-instrument")
@@ -231,7 +304,17 @@ with sync_playwright() as pw:
     p.wait_for_timeout(3000)
     ck("UNWIND CORE opens", p.is_visible("#bar-wrap") or p.is_visible("#split"))
 
-    exp = ("401", "fonts.googleapis", "ERR_CONNECTION_RESET")
+    # ERR_ABORTED on /static/media/ is Chromium ending a `preload="metadata"`
+    # range request once it has the header it wanted, and on re-render when a
+    # replaced <video> drops its own pending fetch. Neither is a broken URL --
+    # the play checks above prove those same files decode and run -- so they
+    # are expected here rather than treated as a failed request.
+    exp = (
+        "401",
+        "fonts.googleapis",
+        "ERR_CONNECTION_RESET",
+        "/static/media/",
+    )
     bad = [f for f in failed if not any(e in f for e in exp)]
     ck("no unexpected failed requests", not bad, "; ".join(bad[:2]) or "none")
     b.close()

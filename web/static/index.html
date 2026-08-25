@@ -210,7 +210,6 @@
       require human approval before any external action
     </label>
     <button id="cmdos-open-instrument" type="button" class="btn btn-quiet">the six-layer instrument &#9658;</button>
-    <button id="cmdos-open-timemachine" type="button" class="btn btn-quiet">Mission Time Machine &#9658;</button>
   </div>
 
   <div id="cmdos-offline" class="mono instr-offline" hidden>
@@ -219,6 +218,50 @@
   <div id="cmdos-authfail" class="mono instr-offline" hidden>
     NOT AUTHENTICATED — every mutating endpoint refuses an anonymous caller. Supply an operator
     credential above, or set <span class="cond">UNWIND_DEV_PRINCIPAL</span> for local development.
+  </div>
+
+  <!-- ─────────── GOOGLE MODEL STACK + MISSION MEDIA LAB ───────────
+       Moved ABOVE the mission panels deliberately. When this sat at the
+       bottom of the page it read as an appendix bolted on after the fact;
+       the three generative modalities are part of how this system reports,
+       not a postscript to it. Everything here is inline -- no button opens
+       a separate screen, and every player is playable on arrival. -->
+  <div id="model-stack" class="cmdos-panel modelstack">
+    <h3 class="mono cmdos-h">Google model stack</h3>
+    <p class="cmdos-hint mono">every model string this system pins, joined to what a real call
+      actually did — model IDs from <span class="cond">lib/config.py</span>, statuses from
+      <span class="cond">evidence/models/verification-*.json</span>, never from a hardcoded list
+      on this page. A model that has not been exercised says so.</p>
+    <div id="model-roster" class="model-roster mono"></div>
+
+    <h3 class="mono cmdos-h">Mission Media Lab — one mission, three modalities</h3>
+    <p class="cmdos-hint mono">all three read the same grounded brief, built from the checkpoints
+      this mission actually persisted (<span class="cond">GET /api/media/mission/{id}/brief</span>
+      returns the exact input, so it can be checked against the checkpoints themselves). Each card
+      plays a committed render immediately and can also make a live call when a credential is
+      present.</p>
+    <div id="media-lab" class="media-lab"></div>
+    <p id="media-note" class="cmdos-hint mono"></p>
+
+    <div id="media-verified" class="media-verified" hidden>
+      <h4 class="mono cmdos-h">Real Vertex generation — the actual bytes, when this environment has them</h4>
+      <p class="cmdos-hint mono">one real Veo and one real Lyria generation ran against live Vertex AI
+        on 2026-08-21 (<span class="cond">evidence/models/verification-20260821T031634Z.json</span>).
+        Those files are gitignored model output, so they appear here only where someone has actually
+        put them — never re-triggered to render this panel.</p>
+      <div class="media-verified-row">
+        <div id="media-verified-veo" class="media-verified-item" hidden>
+          <div class="media-name">VEO — veo-3.1-generate-001</div>
+          <video id="mv-video" class="media-player" controls preload="none" playsinline></video>
+          <div id="mv-video-meta" class="media-model mono"></div>
+        </div>
+        <div id="media-verified-lyria" class="media-verified-item" hidden>
+          <div class="media-name">LYRIA — lyria-002</div>
+          <audio id="mv-audio" class="media-player" controls preload="none"></audio>
+          <div id="mv-audio-meta" class="media-model mono"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="cmdos-plan-panel" class="cmdos-panel" hidden>
@@ -320,67 +363,45 @@
   </div>
   <div id="cq-out" class="cq-out mono"></div>
 
-  <h3 class="mono cmdos-h">Mission Media Lab</h3>
-  <p class="cmdos-hint mono">one mission. three AI modalities. one machine-verifiable source of
-    truth — all three read the same grounded brief, built from the checkpoints this mission
-    actually persisted (<span class="cond">GET /api/media/mission/{id}/brief</span> returns the
-    exact input, so it can be checked against the checkpoints themselves)</p>
-  <div id="media-lab" class="media-lab"></div>
-  <p id="media-note" class="cmdos-hint mono"></p>
-
-  <div id="media-verified" class="media-verified" hidden>
-    <h3 class="mono cmdos-h">Real Verified Evidence — 2026-08-21</h3>
-    <p class="cmdos-hint mono">one real Veo and one real Lyria generation ran against live Vertex AI
-      this pass (not re-run since — see <span class="cond">evidence/models/verification-20260821T031634Z.json</span>).
-      Not re-triggered to render this panel: these are the actual bytes that call produced, served
-      from this environment's media directory when present.</p>
-    <div class="media-verified-row">
-      <div id="media-verified-veo" class="media-verified-item" hidden>
-        <div class="media-name">VEO — veo-3.1-generate-001</div>
-        <video id="mv-video" class="media-player" controls preload="none"></video>
-        <div id="mv-video-meta" class="media-model mono"></div>
-      </div>
-      <div id="media-verified-lyria" class="media-verified-item" hidden>
-        <div class="media-name">LYRIA — lyria-002</div>
-        <audio id="mv-audio" class="media-player" controls preload="none"></audio>
-        <div id="mv-audio-meta" class="media-model mono"></div>
-      </div>
-    </div>
-  </div>
-
   <h3 class="mono cmdos-h">System Reality</h3>
   <p class="cmdos-hint mono">every feature below carries its own honest status — nothing here claims
     to be live that is not</p>
   <div id="cmdos-reality" class="cmdos-reality mono"></div>
 
+  <!-- ─────────── MISSION TIME MACHINE — INLINE ───────────
+       This was a separate screen behind a "Mission Time Machine ▶" button.
+       The button was the whole problem: it navigated away from the mission
+       the operator was looking at, and when the panel loaded empty there was
+       nothing on screen to say why. It is now a heading on this page, below
+       the mission it replays, loaded with everything else. Nothing to press,
+       nothing to navigate back from. -->
+  <h3 class="mono cmdos-h" id="mtm-heading">Mission Time Machine</h3>
+  <p class="cmdos-hint mono">historical mission state, reconstructed from real checkpoints — not a
+    literal reversal of time, a replay of what was actually persisted. Loads with this page; the
+    most recent mission opens on its own.</p>
+
+  <div class="mtm-inline">
+    <h4 class="mono cmdos-h">Mission arc — past to current trusted state</h4>
+    <ol id="mtm-timeline" class="mtm-arc mono"></ol>
+
+    <div id="mtm-state" class="cmdos-report mono mtm-state" hidden></div>
+
+    <div class="cmdos-tf-grid">
+      <div>
+        <h4 class="mono cmdos-h">Missions</h4>
+        <ol id="mtm-missions" class="cmdos-mission-list mono"></ol>
+      </div>
+      <div>
+        <h4 class="mono cmdos-h">Checkpoints</h4>
+        <ol id="mtm-checkpoints" class="cmdos-stages mono"></ol>
+        <div id="mtm-detail" class="cmdos-report mono" hidden></div>
+      </div>
+    </div>
+  </div>
+
   <p class="instr-hint mono">every stage above calls a real engine one layer down · every status
     label is served by <span class="cond">/api/command-os/status</span>, a second independently
     queryable source that must agree with this page or this page is wrong</p>
-</section>
-
-<!-- ─────────── MISSION TIME MACHINE ─────────── -->
-<section id="mission-time-machine" class="overlay cmdos" hidden>
-  <button type="button" id="mtm-back" class="btn btn-quiet cmdos-back-link">&#9650; Agentic Command OS</button>
-  <h2 class="cond overlay-h">MISSION TIME MACHINE</h2>
-  <p class="mono cmdos-lede">historical mission state, reconstructed from real checkpoints — not a
-    literal reversal of time, a replay of what was actually persisted</p>
-
-  <h3 class="mono cmdos-h">Mission arc — past to current trusted state</h3>
-  <ol id="mtm-timeline" class="mtm-arc mono"></ol>
-
-  <div id="mtm-state" class="cmdos-report mono mtm-state" hidden></div>
-
-  <div class="cmdos-tf-grid">
-    <div>
-      <h3 class="mono cmdos-h">Missions</h3>
-      <ol id="mtm-missions" class="cmdos-mission-list mono"></ol>
-    </div>
-    <div>
-      <h3 class="mono cmdos-h">Checkpoints</h3>
-      <ol id="mtm-checkpoints" class="cmdos-stages mono"></ol>
-      <div id="mtm-detail" class="cmdos-report mono" hidden></div>
-    </div>
-  </div>
 </section>
 
 <!-- ─────────── THE INSTRUMENT (Card 0 spanning Cards 1-3) ─────────── -->

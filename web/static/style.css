@@ -1069,9 +1069,57 @@ html, body {
 }
 .media-details summary:hover { opacity: 0.9; }
 .media-player { width: 100%; margin-top: 8px; border: 1px solid var(--slate); }
+
+/* ── THE COMMITTED RENDER, INLINE IN THE CARD ──────────────────────────
+ * The player sits INSIDE the card it belongs to rather than in a separate
+ * panel further down the page, because a video of a mission and the card
+ * describing that mission's modality are one thing. The amber left rule is
+ * the same "this is a claim about provenance" marker the load warning uses:
+ * it is what separates a committed local render from a model generation,
+ * and it must be impossible to read the player without reading the label. */
+.media-demo {
+  width: 100%; margin-top: 10px; padding-left: 10px;
+  border-left: 2px solid var(--amber);
+}
+.media-demo-label {
+  color: var(--amber); opacity: 0.92; line-height: 1.5; font-size: 10px;
+  letter-spacing: 0.02em;
+}
+.media-demo .media-player { max-height: 200px; }
+.media-demo audio.media-player { height: 36px; border: none; }
+.media-demo .media-text { max-height: 190px; font-size: 10px; }
+
 @media (max-width: 1100px) {
   .media-lab { grid-template-columns: 1fr; }
 }
+
+/* ── GOOGLE MODEL STACK ────────────────────────────────────────────────
+ * One chip per pinned model string. Flat, small, and above the mission
+ * panels: the point is that a reader can see the whole stack at a glance
+ * and see which entries have an actual call behind them, not that any one
+ * of them is featured. The status badges reuse the page's own vocabulary
+ * (.cmdos-live / .cmdos-unavailable / .cmdos-designed) so a green tick here
+ * means exactly what a green tick means anywhere else on this page. */
+.model-roster {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.model-chip {
+  border: 1px solid var(--slate); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.model-chip-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.model-family { font-size: 12px; letter-spacing: 0.08em; color: var(--bone); }
+.model-id { color: var(--amber); opacity: 0.92; word-break: break-all; }
+.model-roster-foot { grid-column: 1 / -1; opacity: 0.62; }
+.modelstack { border-top: 1px solid var(--slate); padding-top: 18px; }
+
+/* ── MISSION TIME MACHINE, INLINE ──────────────────────────────────────
+ * It used to be a separate screen behind a button. Inline, it needs a rule
+ * above it so the page still reads as sections rather than one scroll, and
+ * the same left inset the other panels use. */
+.mtm-inline { border-top: 1px solid var(--slate); padding-top: 14px; margin-bottom: 18px; }
+.mtm-empty { list-style: none; opacity: 0.62; padding: 6px 0; }
 
 /* ── REAL VERIFIED EVIDENCE — the one genuine Veo/Lyria generation this
  * project ran, played back from the actual bytes when this environment has

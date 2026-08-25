@@ -1663,6 +1663,172 @@ async def media_verified_evidence() -> dict[str, Any]:
     return out
 
 
+#: The demo bundle `scripts/build_demo_media.py` renders into `web/static/media`
+#: and commits. Unlike `.media/`, these are NOT model output: they are a
+#: deterministic local render of the committed grounded brief, reproducible on
+#: any machine with no credential and no network. They exist so a deployment
+#: that has never held a Vertex credential can still SHOW the mission instead
+#: of only describing it -- and they are labelled as a local render everywhere
+#: they appear, so they can never be mistaken for a Veo or Lyria generation.
+DEMO_MEDIA = STATIC / "media"
+
+
+def _demo_bundle() -> dict[str, Any]:
+    """The committed, always-playable demo render -- or an honest absence."""
+    manifest = DEMO_MEDIA / "manifest.json"
+    if not manifest.is_file():
+        return {"available": False, "reason": "web/static/media/manifest.json is not present"}
+    try:
+        record = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"available": False, "reason": f"demo manifest unreadable: {exc}"}
+    out: dict[str, Any] = {
+        "available": True,
+        "kind": record.get("kind"),
+        "mission_id": record.get("mission_id"),
+        "checkpoint_count": record.get("checkpoint_count"),
+        "source_brief": record.get("source_brief"),
+        "generator": record.get("generator"),
+        "not_a_model_call": True,
+    }
+    #: A manifest entry is only reported when the BYTES are actually on disk.
+    #: A manifest that outlives its files would otherwise put a dead <video>
+    #: element on the page, which is the exact failure this endpoint exists to
+    #: stop.
+    for slot in ("video", "audio", "narration"):
+        entry = record.get(slot) or {}
+        name = entry.get("file")
+        path = DEMO_MEDIA / name if name else None
+        if path is not None and path.is_file():
+            item = {
+                "url": f"/static/media/{name}",
+                "filename": name,
+                "mime_type": entry.get("mime"),
+                "size_bytes": path.stat().st_size,
+            }
+            poster = entry.get("poster")
+            if poster and (DEMO_MEDIA / poster).is_file():
+                item["poster_url"] = f"/static/media/{poster}"
+            if entry.get("duration_seconds"):
+                item["duration_seconds"] = entry["duration_seconds"]
+            #: Alternate containers of the SAME render, in the order the page
+            #: should offer them. Filtered by presence on disk for the same
+            #: reason the primary file is: a <source> pointing at a missing
+            #: file is a silent failure, and this endpoint's whole job is to
+            #: make absence loud.
+            sources = [
+                {
+                    "url": f"/static/media/{alt['file']}",
+                    "filename": alt["file"],
+                    "mime_type": alt.get("mime"),
+                    "size_bytes": (DEMO_MEDIA / alt["file"]).stat().st_size,
+                }
+                for alt in (entry.get("sources") or [])
+                if alt.get("file") and (DEMO_MEDIA / alt["file"]).is_file()
+            ]
+            if sources:
+                item["sources"] = sources
+            out[slot] = item
+        else:
+            out[slot] = None
+    out["available"] = any(out.get(slot) for slot in ("video", "audio", "narration"))
+    return out
+
+
+def _latest_model_verification() -> dict[str, Any]:
+    """The newest `evidence/models/verification-*.json`, or an empty record.
+
+    Filenames are UTC timestamps, so a lexical max IS the chronological max --
+    no parsing, and no chance of picking a stale file because a date format
+    changed.
+    """
+    directory = REPO / "evidence" / "models"
+    if not directory.is_dir():
+        return {}
+    files = sorted(p for p in directory.glob("verification-*.json") if p.is_file())
+    if not files:
+        return {}
+    try:
+        return json.loads(files[-1].read_text(encoding="utf-8")) | {"source": files[-1].name}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+@app.get("/api/media/model-roster")
+async def media_model_roster() -> dict[str, Any]:
+    """Every Google model this project pins, with what a real call actually did.
+
+    WHY THIS ENDPOINT EXISTS RATHER THAN A HARDCODED LIST IN THE PAGE.
+    `lib/config.py` is the only place a model string may live, and
+    `evidence/models/verification-*.json` is the only place a model's LIVE
+    status may come from -- it is written by a script that made the call, not
+    by anyone's belief about what should work. Joining them here means the
+    page cannot advertise a model that config does not pin, and cannot claim
+    a status no call produced. The Gemma entry currently comes back
+    UNAVAILABLE for exactly that reason, and the page says so rather than
+    quietly omitting it.
+    """
+    from lib.config import (
+        GEMMA_MODEL,
+        LYRIA_MODEL,
+        MODEL_DEEP,
+        MODEL_FAST,
+        VEO_MODEL,
+    )
+
+    verification = _latest_model_verification()
+    by_check = {r.get("check"): r for r in verification.get("results", [])}
+
+    def entry(key: str, family: str, model: str, role: str) -> dict[str, Any]:
+        record = by_check.get(key, {})
+        #: Only a verification whose `model` matches the pinned string counts.
+        #: A status carried over from a previously-pinned model ID would be a
+        #: claim about a model this build does not use.
+        matched = record.get("model") == model
+        return {
+            "key": key,
+            "family": family,
+            "model": model,
+            "role": role,
+            "status": record.get("status", "UNVERIFIED") if matched else "UNVERIFIED",
+            "latency_ms": record.get("latency_ms") if matched else None,
+            "reason": (record.get("reason") or "")
+            if matched
+            else "no verification pass in this repository names this exact model string",
+        }
+
+    roster = [
+        entry(
+            "gemini", "Gemini", MODEL_DEEP, "deep reasoning · re-derivation, arbitration, drafting"
+        ),
+        entry(
+            "gemini_fast",
+            "Gemini",
+            MODEL_FAST,
+            "high-volume subagent work · parsing, materiality cull",
+        ),
+        entry(
+            "gemma",
+            "Gemma",
+            GEMMA_MODEL,
+            "Countersign — a DIFFERENT family, so it cannot share Gemini's blind spots",
+        ),
+        entry("veo", "Veo", VEO_MODEL, "mission visual replay"),
+        entry("lyria", "Lyria", LYRIA_MODEL, "mission state transitions as an audio signal"),
+    ]
+    live = sum(1 for r in roster if r["status"] == "LIVE_VERIFIED")
+    return {
+        "verified_at": verification.get("generated_at"),
+        "verification_source": (
+            f"evidence/models/{verification['source']}" if verification.get("source") else None
+        ),
+        "live_verified": live,
+        "total": len(roster),
+        "models": roster,
+        "demo_bundle": _demo_bundle(),
+    }
+
+
 @app.post("/api/media/mission/{mission_id}/synthesize")
 async def media_synthesize(
     mission_id: str, caller: Principal = Depends(require_principal)

@@ -1,0 +1,17 @@
+MISSION mission_628ee1fb5b — COMPLETED_WITH_RESTRICTIONS
+
+Objective: Investigate an anomalous finance capability request.
+Arc: PLAN → STEP 1 → STEP 2 → CONTAIN → STEP 3 → STEP 4 → STEP 5 → CHALLENGE → HUMAN GATE → EXECUTE → VERIFY → REPORT
+
+12 checkpoints were persisted. Drift band closed at ELEVATED.
+
+The mission's decisive moment is checkpoint 4, CONTAIN — fleet_recon ISOLATED: behaviour CRITICAL (score 100) from the evidence's own 147 tool calls on 'finance'; Gateway SCOPE_EXCEEDED: agent 'fleet_recon' requested ['finance.secret_read'], which is outside its granted scope ['corpus.read', 'documents', 'evidence.read', 'web'].
+
+Everything after that checkpoint is priced against a contained fleet, not a clean one — which is why the steps that follow carry a tax the earlier ones do not.
+
+1 of 12 checkpoints are labelled SIMULATED (CHALLENGE). They are not counted as live evidence anywhere in this system.
+
+Human principal: human::kim@ops.example.
+Independently verified: True.
+
+ZERO-MODEL RENDER — every sentence above is assembled by scripts/build_demo_media.py from the committed grounded brief. No Gemini call produced it, and it claims nothing the checkpoints do not say.

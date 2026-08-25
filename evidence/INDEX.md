@@ -723,3 +723,63 @@ this section: `services/api/main.py` (`_firestore_unavailable_reason`,
 `_dependency_versions`/`/api/healthz`), `lib/firestore.py` (comment only —
 the code is unchanged from before this section), `pyproject.toml`
 (`google-cloud-firestore<2.29.0`, `google-api-core<2.35.0`).
+
+---
+
+## 16. The Media Lab plays media with no credential; the Time Machine button is retired (2026-08-25)
+
+Full write-up with checksums, per-window audio levels, stream headers and
+screenshots: **`evidence/media/demo/PROOF.md`**. Browser run log:
+`evidence/media/demo/browser-verification-20260825T040721Z.log` (**55/55**).
+
+### The three reports, and what each one actually was
+
+| Reported | Root cause |
+| --- | --- |
+| The `Mission Time Machine ▶` button "does nothing" | It navigated to a separate screen. §10 fixed its *empty-state honesty*; the navigation itself was the remaining problem — on a protected read it took the operator one screen away from the mission they were on, to show one line. |
+| The video option plays nothing | Correct behaviour, wrong outcome. `.media/` is gitignored generated output, so the one real 2026-08-21 Veo/Lyria pass (§13) exists only on the machine that ran it. `/api/media/verified-evidence` honestly reported `available: false` and the panel honestly stayed hidden — leaving a Media Lab that could not show media on any deployment. |
+| The bonus models look bolted on | The Media Lab was the last panel on the page, below eleven others. |
+
+### What changed
+
+| File | Change |
+| --- | --- |
+| `scripts/build_demo_media.py` | **New.** Renders a deterministic bundle — 1280×720 video in WebM/VP9 *and* MP4/H.264, a 35 s WAV, a poster and a zero-model narration — from `evidence/media/grounded-brief-20260820T092845Z.json`, the committed grounded brief of `mission_628ee1fb5b`'s 12 real checkpoints. No network, no credential, no model. |
+| `web/static/media/` | **New, committed.** `.gcloudignore` already carries `web/static/` into the Cloud Run upload, so these bytes reach the deployment. |
+| `services/api/main.py` | **New** `GET /api/media/model-roster`: joins model IDs from `lib/config.py` to statuses from the newest `evidence/models/verification-*.json`, and reports the demo bundle — listing only files confirmed on disk. A status is accepted only when the verification record names the *same* string config currently pins. |
+| `web/static/index.html`, `app.js`, `style.css` | Time Machine button deleted and the panel inlined as a heading on the Agentic Command OS page; Media Lab moved above the mission panels with a Google model stack strip; a player embedded in each of the three cards. |
+| `tests/test_demo_media.py` | **New**, 9 tests. |
+| `evidence/browser/*.py`, `docs/mission-state.md` | Updated for a Time Machine that is no longer a screen. |
+
+### Why committing generated media does not break `.gitignore`'s rule
+
+That rule refuses media that "is not reproducible by any test". This bundle
+is reproducible by `python scripts/build_demo_media.py` on any machine, from
+committed input, with no credential and no network —
+`test_the_generator_reaches_no_network_and_no_model` enforces that by
+refusing any Google client, HTTP library or socket import in the generator.
+It is never presented as model output: the label `NOT a VEO generation` is
+concatenated into the player's own markup, `manifest.json` carries
+`kind: DETERMINISTIC_LOCAL_RENDER`, and
+`test_the_committed_render_is_kept_out_of_the_verified_evidence_panel`
+proves no committed file can be served through the endpoint that reports the
+real 2026-08-21 generation.
+
+### Verified, in one run
+
+`VIDEO really plays — 1280x720 at t=2.89s` (`videoWidth > 0` proves frames
+decoded, not a container parsed) · `AUDIO really plays — 35.0s track at
+t=2.91s`, unmuted · audio RMS between −22.7 and −10.7 dBFS across all 17
+two-second windows · `renders inline, with no button pressed` ·
+`did not navigate away from Agentic Command OS` · and, unchanged in the same
+run, `all three CONFIGURED_NOT_EXERCISED`, `no fake LIVE claim`, `veo
+NOT_CONFIGURED, no fake video`, `panel honestly stays hidden`.
+
+Regression: **645 passed, 1 skipped**; `ruff check` / `format --check` clean.
+
+### Still not true
+
+No Veo or Lyria call was made for this change — no GCP credential existed in
+the environment it was built in. §13 remains the only real media generation
+this project has run. And this does not deploy itself: the bytes go live on
+the next `gcloud run deploy`.

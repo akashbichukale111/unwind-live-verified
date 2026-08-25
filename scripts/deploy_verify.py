@@ -175,6 +175,22 @@ def main(argv: list[str]) -> int:
         page.wait_for_function("window.__unwindState && window.__unwindState.n > 0", timeout=60000)
         nodes = page.evaluate("window.__unwindState.n")
 
+        # The bare `#bar` field screen was retired as the landing view (see
+        # evidence/deploy/ui-premium-fix-2026-08-17.md and evidence/INDEX.md
+        # §9): Agentic Command OS is default now, `#bar` lives inside UNWIND
+        # CORE, one navigation step deeper (Command OS -> the instrument ->
+        # card 1). `window.__unwindState` still populates on load regardless
+        # (`boot()` runs unconditionally), so the wait above is unaffected --
+        # only the field itself needs a real click-through to become visible.
+        page.click("#cmdos-open-instrument")
+        # The overlay itself opens immediately (2026-08-25 fix: showInstrument()
+        # no longer waits for its three fetches before showing); #instr-body,
+        # which holds the actual card grid, unhides a beat later once that
+        # data arrives -- wait for the thing actually being clicked next.
+        page.wait_for_selector("#instr-body:not([hidden])", timeout=30000)
+        page.click('[data-card="1"]')
+        page.wait_for_selector("#bar-wrap:not([hidden])", timeout=30000)
+
         page.fill("#bar", "supplier_K lead time is now 20 days")
         page.press("#bar", "Enter")
         page.wait_for_selector("#echo:not([hidden])", timeout=30000)

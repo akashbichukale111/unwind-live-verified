@@ -674,6 +674,15 @@ _DEMO_AGENT_CONFIG = dict(
 _DEMO_AGENT_IDS = ("extractor_veteran", "extractor_rookie")
 
 
+#: The exact exception `_firestore_available()` last caught, so a caller can
+#: report WHY rather than a canned "start the emulator" message that is
+#: actively wrong once a deployment has no emulator to start. Module-level
+#: rather than a return value: `_firestore_available()` is called from many
+#: sites as a plain boolean guard, and changing its signature everywhere is
+#: a bigger, riskier diff than this.
+_LAST_FIRESTORE_ERROR: str | None = None
+
+
 def _firestore_available() -> bool:
     """True if Firestore is actually reachable right now.
 
@@ -688,6 +697,7 @@ def _firestore_available() -> bool:
     warrant reads below are unaffected either way -- this only gates
     whether `/api/instrument` bothers to try them.
     """
+    global _LAST_FIRESTORE_ERROR
     import os
 
     emulator_host = os.environ.get("FIRESTORE_EMULATOR_HOST")
@@ -697,8 +707,10 @@ def _firestore_available() -> bool:
         hostname, _, port = emulator_host.partition(":")
         try:
             with socket.create_connection((hostname, int(port or 8080)), timeout=0.75):
+                _LAST_FIRESTORE_ERROR = None
                 return True
-        except OSError:
+        except OSError as exc:
+            _LAST_FIRESTORE_ERROR = f"emulator at {emulator_host}: {exc}"
             return False
 
     # No emulator configured: either a real deployment, or a local run with
@@ -708,9 +720,23 @@ def _firestore_available() -> bool:
         from lib.firestore import get_client
 
         next(iter(get_client().collection(COLLECTION_AGENTS).limit(1).stream()), None)
+        _LAST_FIRESTORE_ERROR = None
         return True
-    except Exception:
+    except Exception as exc:
+        _LAST_FIRESTORE_ERROR = f"{type(exc).__name__}: {exc}"
         return False
+
+
+def _firestore_unavailable_reason() -> str:
+    """Why the last `_firestore_available()` call returned False, stated
+    honestly rather than with a canned "start the emulator" line that is
+    simply wrong once a request has no emulator to start (a real
+    deployment, or a local run against real Firestore with a credential
+    problem). Falls back to the old generic text only if this is somehow
+    called with no prior failed probe to explain."""
+    return (
+        _LAST_FIRESTORE_ERROR or "Firestore unreachable and no failure was recorded to explain why."
+    )
 
 
 def _ensure_demo_agents() -> None:
@@ -806,7 +832,7 @@ async def instrument() -> dict[str, Any]:
     if not _firestore_available():
         return {
             "available": False,
-            "reason": "Firestore emulator not reachable. Start it with `make emulator`.",
+            "reason": _firestore_unavailable_reason(),
         }
     _ensure_demo_agents()
     _seed_veteran_if_empty()
@@ -852,7 +878,7 @@ async def instrument_burn(caller: Principal = Depends(require_principal)) -> dic
     routes to a human -- no cache, live fold.
     """
     if not _firestore_available():
-        raise HTTPException(503, "Firestore emulator not reachable.")
+        raise HTTPException(503, _firestore_unavailable_reason())
     _ensure_demo_agents()
     _seed_veteran_if_empty()
 
@@ -899,7 +925,7 @@ async def instrument_earn(caller: Principal = Depends(require_human_principal)) 
     `countersign/DESIGN.md`), MINT, then the Gateway re-check.
     """
     if not _firestore_available():
-        raise HTTPException(503, "Firestore emulator not reachable.")
+        raise HTTPException(503, _firestore_unavailable_reason())
     _ensure_demo_agents()
 
     import os
@@ -986,7 +1012,7 @@ async def hyperion_summary() -> dict[str, Any]:
     if not _firestore_available():
         return {
             "available": False,
-            "reason": "Firestore emulator not reachable. Start it with `make emulator`.",
+            "reason": _firestore_unavailable_reason(),
         }
     from hyperion.immune_memory import aggregate_fleet_summary
 
@@ -1003,7 +1029,7 @@ async def hyperion_probe(caller: Principal = Depends(require_principal)) -> dict
     already uses for Card 0.
     """
     if not _firestore_available():
-        raise HTTPException(503, "Firestore emulator not reachable.")
+        raise HTTPException(503, _firestore_unavailable_reason())
     _ensure_hyperion_sentinel()
 
     from hyperion.guard import evaluate_with_hyperion
@@ -1089,7 +1115,7 @@ async def singularity_summary() -> dict[str, Any]:
     }
     if not _firestore_available():
         payload["mesh_available"] = False
-        payload["mesh_reason"] = "Firestore emulator not reachable. Start it with `make emulator`."
+        payload["mesh_reason"] = _firestore_unavailable_reason()
         return payload
 
     from singularity.mesh_memory import aggregate_mesh_summary
@@ -1114,7 +1140,7 @@ async def singularity_genome_probe(
       outside the SQL worker's role ceiling.
     """
     if not _firestore_available():
-        raise HTTPException(503, "Firestore emulator not reachable.")
+        raise HTTPException(503, _firestore_unavailable_reason())
 
     from singularity.genome import compute_genome
     from singularity.mesh_memory import aggregate_mesh_summary, write_genome_event
@@ -1159,7 +1185,7 @@ async def singularity_behavior_probe(
       and an export request. Expected: CRITICAL, capability_action ISOLATE.
     """
     if not _firestore_available():
-        raise HTTPException(503, "Firestore emulator not reachable.")
+        raise HTTPException(503, _firestore_unavailable_reason())
 
     from singularity.behavior import detect_drift
     from singularity.mesh_memory import aggregate_mesh_summary, write_behavior_event

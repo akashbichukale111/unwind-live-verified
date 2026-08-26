@@ -32,7 +32,7 @@ earned evidence. They are separate fields here, and:
                                regardless of every other variable.
 
 That is a hard branch in `resolve_policy`, asserted by
-`tests/test_simulation_isolation.py::test_simulation_never_becomes_earned_in_production`.
+`tests/test_adversarial.py::test_attack_09_simulation_contamination_in_production`.
 
 NOTHING IN THIS MODULE WRITES TO os.environ.
 """

@@ -2,7 +2,8 @@
 
 Scenarios are marked against `corpus/data/radius_truth.jsonl`. That file is the
 MARKING SCHEME: the harness reads it, the cascade must never touch it.
-`tests/test_ground_truth_isolation.py` enforces that, because a cascade that can
+`tests/test_spine.py::test_the_cascade_store_never_reads_the_marking_scheme`
+enforces that, because a cascade that can
 read its own answer key would score perfectly and prove nothing.
 
 A run over zero scenarios is still a valid run and exits 0, but it writes a

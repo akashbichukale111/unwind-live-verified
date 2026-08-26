@@ -103,15 +103,53 @@ _FINAL_STATUSES = {
     STATUS_HALTED,
 }
 
-#: [ASSUMPTION] A worker gets this long before the supervisor calls it hung.
-#: Small on purpose -- every tool here is local and deterministic, so a
-#: second is already pathological.
+#: [ASSUMPTION] A worker gets this long before the supervisor stops waiting
+#: for it. Small on purpose -- every tool here is local and deterministic, so
+#: a second is already pathological.
+#:
+#: WHAT THIS DOES AND DOES NOT DO, STATED HONESTLY. It bounds the
+#: SUPERVISOR'S WAIT, not the worker's execution: CPython cannot kill a
+#: running thread, so a hung tool's thread keeps running in the pool until it
+#: returns. What the mission guarantees is that it stops waiting, records a
+#: `WORKER_TIMEOUT`, discards whatever that call eventually produces, and
+#: replans -- which is the property that matters, because an unbounded wait
+#: is how a fleet stops making progress without anything appearing to fail.
+#: `tests/test_mission_failure_recovery.py::test_a_hung_worker_does_not_hang_the_mission`
+#: proves the mission finishes while the worker is still sleeping.
 TOOL_TIMEOUT_SECONDS = 10.0
 
 #: Bounded retries for a transient tool failure. Bounded, with no backoff
 #: needed for local tools; `docs/SECURITY.md` records that a networked
 #: backend would need jitter and this does not have one.
 MAX_TOOL_ATTEMPTS = 2
+
+#: Hard ceiling on the mission's own work queue. `_append_phase` lets a
+#: handler extend the mission durably -- a containment probe, a replan, a
+#: reconciliation -- and that is the mechanism that makes the mission react
+#: to what it finds. It is also, structurally, the mechanism by which a
+#: mission could never finish: a handler that appends the phase that appends
+#: it is a loop with a checkpoint after every iteration, which is worse than
+#: a spin because it also writes.
+#:
+#: So the queue has a ceiling. Reaching it is not a crash and is not silent:
+#: the append is refused, `ctx["phase_budget_exhausted"]` is set, and the
+#: mission finishes with what it has. The number is deliberately far above
+#: any real plan (the longest committed plan produces ~11 phases) so hitting
+#: it means something is wrong, not that the ceiling is tight.
+MAX_MISSION_PHASES = 24
+
+#: [ASSUMPTION] How many prior-mission knowledge records may influence one
+#: plan, and how many characters of them the planner may see.
+#:
+#: These two numbers ARE the "massive context" answer. The knowledge store
+#: grows without bound as missions run; what reaches a planning decision is
+#: capped here, and `recall/index.py` reports how many records it dropped to
+#: honour the cap. So the claim "UNWIND does not put its whole history into
+#: one prompt" is a pair of constants and a number in the checkpoint, not a
+#: paragraph. Small on purpose: five well-chosen records beat fifty, and a
+#: budget that is never binding is not a budget.
+RECALL_TOP_K = 5
+RECALL_CHAR_BUDGET = 1200
 
 
 # ===========================================================================
@@ -163,7 +201,16 @@ def _signals(ctx: dict[str, Any]) -> UncertaintySignals:
         drift_band=_effective_drift_band(ctx),
         model_disagreement=bool(ctx.get("challenger_disagreed", False)),
         external_state_changed=bool(ctx.get("external_state_changed", False)),
-        risk_divergence=bool(ctx.get("risk_divergence", False)),
+        # Two independent sources of divergence, OR-ed rather than
+        # overwritten. The risk step sets `risk_divergence` and the
+        # reconciliation step sets `reconciliation_disputed`; because the
+        # reconciliation runs FIRST, assigning to one key would let the risk
+        # step silently clear a live dispute -- the same clobbering bug
+        # `_effective_drift_band` exists to fix one field over.
+        risk_divergence=(
+            bool(ctx.get("risk_divergence", False))
+            or bool(ctx.get("reconciliation_disputed", False))
+        ),
         consequence_band=str(ctx.get("consequence_band", "NONE")),
     )
 
@@ -174,18 +221,33 @@ def _plan(ctx: dict[str, Any]):
     return MissionPlan(**ctx["plan"])
 
 
-def _append_phase(ctx: dict[str, Any], phase: str, *, after_cursor: bool = True) -> None:
-    """Add work to the mission's durable queue.
+def _append_phase(ctx: dict[str, Any], phase: str, *, after_cursor: bool = True) -> bool:
+    """Add work to the mission's durable queue. Returns whether it was added.
 
     `after_cursor=True` inserts immediately after the current position, so a
     containment probe raised by the risk step runs BEFORE the remaining plan
     steps rather than after them. The queue lives in `ctx`, so the insertion
     survives a restart.
+
+    Refused, with a reason recorded in `ctx`, once the queue reaches
+    `MAX_MISSION_PHASES`. A refused append is the loop bound: see that
+    constant for why a mission that can extend itself needs one.
     """
+    if len(ctx["phases"]) >= MAX_MISSION_PHASES:
+        ctx["phase_budget_exhausted"] = True
+        ctx.setdefault("refused_phases", []).append(phase)
+        logger.warning(
+            "mission %s refused phase %s: queue is at the %d-phase ceiling",
+            ctx.get("mission_id"),
+            phase,
+            MAX_MISSION_PHASES,
+        )
+        return False
     if after_cursor:
         ctx["phases"].insert(ctx["cursor"] + 1, phase)
     else:
         ctx["phases"].append(phase)
+    return True
 
 
 def _agent_for(role_or_agent_role) -> Any:
@@ -260,14 +322,134 @@ def _seed_warrant(ctx: dict[str, Any]) -> dict[str, int]:
 # ===========================================================================
 
 
+def _recall_for_objective(ctx: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+    """Retrieve what previous missions measured, and derive what it may change.
+
+    Returns `(directive, record)`. `record` is JSON-safe and goes into the
+    PLAN checkpoint whatever happens, including when recall is unavailable --
+    "no prior knowledge was consulted" and "prior knowledge was consulted and
+    was empty" are different facts and a judge should not have to guess which.
+
+    Best-effort by design: recall is an INPUT to planning, not a
+    precondition for it. A store that cannot be reached produces a mission
+    that plans exactly as it would have without one, which is the same
+    stance `lib/vertex.py` takes for the model.
+    """
+    from recall.guard import ScrutinyDirective
+
+    empty = ScrutinyDirective()
+    try:
+        from recall.guard import build_directive
+        from recall.index import search
+        from recall.store import list_records
+
+        corpus = list_records()
+        result = search(
+            ctx["objective"],
+            corpus,
+            k=RECALL_TOP_K,
+            char_budget=RECALL_CHAR_BUDGET,
+        )
+        directive = build_directive(result)
+        quarantined = _quarantine_grant_shaped_records(result)
+        return directive, {
+            "quarantined": quarantined,
+            "available": True,
+            "corpus_records": result.considered,
+            "selected": len(result.selected),
+            "filtered_out": result.filtered_out,
+            "zero_scored": result.zero_scored,
+            "dropped_for_budget": result.dropped_for_budget,
+            "chars_returned": result.chars_returned,
+            "char_budget": result.char_budget,
+            "selection_ratio": round(result.selection_ratio, 4),
+            "selected_records": [
+                {
+                    "record_id": item.record.record_id,
+                    "kind": item.record.kind.value,
+                    "subject": item.record.subject,
+                    "statement": item.record.statement,
+                    "mission_id": item.record.mission_id,
+                    "checkpoint_seq": item.record.checkpoint_seq,
+                    "source": item.record.source,
+                    "score": item.score,
+                    "matched_terms": item.matched_terms,
+                }
+                for item in result.selected
+            ],
+            "directive": directive.as_record(),
+        }
+    except Exception as exc:  # noqa: BLE001 -- recall informs planning, never gates it
+        logger.info("recall unavailable for mission %s: %s", ctx.get("mission_id"), exc)
+        return empty, {
+            "available": False,
+            "reason": f"{type(exc).__name__}: {exc}",
+            "directive": empty.as_record(),
+        }
+
+
+def _risk_profile(plan) -> str:
+    """The plan's risk classes, in step order. Comparable across two plans."""
+    return "|".join(f"{s.seq}:{s.risk_class}" for s in plan.steps)
+
+
+def _quarantine_grant_shaped_records(result) -> list[str]:
+    """Make an exclusion DURABLE, not recomputed on every mission.
+
+    `recall/guard.py:build_directive` already refuses to let a grant-shaped
+    record influence anything -- but it refuses silently and afresh each
+    time, so a record written into the store by an attacker keeps being
+    retrieved, keeps being screened, and leaves no trace anywhere that
+    somebody tried.
+
+    This writes a superseding `UNTRUSTED` record, which `recall/index.py`
+    excludes from every default search. The original is NOT deleted: an
+    edited-away memory is a memory with no evidence that it was attacked,
+    which is the whole reason `recall/store.py` has no delete on its public
+    surface.
+
+    Best-effort and returns what it quarantined, so the PLAN checkpoint
+    carries the attempt even if the write fails.
+    """
+    from recall.guard import screen_statement
+    from recall.schema import Standing
+    from recall.store import mark_untrusted
+
+    quarantined: list[str] = []
+    for item in result.selected:
+        record = item.record
+        if record.standing is Standing.UNTRUSTED:
+            continue
+        if screen_statement(record.statement) is not Standing.UNTRUSTED:
+            continue
+        try:
+            mark_untrusted(
+                record,
+                "the statement reads as a grant of authority; a distilled record cannot "
+                "contain grant language, so this did not come from the distiller",
+            )
+        except Exception:  # noqa: BLE001 -- recording the attempt must not fail the mission
+            logger.exception("could not quarantine knowledge record %s", record.record_id)
+        quarantined.append(record.record_id)
+    if quarantined:
+        logger.warning("quarantined %d grant-shaped knowledge record(s)", len(quarantined))
+    return quarantined
+
+
 def _phase_plan(ctx: dict[str, Any], phase: str) -> MissionStage:
-    """Classify the objective, register the fleet, seed opening warrant, plan."""
-    from fleet.planner import build_plan
+    """Classify the objective, recall prior missions, register, seed, plan."""
+    from fleet.planner import apply_scrutiny, build_plan
     from fleet.roles import ensure_registered
 
     registration = ensure_registered()
+    directive, recall_record = _recall_for_objective(ctx)
     plan = build_plan(ctx["objective"], evidence={}, allow_model=ctx.get("allow_model", True))
+    base_fingerprint = plan.fingerprint()
+    base_risk_profile = _risk_profile(plan)
+    plan, scrutiny_applied = apply_scrutiny(plan, directive)
     ctx["plan"] = plan.model_dump(mode="json")
+    ctx["recall"] = recall_record
+    ctx["scrutiny_applied"] = scrutiny_applied
     seeded = _seed_warrant(ctx)
 
     for step in plan.steps:
@@ -283,10 +465,31 @@ def _phase_plan(ctx: dict[str, Any], phase: str) -> MissionStage:
             f"{plan.objective_class.value}: {len(plan.steps)} step(s) "
             f"[{', '.join(s.role.value for s in plan.steps)}] "
             f"— planner provenance {plan.provenance.value}"
+            + (
+                f"; {len(scrutiny_applied)} change(s) from "
+                f"{len(recall_record.get('selected_records', []))} recalled record(s)"
+                if scrutiny_applied
+                else ""
+            )
         ),
         detail={
             "plan": ctx["plan"],
             "fingerprint": plan.fingerprint(),
+            # The plan the classifier alone would have produced, kept beside
+            # the plan that ran. A judge comparing the two sees exactly what
+            # recalled knowledge changed, without replaying the mission.
+            "fingerprint_before_recall": base_fingerprint,
+            # `MissionPlan.fingerprint()` deliberately encodes role/tool/action
+            # only, so a plan whose SHAPE is unchanged still fingerprints the
+            # same. Recall's commonest effect is to raise risk classes, which
+            # changes what each step must afford at the Gateway without
+            # changing its shape -- so the risk profile is recorded beside the
+            # fingerprint. Without it, a real narrowing would look like a
+            # no-op in the checkpoint.
+            "risk_profile": _risk_profile(plan),
+            "risk_profile_before_recall": base_risk_profile,
+            "recall": recall_record,
+            "scrutiny_applied": scrutiny_applied,
             "registration": registration,
             "seeded_warrant_bp": seeded,
             "planner_provenance": plan.provenance.value,
@@ -297,68 +500,161 @@ def _phase_plan(ctx: dict[str, Any], phase: str) -> MissionStage:
     )
 
 
-def _run_tool(ctx: dict[str, Any], tool: str, step) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    """Execute one tool with a bounded retry and a real measured latency.
+def _tool_thunk(ctx: dict[str, Any], tool: str):
+    """Bind one tool call to the mission's current context. No execution here.
 
-    Returns `(output, tool_calls)`. A tool that raises twice returns a
-    structured failure rather than propagating -- an exception escaping here
-    would abort the mission mid-phase and leave a checkpoint gap, whereas a
-    structured failure routes to WORKER_FAULT, which is a branch the Gateway
-    already knows how to handle.
+    Separated from `_run_tool` so the supervisor below can hand a plain
+    zero-argument callable to an executor and know that everything the tool
+    reads was resolved on THIS thread, at the moment the attempt started --
+    a thunk that reached back into a mutating `ctx` from a worker thread
+    would make a timed-out call's late completion able to observe state from
+    a later phase.
     """
     from fleet.roles import BY_AGENT_ROLE
     from fleet.tools import (
         recon_extract_claims,
+        reconcile_adjudicate,
         remediation_prepare,
         risk_probe,
         verify_check,
     )
 
+    if tool == "recon.extract_claims":
+        # `incident_dir` is an explicit, checkpointed seam so a test (or a
+        # second incident) can point the mission at a different evidence
+        # bundle. `tests/test_mission_causality.py` uses it to run the SAME
+        # mission over evidence with the escalating row removed and compare
+        # the two traces.
+        from pathlib import Path as _Path
+
+        incident_dir = ctx.get("incident_dir")
+        path = _Path(incident_dir) if incident_dir else None
+        return lambda: recon_extract_claims(incident_dir=path)
+    if tool == "risk.probe":
+        scopes = {r.agent_id: list(r.authority_scope) for r in BY_AGENT_ROLE.values()}
+        recon = ctx.get("recon", {})
+        return lambda: risk_probe(recon=recon, fleet_scopes=scopes)
+    if tool == "reconcile.adjudicate":
+        recon = ctx.get("recon", {})
+        return lambda: reconcile_adjudicate(recon=recon)
+    if tool == "remediation.prepare":
+        risk, recon = ctx.get("risk", {}), ctx.get("recon", {})
+        mission_id = ctx["mission_id"]
+        return lambda: remediation_prepare(risk=risk, mission_id=mission_id, recon=recon)
+    if tool == "remediation.execute":
+        # Execution is never done by a tool: it goes through the one
+        # authorized path in `command_os/external.py`, at the EXECUTE phase,
+        # after the gate. This tool only stages the proposal.
+        proposal = ctx.get("proposal", {})
+        return lambda: {"staged": True, "proposal": proposal}
+    if tool == "verify.check":
+        proposal, recorded = ctx.get("proposal", {}), ctx.get("external_record")
+        return lambda: verify_check(proposal=proposal, recorded=recorded)
+    raise ValueError(f"unknown tool {tool!r}")
+
+
+def _contract_inputs(ctx: dict[str, Any], tool: str) -> dict[str, Any]:
+    """What the worker was GIVEN, for `fleet/contracts.py`'s grounding checks.
+
+    Only the inputs that exist. A grounding check with no input to ground
+    against is skipped rather than passed -- see `validate_tool_output`.
+    """
+    if tool in ("risk.probe", "reconcile.adjudicate"):
+        return {"recon": ctx.get("recon", {})}
+    if tool == "remediation.prepare":
+        return {"risk": ctx.get("risk", {}), "recon": ctx.get("recon", {})}
+    return {}
+
+
+def _run_tool(ctx: dict[str, Any], tool: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Execute one tool under a supervisor: bounded wait, bounded retries,
+    and an output contract checked before the result is believed.
+
+    Returns `(output, tool_calls)`. Three distinct ways an attempt fails, and
+    the trace names which one happened rather than collapsing them:
+
+      RAISED    -- the tool raised. Recorded with the exception text.
+      TIMED_OUT -- the supervisor stopped waiting after
+                   `TOOL_TIMEOUT_SECONDS`. See that constant for what this
+                   does and does not guarantee.
+      CONTRACT  -- the tool returned, and what it returned failed
+                   `fleet/contracts.py`. This is the case `tower/gateway.py:
+                   check_worker_fault` cannot see: right shape, wrong
+                   contents. The output is DISCARDED, never merged into
+                   `ctx`, so a fabricated coverage figure can never price an
+                   action and a finding about an agent the evidence never
+                   named can never reach the Gateway.
+
+    A tool that fails every attempt returns a structured failure rather than
+    propagating -- an exception escaping here would abort the mission
+    mid-phase and leave a checkpoint gap, whereas a structured failure routes
+    to WORKER_FAULT, which is a branch the Gateway already knows how to
+    handle.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import TimeoutError as FutureTimeout
+
+    from fleet.contracts import validate_tool_output
+
     calls: list[dict[str, Any]] = []
     last_error = ""
+    last_failure = ""
+    last_violations: list[dict[str, str]] = []
+
     for attempt in range(1, MAX_TOOL_ATTEMPTS + 1):
         started = time.monotonic()
         try:
-            if tool == "recon.extract_claims":
-                # `incident_dir` is an explicit, checkpointed seam so a test
-                # (or a second incident) can point the mission at a different
-                # evidence bundle. `tests/test_mission_causality.py` uses it
-                # to run the SAME mission over evidence with the escalating
-                # row removed and compare the two traces.
-                from pathlib import Path as _Path
+            thunk = _tool_thunk(ctx, tool)
+        except ValueError as exc:
+            # An unknown tool is not a transient fault and must not be
+            # retried: the tool vocabulary is closed and validated in the
+            # planner, so arriving here means the plan bypassed validation.
+            last_error = f"{type(exc).__name__}: {exc}"
+            calls.append(
+                {
+                    "tool": tool,
+                    "ok": False,
+                    "latency_ms": 0,
+                    "attempt": attempt,
+                    "failure": "UNKNOWN_TOOL",
+                    "error": last_error,
+                }
+            )
+            return (
+                {"__failed__": True, "error": last_error, "failure": "UNKNOWN_TOOL"},
+                calls,
+            )
 
-                incident_dir = ctx.get("incident_dir")
-                output = recon_extract_claims(
-                    incident_dir=_Path(incident_dir) if incident_dir else None
-                )
-            elif tool == "risk.probe":
-                scopes = {r.agent_id: list(r.authority_scope) for r in BY_AGENT_ROLE.values()}
-                output = risk_probe(recon=ctx.get("recon", {}), fleet_scopes=scopes)
-            elif tool == "remediation.prepare":
-                output = remediation_prepare(
-                    risk=ctx.get("risk", {}),
-                    mission_id=ctx["mission_id"],
-                    recon=ctx.get("recon", {}),
-                )
-            elif tool == "remediation.execute":
-                # Execution is never done by a tool: it goes through the one
-                # authorized path in `command_os/external.py`, at the EXECUTE
-                # phase, after the gate. This tool only stages the proposal.
-                output = {"staged": True, "proposal": ctx.get("proposal", {})}
-            elif tool == "verify.check":
-                output = verify_check(
-                    proposal=ctx.get("proposal", {}),
-                    recorded=ctx.get("external_record"),
-                )
-            else:
-                raise ValueError(f"unknown tool {tool!r}")
+        # The supervisor. One worker thread per attempt, and the pool is NOT
+        # shut down with wait=True on the timeout path -- waiting for a hung
+        # worker inside the handler for a hung worker is the same bug twice.
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f"unwind-tool-{attempt}")
+        future = executor.submit(thunk)
+        try:
+            output = future.result(timeout=TOOL_TIMEOUT_SECONDS)
+        except FutureTimeout:
             latency_ms = int((time.monotonic() - started) * 1000)
-            calls.append({"tool": tool, "ok": True, "latency_ms": latency_ms, "attempt": attempt})
-            if not isinstance(output, dict):
-                raise TypeError(f"tool {tool!r} returned {type(output).__name__}, not a dict")
-            return output, calls
+            last_failure = "TIMED_OUT"
+            last_error = (
+                f"tool {tool!r} did not return within {TOOL_TIMEOUT_SECONDS}s; "
+                "the supervisor stopped waiting and discarded the call"
+            )
+            calls.append(
+                {
+                    "tool": tool,
+                    "ok": False,
+                    "latency_ms": latency_ms,
+                    "attempt": attempt,
+                    "failure": "TIMED_OUT",
+                    "timeout_seconds": TOOL_TIMEOUT_SECONDS,
+                    "error": last_error,
+                }
+            )
+            executor.shutdown(wait=False)
+            continue
         except Exception as exc:  # noqa: BLE001 -- bounded retry, then structured failure
             latency_ms = int((time.monotonic() - started) * 1000)
+            last_failure = "RAISED"
             last_error = f"{type(exc).__name__}: {exc}"
             calls.append(
                 {
@@ -366,10 +662,48 @@ def _run_tool(ctx: dict[str, Any], tool: str, step) -> tuple[dict[str, Any], lis
                     "ok": False,
                     "latency_ms": latency_ms,
                     "attempt": attempt,
+                    "failure": "RAISED",
                     "error": last_error,
                 }
             )
-    return {"__failed__": True, "error": last_error}, calls
+            executor.shutdown(wait=False)
+            continue
+        executor.shutdown(wait=False)
+
+        latency_ms = int((time.monotonic() - started) * 1000)
+        violations = validate_tool_output(tool, output, inputs=_contract_inputs(ctx, tool))
+        if violations:
+            last_failure = "CONTRACT"
+            last_violations = [v.as_record() for v in violations]
+            last_error = (
+                f"tool {tool!r} returned a result that failed its output contract: "
+                + "; ".join(f"{v.check}/{v.field}: {v.detail}" for v in violations[:3])
+            )
+            calls.append(
+                {
+                    "tool": tool,
+                    "ok": False,
+                    "latency_ms": latency_ms,
+                    "attempt": attempt,
+                    "failure": "CONTRACT",
+                    "violations": last_violations,
+                    "error": last_error,
+                }
+            )
+            continue
+
+        calls.append({"tool": tool, "ok": True, "latency_ms": latency_ms, "attempt": attempt})
+        return output, calls
+
+    return (
+        {
+            "__failed__": True,
+            "error": last_error,
+            "failure": last_failure or "RAISED",
+            "violations": last_violations,
+        },
+        calls,
+    )
 
 
 def _observe(ctx: dict[str, Any], step, output: dict[str, Any], calls: list[dict[str, Any]]):
@@ -488,7 +822,7 @@ def _phase_step(ctx: dict[str, Any], phase: str) -> MissionStage:
         )
 
     # --- 5. EXECUTE the tool ---------------------------------------------
-    output, calls = _run_tool(ctx, step.tool, step)
+    output, calls = _run_tool(ctx, step.tool)
     faulted = bool(output.get("__failed__"))
 
     from tower.gateway import check_worker_fault
@@ -500,22 +834,35 @@ def _phase_step(ctx: dict[str, Any], phase: str) -> MissionStage:
         output={} if faulted else output,
     )
     if faulted or fault is not None:
+        failure_kind = str(output.get("failure", "")) or ("GATEWAY" if fault else "RAISED")
+        violations = output.get("violations") or []
         ctx.setdefault("faults", []).append(
-            {"seq": step_seq, "tool": step.tool, "error": output.get("error", "")}
+            {
+                "seq": step_seq,
+                "tool": step.tool,
+                "failure": failure_kind,
+                "error": output.get("error", ""),
+                "violations": violations,
+            }
         )
         if not ctx.get("replanned"):
             _append_phase(ctx, "REPLAN")
         return MissionStage(
             n=ctx["seq"],
-            name=f"STEP {step_seq} — WORKER FAULT",
+            name=f"STEP {step_seq} — WORKER FAULT ({failure_kind})",
             status="LIVE",
             summary=(
-                f"{role.agent_id} faulted on {step.tool}: "
+                f"{role.agent_id} faulted on {step.tool} [{failure_kind}]: "
                 f"{output.get('error') or (fault.reason if fault else 'unusable output')}"
             ),
             detail={
                 "step": step.model_dump(mode="json"),
                 "tool_calls": calls,
+                "failure": failure_kind,
+                # The contract violations, verbatim. A rejected result is
+                # evidence about the worker, so it is kept in the checkpoint
+                # rather than reduced to "faulted".
+                "contract_violations": violations,
                 "fault": fault.model_dump(mode="json") if fault else None,
                 "executed": False,
             },
@@ -532,6 +879,16 @@ def _phase_step(ctx: dict[str, Any], phase: str) -> MissionStage:
         # phase exists only because premises were actually extracted.
         if output.get("claims"):
             _append_phase(ctx, "CONSEQUENCE")
+        # THE THIRD CAUSAL SEAM. Recon resolves a contradiction by RECENCY
+        # and says so; a separately-scoped specialist re-derives the same
+        # contradictions from AUTHORITY. The phase exists only because the
+        # evidence actually contradicted itself -- remove the second record
+        # for a claim and no reconciliation runs, nothing is disputed, and
+        # the report says so. Appended AFTER `CONSEQUENCE` so it lands at
+        # `cursor + 1` and therefore runs BEFORE it: what a premise change
+        # would break is worth computing only once the premise is settled.
+        if output.get("contradictions"):
+            _append_phase(ctx, "RECONCILE")
     elif step.tool == "risk.probe":
         ctx["risk"] = output
         ctx["risk_divergence"] = output.get("verdict") == "ESCALATION_FOUND"
@@ -673,6 +1030,158 @@ def _phase_contain(ctx: dict[str, Any], phase: str) -> MissionStage:
             "isolated": isolated,
         },
     )
+
+
+def _phase_reconcile(ctx: dict[str, Any], phase: str) -> MissionStage:
+    """A second, differently-scoped agent re-derives every contradicted claim.
+
+    This phase exists ONLY because recon reported a contradiction, and it is
+    delegated to `fleet_reconciler` -- a distinct principal from the one that
+    produced the contradiction, holding `claims.reconcile`, which no other
+    role holds. So it is not a branch inside recon wearing a hat: it is
+    priced, it goes through the unmodified Gateway, its output is checked
+    against `fleet/contracts.py`, and it can be refused.
+
+    The output that matters is the DISAGREEMENT. Where recency and authority
+    reach the same value the claim is settled by two independent rules.
+    Where they disagree, nothing is decided here: the claim is DISPUTED, the
+    dispute raises the mission's uncertainty (and therefore the price of
+    every subsequent action, via `warrant/economics.py`), and it is carried
+    into the report for a human. A parser that picked one would be making an
+    authority ruling it has no standing to make.
+    """
+    from fleet.roles import RECONCILER
+    from hyperion.guard import evaluate_with_hyperion
+    from singularity.behavior import detect_drift
+
+    role = RECONCILER
+    agent = _agent_for(role)
+    priced = price_action(ActionKind.ANALYZE, _signals(ctx))
+    case_id = f"{ctx['mission_id']}_reconcile"
+    ctx.setdefault("case_ids", []).append(case_id)
+
+    decision, assessment = evaluate_with_hyperion(
+        agent,
+        task="reconcile.adjudicate: re-derive contradicted claims from authority",
+        requested_scope=["claims.reconcile"],
+        requested_cost=priced.cost_bp,
+        risk_class="LOW",
+        capability=role.capabilities[0],
+        case_id=case_id,
+    )
+    if not decision.allowed:
+        ctx["last_refusal"] = {
+            "seq": ctx["seq"],
+            "reason_code": decision.reason_code.value,
+            "reason": decision.reason,
+            "cost_bp": priced.cost_bp,
+        }
+        ctx.setdefault("refusals", []).append(ctx["last_refusal"])
+        return MissionStage(
+            n=ctx["seq"],
+            name=f"RECONCILE — REFUSED ({decision.reason_code.value})",
+            status="LIVE",
+            summary=(
+                f"{role.agent_id} refused {decision.reason_code.value}: {decision.reason}; "
+                "the contradictions stand unadjudicated and the report says so"
+            ),
+            detail={
+                "priced": priced.as_record(),
+                "decision": decision.model_dump(mode="json"),
+                "risk": assessment.model_dump(mode="json"),
+                "executed": False,
+            },
+        )
+
+    output, calls = _run_tool(ctx, "reconcile.adjudicate")
+    if output.get("__failed__"):
+        failure_kind = str(output.get("failure", "RAISED"))
+        ctx.setdefault("faults", []).append(
+            {
+                "seq": ctx["seq"],
+                "tool": "reconcile.adjudicate",
+                "failure": failure_kind,
+                "error": output.get("error", ""),
+                "violations": output.get("violations") or [],
+            }
+        )
+        return MissionStage(
+            n=ctx["seq"],
+            name=f"RECONCILE — WORKER FAULT ({failure_kind})",
+            status="LIVE",
+            summary=f"{role.agent_id} faulted adjudicating: {output.get('error', '')}",
+            detail={
+                "tool_calls": calls,
+                "failure": failure_kind,
+                "contract_violations": output.get("violations") or [],
+                "executed": False,
+            },
+        )
+
+    disputes = output.get("disputes", [])
+    resolutions = output.get("resolutions", [])
+    ctx["reconciliation"] = output
+    ctx["reconciliation_verdict"] = output.get("verdict", "")
+    ctx["reconciliation_disputed"] = bool(disputes)
+    ctx["disputed_claims"] = [str(d.get("claim_id")) for d in disputes]
+    ctx["reconciled_claims"] = [str(r.get("claim_id")) for r in resolutions]
+
+    # A dispute is a behavioural signal about the mission, not only a data
+    # finding: the fleet is now acting on a premise two independent rules
+    # disagree about. That is observed the same way every other step is.
+    observation = _observe(ctx, _reconcile_step_shim(), output, calls)
+    drift = detect_drift(observation)
+    ctx["drift_band"] = drift.drift_band.value
+    ctx["drift_score"] = drift.drift_score
+
+    return MissionStage(
+        n=ctx["seq"],
+        name=(
+            f"RECONCILE — {len(resolutions)} settled, {len(disputes)} DISPUTED"
+            if disputes
+            else f"RECONCILE — {len(resolutions)} settled by two independent rules"
+        ),
+        status="LIVE",
+        summary=(
+            f"{role.agent_id} re-derived {output.get('contradictions_considered', 0)} "
+            f"contradicted claim(s) from authority: verdict {output.get('verdict')}"
+            + (
+                "; "
+                + "; ".join(
+                    f"{d.get('claim_id')} disputed ({d.get('dispute_kind')}): "
+                    f"recency {d.get('recency_value')!r} vs authority "
+                    f"{d.get('authority_value')!r}"
+                    for d in disputes
+                )
+                if disputes
+                else "; both rules agree on every claim"
+            )
+        ),
+        detail={
+            "priced": priced.as_record(),
+            "decision": decision.model_dump(mode="json"),
+            "reconciliation": output,
+            "tool_calls": calls,
+            "observation": observation.model_dump(mode="json"),
+            "drift": drift.model_dump(mode="json"),
+            "executed": True,
+        },
+    )
+
+
+def _reconcile_step_shim():
+    """The minimal step-shaped object `_observe` needs for the RECONCILE phase.
+
+    `_observe` reads `step.role` and `step.action_kind` only. Building a real
+    `PlanStep` here would put a step in the mission that the PLAN never
+    contained, which is exactly the kind of after-the-fact plan edit
+    `MissionReport.plan_fingerprint` exists to make impossible to hide.
+    """
+    from types import SimpleNamespace
+
+    from fleet.roles import RECONCILER
+
+    return SimpleNamespace(role=RECONCILER.agent_role, action_kind=ActionKind.ANALYZE.value)
 
 
 def _phase_replan(ctx: dict[str, Any], phase: str) -> MissionStage:
@@ -1125,7 +1634,8 @@ def _mission_status(ctx: dict[str, Any]) -> str:
     previous `_build_report` folded only three booleans and reported
     `HEALTHY` for a mission whose capability negotiation had been RESTRICTed
     and whose steps had been refused. Each branch below is reachable and is
-    covered by `tests/test_mission_report.py`.
+    covered by `tests/test_command_os_mission.py` and
+    `tests/test_mission_causality.py`.
     """
     if ctx.get("challenger_agrees") is False:
         return STATUS_CHALLENGED
@@ -1180,6 +1690,10 @@ def _build_report(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionRep
         evidence_completeness=float(ctx.get("evidence_completeness", 1.0)),
         contradictions_found=len(recon.get("contradictions", [])),
         escalations_found=len(risk.get("escalations", [])),
+        reconciliation_verdict=str(ctx.get("reconciliation_verdict", "")),
+        contradictions_reconciled=len(ctx.get("reconciled_claims", [])),
+        contradictions_disputed=len(ctx.get("disputed_claims", [])),
+        disputed_claims=list(ctx.get("disputed_claims", [])),
         drift_band=_effective_drift_band(ctx),
         drift_score=int(ctx.get("drift_score", 0)),
         agents_isolated=1 if ctx.get("isolated_agent") else 0,
@@ -1187,6 +1701,8 @@ def _build_report(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionRep
         gateway_refusals=[r.get("reason_code", "") for r in ctx.get("refusals", [])],
         unsafe_actions_executed=0,
         worker_faults=len(ctx.get("faults", [])),
+        worker_fault_kinds=[str(f.get("failure", "RAISED")) for f in ctx.get("faults", [])],
+        phase_budget_exhausted=bool(ctx.get("phase_budget_exhausted", False)),
         challenger_agrees=ctx.get("challenger_agrees"),
         challenger_ground=str(ctx.get("challenger_ground", "")),
         challenger_simulated=bool(ctx.get("challenger_simulated", False)),
@@ -1292,6 +1808,7 @@ _HANDLERS = {
     "STEP": _phase_step,
     "CONSEQUENCE": _phase_consequence,
     "CONTAIN": _phase_contain,
+    "RECONCILE": _phase_reconcile,
     "REPLAN": _phase_replan,
     "CHALLENGE": _phase_challenge,
     "GATE": _phase_gate,
@@ -1302,6 +1819,13 @@ _HANDLERS = {
 
 
 def _handler_for(phase: str):
+    """Resolve a queued phase to its handler.
+
+    Raises `KeyError` on an unknown phase rather than skipping it. A queue
+    entry nothing can execute means state was written by something that does
+    not agree with this module about the phase vocabulary, and continuing
+    past it would silently drop mission work.
+    """
     return _HANDLERS[phase.split(":", 1)[0]]
 
 
@@ -1348,6 +1872,38 @@ def _evaluate_trajectory(mission_id: str, report: MissionReport) -> None:
         logger.exception("trajectory evaluation failed for mission %s", mission_id)
 
 
+def _record_knowledge(mission_id: str, report: MissionReport) -> None:
+    """Distil this mission into knowledge a LATER mission can retrieve.
+
+    BEST-EFFORT, FOR THE SAME REASON `_evaluate_trajectory` IS
+    -------------------------------------------------------------
+    This runs after the terminal report exists and can change no mission
+    outcome. A store that cannot be written must not turn a COMPLETED
+    mission into a crashed one; the knowledge is simply absent, and absent
+    is visible (`/api/recall/corpus` counts what is actually there) rather
+    than papered over.
+
+    Note the ORDER: knowledge is written AFTER the report, so a mission can
+    never retrieve its own findings mid-flight and treat them as prior
+    corroboration. Every record this writes is dated by the mission that
+    produced it and can only influence the next one.
+    """
+    try:
+        from recall.distill import distill
+        from recall.store import write_records
+
+        checkpoints = [cp.model_dump(mode="json") for cp in checkpoint.list_checkpoints(mission_id)]
+        records = distill(
+            report=report.model_dump(mode="json"),
+            checkpoints=checkpoints,
+            mission_id=mission_id,
+        )
+        written = write_records(records)
+        logger.info("mission %s distilled %d knowledge record(s)", mission_id, written)
+    except Exception:  # noqa: BLE001 -- knowledge capture must never fail a mission
+        logger.exception("knowledge distillation failed for mission %s", mission_id)
+
+
 def _run_phases(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionResult:
     """The one loop `run_mission` and `resume_mission` share.
 
@@ -1388,6 +1944,7 @@ def _run_phases(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionResul
     report = _build_report(ctx, stages)
     checkpoint.update_mission_status(mission_id, report.status)
     _evaluate_trajectory(mission_id, report)
+    _record_knowledge(mission_id, report)
     return MissionResult(
         mission_id=mission_id,
         objective=ctx["objective"],

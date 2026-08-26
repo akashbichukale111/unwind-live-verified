@@ -23,7 +23,7 @@ run at all: **the evolution loop can change what an agent is TOLD, and can
 never change what an agent is ALLOWED.** A candidate version that has
 somehow been talked into requesting `sandbox.write` still meets exactly the
 same Gateway, holding exactly the same registered scope, as version 1 did.
-`tests/test_evolution_promote.py::test_candidate_carrying_scope_is_refused`
+`tests/test_evolution_promote.py::test_candidate_carrying_scope_cannot_even_be_constructed`
 proves the refusal, and
 `tests/test_evolution_versions.py::test_version_cannot_carry_authority_keys`
 proves it cannot even be constructed.

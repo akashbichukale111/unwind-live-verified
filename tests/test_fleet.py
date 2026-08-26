@@ -1,4 +1,4 @@
-"""The fleet: five bounded identities, a planner that diverges, a validator
+"""The fleet: six bounded identities, a planner that diverges, a validator
 that cannot be talked past, and tools that parse genuinely messy input.
 
 The tests split by what they need. Everything about roles, planning,
@@ -24,7 +24,15 @@ from fleet.planner import (
     replan_after_refusal,
     validate_plan,
 )
-from fleet.roles import ALL_ROLES, BY_AGENT_ID, RECON, REMEDIATION, SPECIALISTS, VERIFIER
+from fleet.roles import (
+    ALL_ROLES,
+    BY_AGENT_ID,
+    RECON,
+    RECONCILER,
+    REMEDIATION,
+    SPECIALISTS,
+    VERIFIER,
+)
 from fleet.schema import ObjectiveClass, PlanProvenance
 from fleet.tools import TOOL_REGISTRY, recon_extract_claims, risk_probe
 from warrant.economics import ActionKind
@@ -52,17 +60,29 @@ requires_emulator = pytest.mark.skipif(
 # ===========================================================================
 
 
-def test_there_are_five_distinct_agent_identities() -> None:
-    assert len(ALL_ROLES) == 5
-    assert len({r.agent_id for r in ALL_ROLES}) == 5
-    assert len({r.principal for r in ALL_ROLES}) == 5
-    assert len({r.agent_role for r in ALL_ROLES}) == 5
+def test_every_agent_identity_is_distinct() -> None:
+    """Asserted as a PROPERTY, not against a hardcoded six.
+
+    The count changed once already (five roles became six when the
+    Reconciler was added) and a test that pins the number fails on the
+    addition rather than on the thing that would actually be wrong: two
+    roles sharing an identity. What must hold is that agent_id, principal
+    and AgentRole are each unique across the fleet -- because
+    `tower/gateway.py` scopes warrant per principal and `fleet/roles.py:
+    role_for` resolves a plan step by AgentRole, so a collision in either
+    would let one agent spend another's authority.
+    """
+    n = len(ALL_ROLES)
+    assert n >= 5
+    assert len({r.agent_id for r in ALL_ROLES}) == n
+    assert len({r.principal for r in ALL_ROLES}) == n
+    assert len({r.agent_role for r in ALL_ROLES}) == n
 
 
 def test_read_only_roles_hold_no_write_scope() -> None:
     """The property the whole permission model rests on. Asserted on the
     registry data, not on a comment."""
-    for role in (RECON, VERIFIER):
+    for role in (RECON, RECONCILER, VERIFIER):
         assert not any(".write" in s for s in role.authority_scope), (
             f"{role.agent_id} holds a write scope; it is meant to be read-only"
         )
@@ -84,6 +104,17 @@ def test_the_orchestrator_cannot_be_delegated_to() -> None:
     """A planner that can assign work to itself is a single point of total
     authority -- the separation `lib/principals.py` enforces one layer down."""
     assert all(r.agent_id != "fleet_orchestrator" for r in SPECIALISTS)
+
+
+def test_there_is_one_agent_name_per_registered_role() -> None:
+    """`fleet/agents.py` builds one `LlmAgent` per role; `AGENT_NAMES` is the
+    credential-free view of that. If the two ever disagree, the UI and the
+    registry are describing different fleets."""
+    from fleet.agents import AGENT_NAMES
+
+    assert len(AGENT_NAMES) == len(ALL_ROLES)
+    assert len(set(AGENT_NAMES)) == len(AGENT_NAMES), "two agents share a name"
+    assert set(AGENT_NAMES) == {r.agent_id for r in ALL_ROLES}
 
 
 def test_planner_menu_is_generated_from_the_same_constants_the_registry_uses() -> None:

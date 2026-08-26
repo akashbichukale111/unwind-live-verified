@@ -1,0 +1,15 @@
+1181 passed, 1 skipped in 112.60s (emulator up, FIRESTORE_EMULATOR_HOST=localhost:8080)
+--- no firestore reachable (FIRESTORE_EMULATOR_HOST=localhost:9999) ---
+1026 passed, 156 skipped in 10.09s
+--- lint ---
+ruff check .          All checks passed!
+ruff format --check . 278 files already formatted
+--- corpus ---
+corpus is deterministic: regenerated manifest is byte-identical
+--- browser verification, all against a local server on the final code ---
+evidence/browser/verify_recall_and_reconcile.py   23/23  (includes a live knowledge-store poisoning attack)
+evidence/browser/verify_all_cards.py              26/26  (seven-card regression)
+evidence/browser/verify_timemachine_and_media.py  55/55
+evidence/browser/verify_mission_button.py         11/11
+--- deploy preflight ---
+scripts/deploy_check.py                           20/20 PASS

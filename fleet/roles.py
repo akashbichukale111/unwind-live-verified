@@ -1,4 +1,4 @@
-"""The specialized agent fleet: five distinct identities with bounded scope.
+"""The specialized agent fleet: six distinct identities with bounded scope.
 
 WHAT MAKES THESE AGENTS AND NOT FUNCTIONS WITH NAMES
 -------------------------------------------------------
@@ -31,7 +31,9 @@ THE PROPERTY THAT MATTERS, AND IT IS TESTED
 That is the whole point of putting the fleet's permissions in the registry
 rather than in the agent's prompt: a compromised or prompt-injected planner
 can propose anything it likes, and the deterministic layer still refuses.
-`tests/test_fleet_roles.py` asserts each of those refusals directly.
+`tests/test_fleet.py::test_recon_cannot_write_even_if_asked_to` and
+`::test_remediation_cannot_read_secrets_even_though_it_can_write` assert each
+of those refusals directly, against the real Gateway.
 
 NO MODEL CLIENT IS IMPORTED HERE
 -----------------------------------
@@ -81,7 +83,7 @@ class FleetRole:
 
 
 # ---------------------------------------------------------------------------
-# The five roles.
+# The six roles.
 #
 # [ASSUMPTION] Budgets, thresholds and schedules below are chosen,
 # demo-legible numbers, stated as chosen -- the same discipline
@@ -229,6 +231,39 @@ REMEDIATION = FleetRole(
     ),
 )
 
+RECONCILER = FleetRole(
+    key="reconciler",
+    agent_id="fleet_reconciler",
+    title="Reconciler — adjudicates contradicted claims by authority",
+    agent_role=AgentRole.WORKER_SQL,
+    purpose=(
+        "Re-derives every contradicted claim from source AUTHORITY rather than "
+        "recency, compares its ruling against the extractor's, and escalates the "
+        "claims where the two rules disagree instead of silently picking one."
+    ),
+    capabilities=["reconciliation"],
+    # READ ONLY, like Recon -- and deliberately a DIFFERENT identity from it.
+    # A reconciler that shared Recon's principal would be re-deriving its own
+    # answer, which is the tautology `lib/principals.py:assert_agent_is_distinct`
+    # exists to prevent and `judgment/rederive.py` states at length.
+    authority_scope=["evidence.read", "claims.reconcile"],
+    data_scope=["documents"],
+    tools=["reconcile.adjudicate"],
+    max_budget=100,
+    risk_class_thresholds={"LOW": 100, "MEDIUM": 50, "HIGH": 0, "CRITICAL": 0},
+    warrant_mint_schedule={"LOW": 300, "MEDIUM": 150},
+    warrant_spend_schedule={"LOW": 10, "MEDIUM": 30, "HIGH": 100},
+    permitted_actions=frozenset({ActionKind.READ_INTERNAL, ActionKind.ANALYZE}),
+    instruction=(
+        "You are the Reconciler. Given claims that contradict each other, you "
+        "decide which source actually holds standing over the predicate in "
+        "question -- not which record arrived last. Where the authority ruling "
+        "and the recency ruling disagree, you do NOT choose: you record the "
+        "disagreement as a dispute and escalate it. You hold read-only authority "
+        "and you never write to any system of record."
+    ),
+)
+
 VERIFIER = FleetRole(
     key="verifier",
     agent_id="fleet_verifier",
@@ -257,13 +292,20 @@ VERIFIER = FleetRole(
     ),
 )
 
-ALL_ROLES: tuple[FleetRole, ...] = (ORCHESTRATOR, RECON, RISK, REMEDIATION, VERIFIER)
+ALL_ROLES: tuple[FleetRole, ...] = (
+    ORCHESTRATOR,
+    RECON,
+    RECONCILER,
+    RISK,
+    REMEDIATION,
+    VERIFIER,
+)
 
 #: The specialists a plan may delegate to. The Orchestrator is excluded: it
 #: authors the plan and must not be able to assign work to itself, the same
 #: "a worker must not be its own arbiter" separation
 #: `lib/principals.py:assert_agent_is_distinct` already enforces one layer down.
-SPECIALISTS: tuple[FleetRole, ...] = (RECON, RISK, REMEDIATION, VERIFIER)
+SPECIALISTS: tuple[FleetRole, ...] = (RECON, RECONCILER, RISK, REMEDIATION, VERIFIER)
 
 BY_KEY: dict[str, FleetRole] = {r.key: r for r in ALL_ROLES}
 BY_AGENT_ID: dict[str, FleetRole] = {r.agent_id: r for r in ALL_ROLES}
@@ -349,6 +391,7 @@ __all__ = [
     "BY_KEY",
     "ORCHESTRATOR",
     "RECON",
+    "RECONCILER",
     "REMEDIATION",
     "RISK",
     "SPECIALISTS",

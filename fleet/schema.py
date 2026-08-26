@@ -130,7 +130,7 @@ class MissionPlan(_Base):
     def fingerprint(self) -> str:
         """A short, stable, comparable summary of the plan's SHAPE.
 
-        `tests/test_fleet_planner.py::test_different_objectives_create_different_plans`
+        `tests/test_fleet.py::test_different_objectives_create_different_plans`
         compares fingerprints rather than whole objects, so the assertion is
         about the plan differing in role/tool/action -- the thing that
         matters -- rather than in a timestamp.

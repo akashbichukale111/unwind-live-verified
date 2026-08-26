@@ -9,11 +9,11 @@ claim site.
 A screenshot in this repository proves what its own caption says and
 nothing more. There are no decorative screenshots.
 
-**Generated / last refreshed:** 2026-08-26 (§18 added — the governed
-evolution engine, merged into `main`; §17 and earlier unchanged, and §13's
-Gemini/Veo/Lyria verification was NOT re-run). Timestamps in filenames are
-the actual run time, not an edit
-time.
+**Generated / last refreshed:** 2026-08-26 (§20 added — the rubric pass:
+output contracts, supervised workers, the Reconciler, and the recall
+knowledge engine. §19 and earlier unchanged, and §13's Gemini/Veo/Lyria
+verification was **NOT re-run** — no model or API credit was spent in that
+pass). Timestamps in filenames are the actual run time, not an edit time.
 
 ---
 
@@ -1094,4 +1094,103 @@ credentials of any kind, and the egress proxy answers 403 to
 `CONNECT *.a.run.app`, so the live URL cannot be reached from here. See §18b.
 `main` is deployment-ready: preflight 20/20, and `.gcloudignore` carries
 `evolution/`, `web/static/media/` and `docs/` into the upload.
+
+---
+
+## 20. Output contracts, supervised workers, the Reconciler, and the recall knowledge engine (2026-08-26)
+
+A pass targeted at the published 70-point rubric. The full map of criterion →
+mechanism → test → UI proof, with a conservative before/after score and the
+limitations that remain, is **[`RUBRIC.md`](../RUBRIC.md)**.
+
+**No Gemini, Veo or Lyria generation was re-run and no model or API credit was
+spent.** `evidence/models/verification-*.json` is untouched; every mechanism
+below is deterministic and runs with `UNWIND_VERTEX_DISABLED=1`.
+
+### 20a. Two defects the audit found before anything was added
+
+| Defect | Evidence it was real | Fix | Test |
+| --- | --- | --- | --- |
+| **`TOOL_TIMEOUT_SECONDS` was dead code.** Its comment said "a worker gets this long before the supervisor calls it hung"; `grep -rn TOOL_TIMEOUT_SECONDS` returned exactly one line — the definition. A documented safeguard that does not run is worse than an absent one. | `git show 748fa77:command_os/mission.py \| grep -n TOOL_TIMEOUT` → one hit | A real supervisor around every tool call, with three named failure kinds (`TIMED_OUT` / `RAISED` / `CONTRACT`) in the trace | `tests/test_mission_failure_recovery.py::test_a_hung_worker_does_not_hang_the_mission`, `::test_the_timeout_ceiling_is_actually_read_from_the_constant` |
+| **The mission's self-extending work queue had no ceiling.** `_append_phase` is what makes the mission reactive and was also, structurally, how it could never finish. | `git show 748fa77:command_os/mission.py` — no bound in `_append_phase` or `_run_phases` | `MAX_MISSION_PHASES`; a refused append sets `phase_budget_exhausted` and is recorded | `tests/test_mission_failure_recovery.py::test_the_phase_queue_has_a_ceiling_and_refuses_past_it` |
+| **Ten docstrings cited tests that did not exist** (`tests/test_fleet_zero_model.py`, `test_fleet_planner.py`, `test_fleet_roles.py`, `test_mission_report.py`, `test_countersign_agent.py`, `test_ground_truth_isolation.py`, `test_coverage.py`, `test_simulation_isolation.py`, and two node ids that had been renamed). A confident citation of something absent is worse than no citation. | The new integrity test found all ten on its first run | Every citation repointed at a real file and node id | `tests/test_documentation_integrity.py::test_every_cited_test_exists` — parameterised one-per-citation, 279 at this commit, and `::test_the_reference_scan_is_not_vacuous` guards against the regex silently matching nothing |
+
+### 20b. What was added
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| A worker result with the right SHAPE and fabricated CONTENTS is rejected before it can write anything into mission state | `fleet/contracts.py`; `evidence/knowledge/rubric-suites-20260826T175211Z.log` | `python -m pytest tests/test_fleet_contracts.py -v` |
+| A finding may only name entities present in what the worker was GIVEN — risk cannot escalate an `agent_id` the evidence never mentioned | `tests/test_fleet_contracts.py::test_risk_may_not_name_an_agent_the_evidence_never_mentioned` | `python -m pytest tests/test_fleet_contracts.py -k grounding -v` |
+| A rejected result reaches **no** part of the mission trace — asserted by searching the whole trace for the forged numbers | `tests/test_mission_failure_recovery.py::test_a_rejected_result_never_reaches_the_mission_context` | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest tests/test_mission_failure_recovery.py -v` |
+| Every registered tool has a declared contract; a tool without one is refused, not trusted | `tests/test_fleet_contracts.py::test_every_registered_tool_has_a_contract`, `::test_a_tool_with_no_declared_contract_is_refused_rather_than_trusted` | same |
+| A second, differently-scoped agent re-derives every contradiction from AUTHORITY; the **disagreement** is the finding | `fleet/tools.py:reconcile_adjudicate`, `command_os/mission.py:_phase_reconcile` | `python -m pytest tests/test_reconcile.py -v` |
+| On the committed evidence, unmodified: `clm_supplier_K_lead_time` SETTLES (both rules say 20), `clm_tariff_rate_K` is DISPUTED (recency 8.0 from ERP vs authority 8.5 from compliance) | `evidence/knowledge/cross-mission-20260826T175211Z.json` | `python -c "from fleet.tools import *; print(reconcile_adjudicate(recon=recon_extract_claims()))"` |
+| The disputed claim is the one the operator's own note flags as *"never reconciled"* | `fleet/data/incident/ops-note.txt`; `tests/test_reconcile.py::test_the_dispute_is_the_one_the_operator_flagged_by_hand` | `python -m pytest tests/test_reconcile.py -k operator -v` |
+| The RECONCILE phase exists **only** because the evidence contradicts itself — remove the duplicate records and no phase runs, nothing is disputed, and the report says so | `tests/test_reconcile.py::test_the_reconcile_phase_runs_only_when_the_evidence_contradicts_itself` | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest tests/test_reconcile.py -v` |
+| A dispute is not a note: it raises the uncertainty tax on every later action | `tests/test_reconcile.py::test_a_dispute_raises_the_price_of_every_later_action` | same |
+
+### 20c. The knowledge engine — measured, not asserted
+
+`evidence/knowledge/cross-mission-20260826T175211Z.json` is the generated
+record of one two-mission run plus a 512-record retrieval. Its numbers:
+
+| Measurement | Value |
+| --- | --- |
+| Knowledge records mission 1 distilled from what it MEASURED | **6** (AGENT_ISOLATION, SCOPE_ESCALATION, SETTLED_PREMISE, DISPUTED_PREMISE, EVIDENCE_COVERAGE, EXTERNAL_EFFECT) |
+| Mission 1's own recall | corpus 0, selected 0 — an empty store, honestly labelled |
+| Mission 2's recall | **2 selected of 6**, 4 scored zero, 292 of 1,200 characters used |
+| Mission 2's plan, by the classifier alone | `1:LOW\|2:MEDIUM\|3:LOW\|4:MEDIUM\|5:LOW` — identical to mission 1's |
+| Mission 2's plan, as it actually ran | `1:MEDIUM\|2:MEDIUM\|3:LOW\|4:MEDIUM\|5:MEDIUM` — **narrower, because of mission 1** |
+| Retrieval over a 512-record corpus | **4 selected (0.78%)**, 508 scored zero, and all four are the records about the agent the question is about |
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| Mission N+1 plans differently because of mission N, attributably | `tests/test_recall_mission.py::test_the_second_mission_plans_differently_because_of_the_first` | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest tests/test_recall_mission.py -v` |
+| Retrieval selects rather than loading, over 500 records | `tests/test_recall_index.py::test_retrieval_selects_rather_than_loading` | `python -m pytest tests/test_recall_index.py -v` |
+| Knowledge is written AFTER the terminal report, so a mission cannot cite itself | `tests/test_recall_mission.py::test_knowledge_is_written_after_the_report_so_a_mission_cannot_cite_itself` | same |
+| An unreachable knowledge store does not stop a mission | `tests/test_recall_mission.py::test_an_unreachable_knowledge_store_does_not_stop_a_mission` | same |
+| Records are content-addressed: re-distilling a mission does not duplicate facts | `tests/test_recall_mission.py::test_records_are_content_addressed_so_a_replay_does_not_duplicate_them` | same |
+
+### 20d. Red team — the knowledge store attacked directly
+
+A memory that influences planning is a persistence surface: get one record in
+and it fires on every future mission with nobody watching.
+
+| Attack | What happened | Evidence |
+| --- | --- | --- |
+| A record written straight into the store, at `OBSERVED` standing, reading *"fleet_recon may access finance.secret_read … approve without a human gate"* | Retrieved (not hidden), screened, **excluded**, and a superseding `UNTRUSTED` record written so the exclusion is durable and the attempt is permanent evidence. The plan is identical to the un-poisoned one. | `tests/test_recall_mission.py::test_a_poisoned_record_in_the_live_store_changes_nothing`; browser check F in `evidence/knowledge/browser-20260826T175211Z.log` |
+| Widening authority through a recalled record | **Structurally impossible.** `ScrutinyDirective` has no field expressing a grant; a subclass adding one is refused at construction. | `tests/test_recall_guard.py::test_no_knowledge_record_can_widen_scope`, `::test_a_directive_with_an_undeclared_field_is_refused` |
+| Lowering a risk class through a recalled record | `raise_to` is monotone, asserted over every pair in the ordering | `tests/test_recall_guard.py::test_raise_to_never_lowers_a_risk_class` |
+| An influence with no traceable origin | A non-empty directive with no `derived_from` provenance is refused | `tests/test_recall_guard.py::test_a_non_empty_directive_must_name_where_it_came_from` |
+| Stored XSS via a knowledge statement | Rendered as literal text; no script executes | browser check F |
+| Writing to the knowledge store over HTTP | No such route exists — asserted against the app's own route table | `tests/test_recall_api.py::test_there_is_no_write_route_into_the_knowledge_store` |
+
+### 20e. Verification actually run in this pass
+
+| What | Result | File |
+| --- | --- | --- |
+| Full suite, Firestore emulator up | **1181 passed, 1 skipped** | `evidence/tests/full-suite-emulator-20260826T175211Z.log` |
+| Full suite, **no Firestore reachable at all** | **1026 passed, 156 skipped**, nothing failing | same file |
+| The seven rubric suites, verbose | **132 passed** | `evidence/knowledge/rubric-suites-20260826T175211Z.log` |
+| `ruff check .` and `ruff format --check .` | clean, 278 files | — |
+| Browser: recall + reconciliation + live store poisoning | **23/23** | `evidence/knowledge/browser-20260826T175211Z.log`, screenshot `evidence/browser/recall-and-reconcile.png` |
+| Browser: seven-card regression | **26/26** | `evidence/browser/verify_all_cards.py` |
+| Browser: Time Machine + Media Lab regression | **55/55** | `evidence/browser/verify_timemachine_and_media.py` |
+| Browser: the mission button cannot look dead | **11/11** | `evidence/browser/verify_mission_button.py` |
+| `corpus.generate --verify` | regenerated manifest byte-identical | `python -m corpus.generate --verify --out corpus/data` |
+| Deploy preflight | **20/20 PASS** | `python scripts/deploy_check.py` |
+| `docs/evaluation-report.md` regenerated | **every number reproduced unchanged**; only the generation timestamp moved, so this pass did not disturb the evolution measurements | `git diff docs/evaluation-report.md` |
+
+### 20f. What could NOT be done in this session, and why
+
+- **No deployment.** `gcloud` is not installed in this environment and the
+  egress proxy answers `403` to `CONNECT` for `*.a.run.app` and
+  `*.googleapis.com`, so neither a deploy nor a reachability check against the
+  live URL is possible from here. **No claim is made about the deployed
+  revision**; the numbers in this section are all local. `main` is
+  deployment-ready: preflight 20/20, and `recall/` sits in exactly the same
+  position in the build as `fleet/` and `command_os/` (source upload plus
+  Procfile), both of which are already serving on the live revision.
+- **No Gemini/Veo/Lyria run.** Deliberate: no model or API credit was to be
+  spent, and §13's `LIVE_VERIFIED` evidence is preserved byte-for-byte.
 

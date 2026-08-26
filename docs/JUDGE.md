@@ -14,12 +14,17 @@ reproduces it. Nothing here is projected.*
 > → verify, with a Gemini/Veo/Lyria Mission Media Lab and an inline **Mission
 > Time Machine** over every checkpoint), plus a **governed evolution loop**
 > that scores agent trajectories on seven deterministic criteria and refuses
-> to promote a version that trades safety for throughput. The whole suite is
-> now **768 passed, 1 skipped** (was 369) — see
-> [`evidence/INDEX.md` §16–19](../evidence/INDEX.md) and `README.md`'s
-> "Agentic Command OS" section for the current, larger picture. Read this
-> card for the original four-card architecture; read the README for
-> everything built since.
+> to promote a version that trades safety for throughput. Since then it has also grown
+> **output contracts** on every worker result, a **supervised** tool runner
+> (real timeout, bounded retries, three named failure kinds), a
+> **Reconciler** agent that re-derives contradicted claims from authority so
+> the disagreement between two rules becomes the finding, and a **recall
+> knowledge engine** in which mission N+1 provably plans differently because
+> of mission N. The whole suite is now **1181 passed, 1 skipped** (was 369,
+> then 768) — see [`evidence/INDEX.md` §16–20](../evidence/INDEX.md), and
+> **[`RUBRIC.md`](../RUBRIC.md)** for the criterion → mechanism → test → UI
+> map. Read this card for the original four-card architecture; read the
+> README for everything built since.
 
 ---
 
@@ -156,6 +161,16 @@ number against a rubric this submission does not own would be exactly the
 kind of unbacked figure the rest of this repository refuses to print. The
 honesty here is not modesty — it is the reason the 75.6% and the +18.2 pp
 are both worth believing.
+
+> **A note on [`RUBRIC.md`](../RUBRIC.md), which does print numbers.** That
+> file was written later, against a rubric that was published, and it exists
+> because a judge with published criteria is owed a map from each criterion
+> to the artefact that settles it — not because the numbers in it are worth
+> anything on their own. It says so itself: the scores are *the authors'
+> conservative estimates, with the evidence attached so a real judge can
+> disagree cheaply*, and it carries a limitations section naming what is
+> still missing. Read the mechanism column and the test column; the score
+> column is the least interesting thing in it.
 
 **Since this verdict was written**, the same discipline was pointed at the
 Agentic Command OS layer: `docs/evaluation-report.md` measures, rather than

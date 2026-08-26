@@ -77,6 +77,19 @@ class MissionReport(BaseModel):
     contradictions_found: int = 0
     escalations_found: int = 0
 
+    # --- what a second, independently-scoped derivation concluded --------
+    #: `RESOLVED` / `RESOLVED_WITH_DISPUTES` / `DISPUTED` /
+    #: `NO_CONTRADICTIONS`, or "" when no reconciliation ran because the
+    #: evidence did not contradict itself. Never defaulted to a clean value:
+    #: an absent reconciliation and a clean one are different facts.
+    reconciliation_verdict: str = ""
+    #: Claims where the recency rule and the authority rule agreed.
+    contradictions_reconciled: int = 0
+    #: Claims where they DISAGREED. These are not decided by the system: they
+    #: raise the uncertainty tax on every later action and reach the human.
+    contradictions_disputed: int = 0
+    disputed_claims: list[str] = Field(default_factory=list)
+
     # --- what the deterministic layer decided ----------------------------
     drift_band: str = "NORMAL"
     drift_score: int = 0
@@ -85,6 +98,15 @@ class MissionReport(BaseModel):
     gateway_refusals: list[str] = Field(default_factory=list)
     unsafe_actions_executed: int = 0
     worker_faults: int = 0
+    #: How each worker fault actually failed -- TIMED_OUT / CONTRACT /
+    #: RAISED / GATEWAY -- so "the mission recovered from a failure" names
+    #: which failure. A count alone cannot distinguish a tool that crashed
+    #: from a tool that returned a plausible lie.
+    worker_fault_kinds: list[str] = Field(default_factory=list)
+    #: True when the mission's own work queue hit `MAX_MISSION_PHASES` and an
+    #: append was refused. Visible in the report because a mission that ran
+    #: into its loop bound is not the same mission as one that did not.
+    phase_budget_exhausted: bool = False
 
     # --- independent challenge and human concurrence ---------------------
     challenger_agrees: bool | None = None

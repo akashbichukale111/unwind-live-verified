@@ -1365,12 +1365,21 @@
         row("evidence parsed", report.evidence_records_parsed + " / " + report.evidence_records_total +
             " (" + Math.round((report.evidence_completeness || 0) * 100) + "%)") +
         row("contradictions found", report.contradictions_found) +
+        row("reconciliation", (report.reconciliation_verdict || "—") +
+            (report.contradictions_found
+              ? " · " + report.contradictions_reconciled + " settled / " +
+                report.contradictions_disputed + " disputed"
+              : "")) +
+        row("disputed claims", (report.disputed_claims || []).join(", ")) +
         row("escalations found", report.escalations_found) +
         row("drift", report.drift_band + " (" + report.drift_score + ")") +
         row("agents isolated", report.agents_isolated + (report.isolated_agent ? " · " + report.isolated_agent : "")) +
         row("gateway refusals", (report.gateway_refusals || []).join(", ")) +
         row("unsafe actions executed", report.unsafe_actions_executed) +
-        row("worker faults", report.worker_faults) +
+        row("worker faults", report.worker_faults +
+            ((report.worker_fault_kinds || []).length
+              ? " · " + report.worker_fault_kinds.join(", ")
+              : "")) +
         row("challenger", report.challenger_agrees === null ? "UNAVAILABLE"
               : (report.challenger_agrees ? "AGREED" : "DISAGREED")) +
         row("human principal", report.human_principal) +
@@ -1396,6 +1405,147 @@
         row("replayed", String(report.external_replayed)) +
         row("independently verified", String(report.verified)) +
       "</div>";
+  }
+
+  //: RECALL. Everything rendered here is read back from the mission's own
+  //: PLAN checkpoint, never recomputed -- a re-run of the retriever could
+  //: return something different now, and what a judge needs to see is the
+  //: retrieval that actually informed the plan.
+  //:
+  //: Every interpolation goes through esc(): a knowledge record's statement
+  //: is server-derived text that ultimately traces back to an evidence file,
+  //: which is exactly the stored-XSS path the Time Machine already had once.
+  function renderRecall(body) {
+    const panel = $("cmdos-recall-panel");
+    const consulted = body && body.consulted;
+    if (!consulted) { panel.hidden = true; return; }
+    panel.hidden = false;
+
+    if (consulted.available === false) {
+      $("cmdos-recall").innerHTML =
+        "<div class='cmdos-reality-row'>" +
+          "<span class='cmdos-reality-feature'>knowledge store</span>" +
+          "<span class='cmdos-tag cmdos-unavailable'>UNAVAILABLE</span>" +
+        "</div>" +
+        "<div class='cmdos-hint'>" + esc(consulted.reason || "") + "</div>" +
+        "<div class='cmdos-hint'>the mission planned exactly as it would have with no store; " +
+          "recall informs planning, it never gates it</div>";
+      return;
+    }
+
+    const corpus = consulted.corpus_records || 0;
+    const selected = consulted.selected || 0;
+    const rejected = (consulted.zero_scored || 0) + (consulted.dropped_for_budget || 0) +
+      (consulted.filtered_out || 0);
+
+    const counts =
+      "<div class='cmdos-report-grid'>" +
+        row("records in the store", corpus) +
+        row("selected for this plan", selected + (corpus ? " of " + corpus : "")) +
+        row("rejected", rejected + " (" + (consulted.zero_scored || 0) + " scored zero, " +
+            (consulted.dropped_for_budget || 0) + " over budget, " +
+            (consulted.filtered_out || 0) + " filtered)") +
+        row("context used", (consulted.chars_returned || 0) + " / " +
+            (consulted.char_budget || 0) + " characters") +
+        row("risk profile", esc(body.risk_profile_before_recall || "—") + "  →  " +
+            esc(body.risk_profile || "—")) +
+        row("knowledge this mission produced", (body.produced || []).length) +
+      "</div>";
+
+    const records = (consulted.selected_records || []).map((r) => (
+      "<div class='cmdos-recall-row'>" +
+        "<div class='cmdos-recall-head'>" +
+          "<span class='cmdos-tag cmdos-reference'>" + esc(r.kind) + "</span>" +
+          "<span class='cmdos-recall-subject cond'>" + esc(r.subject) + "</span>" +
+          "<span class='cmdos-hint'>score " + esc(r.score) + " · terms " +
+            esc((r.matched_terms || []).join(", ")) + "</span>" +
+        "</div>" +
+        "<div class='cmdos-recall-statement'>" + esc(r.statement) + "</div>" +
+        "<div class='cmdos-hint'>from mission " + esc(r.mission_id) +
+          (r.checkpoint_seq ? " · checkpoint " + esc(r.checkpoint_seq) : "") +
+          (r.source ? " · source " + esc(r.source) : "") + "</div>" +
+      "</div>"
+    )).join("");
+
+    const directive = consulted.directive || {};
+    const applied = (body.scrutiny_applied || []).map(
+      (n) => "<div>· " + esc(n) + "</div>"
+    ).join("");
+
+    const directiveBlock =
+      "<div class='cmdos-recall-directive'>" +
+        "<div class='cmdos-recall-head'>" +
+          "<span class='cmdos-tag " + ((directive.derived_from || []).length ? "cmdos-live" : "cmdos-reference") + "'>" +
+            "SCRUTINY DIRECTIVE</span>" +
+          "<span class='cmdos-hint'>risk floor " + esc(directive.raise_risk_class || "LOW") +
+            " · verification " + ((directive.require_verification) ? "REQUIRED" : "not required") +
+            " · derived from " + ((directive.derived_from || []).length) + " record(s)</span>" +
+        "</div>" +
+        (directive.scrutiny_notes || []).map((n) => "<div class='cmdos-hint'>· " + esc(n) + "</div>").join("") +
+        (applied ? "<div class='cmdos-plan-clamps'>applied to the plan:" + applied + "</div>" : "") +
+      "</div>";
+
+    $("cmdos-recall").innerHTML = counts + records + directiveBlock;
+  }
+
+  //: RECONCILIATION. Read out of the mission's own RECONCILE stage rather
+  //: than re-derived, for the same reason as recall above.
+  function renderReconciliation(stages) {
+    const panel = $("cmdos-reconcile-panel");
+    const stage = (stages || []).find((s) => s.name.indexOf("RECONCILE") === 0);
+    const data = stage && stage.detail && stage.detail.reconciliation;
+    if (!data) {
+      // No reconciliation ran. That is a FACT about the evidence -- it did
+      // not contradict itself -- and hiding the panel with no explanation
+      // would read as a missing feature.
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+
+    const settled = (data.resolutions || []).map((r) => (
+      "<div class='cmdos-recall-row'>" +
+        "<div class='cmdos-recall-head'>" +
+          "<span class='cmdos-tag cmdos-live'>SETTLED</span>" +
+          "<span class='cmdos-recall-subject cond'>" + esc(r.claim_id) + "</span>" +
+          "<span class='cmdos-hint'>" + esc(r.predicate) + " = " + esc(r.chosen_value) +
+            " · authority " + esc(r.chosen_authority) + "</span>" +
+        "</div>" +
+        "<div class='cmdos-recall-statement'>" + esc(r.why) + "</div>" +
+      "</div>"
+    )).join("");
+
+    const disputed = (data.disputes || []).map((d) => (
+      "<div class='cmdos-recall-row'>" +
+        "<div class='cmdos-recall-head'>" +
+          "<span class='cmdos-tag cmdos-unavailable'>DISPUTED</span>" +
+          "<span class='cmdos-recall-subject cond'>" + esc(d.claim_id) + "</span>" +
+          "<span class='cmdos-hint'>" + esc(d.dispute_kind) + "</span>" +
+        "</div>" +
+        "<div class='cmdos-report-grid'>" +
+          row("by recency", esc(d.recency_value) + " (" + esc(d.recency_source) + ")") +
+          row("by authority", (d.authority_value === null || d.authority_value === undefined)
+                ? "no ranked authority holds standing"
+                : esc(d.authority_value) + " (" + esc(d.authority_source) + ")") +
+        "</div>" +
+        "<div class='cmdos-recall-statement'>" + esc(d.why) + "</div>" +
+      "</div>"
+    )).join("");
+
+    $("cmdos-reconcile").innerHTML =
+      "<div class='cmdos-report-grid'>" +
+        row("verdict", esc(data.verdict)) +
+        row("contradictions considered", data.contradictions_considered) +
+        row("rules compared", esc((data.rules_compared || []).join(" vs "))) +
+      "</div>" + settled + disputed;
+  }
+
+  async function loadRecall(missionId) {
+    const res = await authedFetch("/api/recall/mission/" + missionId);
+    if (!res.ok) { $("cmdos-recall-panel").hidden = true; return; }
+    const body = await res.json();
+    if (body.available === false) { $("cmdos-recall-panel").hidden = true; return; }
+    renderRecall(body);
   }
 
   function renderTrust(state) {
@@ -1441,6 +1591,8 @@
     cmdosMissionId = d.mission_id;
     renderMissionStages(d.stages);
     renderPlan(d.plan);
+    renderReconciliation(d.stages);
+    loadRecall(d.mission_id);
     if (d.status === "AWAITING_HUMAN") {
       $("cmdos-gate").hidden = false;
       $("cmdos-report").hidden = true;
@@ -1515,6 +1667,8 @@
     $("cmdos-authfail").hidden = true;
     $("cmdos-plan-panel").hidden = true;
     $("cmdos-external-panel").hidden = true;
+    $("cmdos-recall-panel").hidden = true;
+    $("cmdos-reconcile-panel").hidden = true;
     try {
       const autoApprove = !$("cmdos-auto-approve").checked;
       const objective = encodeURIComponent($("cmdos-objective-input").value.trim());

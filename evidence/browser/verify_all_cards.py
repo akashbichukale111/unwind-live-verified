@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import urllib.request
 
 os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:8080")
 
@@ -47,6 +48,14 @@ failed_requests: list[str] = []
 def check(name: str, ok: bool, detail: str = "") -> None:
     results.append({"check": name, "pass": bool(ok), "detail": detail})
     print(f"  {'PASS' if ok else 'FAIL'}  {name}{(' — ' + detail) if detail else ''}")
+
+
+def api(path: str) -> dict:
+    """One unauthenticated read, used to check the UI against the source the
+    UI itself renders from -- so a check compares two live things rather
+    than one live thing and a number somebody typed."""
+    with urllib.request.urlopen(f"{BASE}{path}", timeout=30) as response:  # noqa: S310
+        return json.load(response)
 
 
 def main() -> int:
@@ -85,10 +94,17 @@ def main() -> int:
         # 1. AGENTIC COMMAND OS — the default view
         # ---------------------------------------------------------------
         check("[1/7] AGENTIC COMMAND OS renders", page.is_visible("#command-os"))
+        # Checked against the API rather than a hardcoded count. The fleet
+        # gained a sixth identity (the Reconciler) and a pinned number turned
+        # a correct addition into a red check, which teaches the reader to
+        # ignore red checks. What must hold is that the UI shows every
+        # registered identity and no more.
+        registered = api("/api/command-os/fleet")["roles"]
+        rendered = page.locator(".cmdos-fleet-row").count()
         check(
-            "      fleet: 5 bounded identities",
-            page.locator(".cmdos-fleet-row").count() == 5,
-            f"{page.locator('.cmdos-fleet-row').count()} rows",
+            "      fleet: every registered identity is on screen",
+            rendered == len(registered),
+            f"{rendered} rows, {len(registered)} registered",
         )
         check(
             "      warrant market prices live",

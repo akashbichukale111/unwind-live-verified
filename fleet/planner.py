@@ -12,7 +12,7 @@ A plan is now COMPUTED, and it is computed from the objective and from the
 evidence actually gathered. Two different objectives produce two different
 plans -- different specialists, different tools, different action kinds,
 different risk classes -- and
-`tests/test_fleet_planner.py::test_different_objectives_create_different_plans`
+`tests/test_fleet.py::test_different_objectives_create_different_plans`
 compares plan fingerprints to prove it rather than asserting it.
 
 TWO PLANNERS, ONE VALIDATOR, HONEST PROVENANCE
@@ -59,7 +59,7 @@ from fleet.roles import BY_AGENT_ROLE, RECON, REMEDIATION, RISK, VERIFIER, Fleet
 from fleet.schema import MissionPlan, ObjectiveClass, PlanProvenance, PlanStep
 from fleet.tools import TOOL_REGISTRY
 from singularity.schema import AgentRole
-from warrant.economics import ActionKind, parse_action_kind
+from warrant.economics import MUTATING_ACTIONS, ActionKind, parse_action_kind
 
 #: Identifier recorded as `MissionPlan.model` when no model produced the plan.
 #: Deliberately not blank and deliberately not a model name.
@@ -582,6 +582,122 @@ def build_plan(
         clamps=[],
         notes=notes,
     )
+
+
+def apply_scrutiny(plan: MissionPlan, directive) -> tuple[MissionPlan, list[str]]:
+    """Apply a `recall.guard.ScrutinyDirective` to a plan. Narrowing only.
+
+    Returns `(plan, applied)`. `applied` names every change, in the same
+    style as `MissionPlan.clamps`, so a plan influenced by prior missions
+    says so in its own record rather than differing silently from the plan
+    the classifier would have produced.
+
+    THE TWO THINGS THIS CAN DO, AND THE MANY IT CANNOT
+    -----------------------------------------------------
+    It can RAISE a step's risk class (never lower it -- `recall.guard.
+    raise_to` is monotone) and it can APPEND one read-only verification step
+    using the VERIFIER role's own registered scope and tool. That is the
+    complete list.
+
+    It cannot add scope to a step, add a tool, change an action kind to a
+    mutating one, add a role that was not already in the fleet registry,
+    remove a gate, or extend the plan past `MAX_PLAN_STEPS`. Those are not
+    guarded against here by checking for them: they are unreachable because
+    `ScrutinyDirective` has no field that expresses any of them
+    (`recall/guard.py:assert_directive_cannot_widen` enforces that at
+    construction), and because the appended step is built from
+    `fleet/roles.py:VERIFIER` rather than from anything a record supplied.
+
+    Raising a risk class is a NARROWING despite sounding like an escalation:
+    `tower/gateway.py:check_warrant` requires more warrant at a higher class
+    and `warrant/economics.py` prices the action higher, so a step raised to
+    MEDIUM is a step that is MORE likely to be refused, never less.
+    """
+    from recall.guard import raise_to
+
+    applied: list[str] = []
+    if directive is None or directive.is_empty:
+        return plan, applied
+
+    steps = [s.model_copy() for s in plan.steps]
+    for step in steps:
+        # THE CORRECTION PATH IS DELIBERATELY EXEMPT, AND THIS IS NOT A
+        # LOOPHOLE. It is the same seam the rest of this system already
+        # draws: PRICE AND PERMISSION ARE DIFFERENT QUESTIONS.
+        #
+        # Recall's lever is price. Raising the price of an investigative step
+        # buys something real -- the evidence is then held to a higher bar
+        # before anyone acts on it. Raising the price of the CORRECTION buys
+        # nothing: nobody looks at it harder, the acting agent simply runs
+        # out of warrant and the mission cannot fix the thing it just found.
+        # `command_os/mission.py:_challenge_material` makes exactly this
+        # argument one layer down -- "a containment that cannot be remediated
+        # is not a safety property, it is a stuck system" -- and measured
+        # behaviour agreed: raising `remediation.prepare` to MEDIUM spent the
+        # remediation agent's MEDIUM budget on the DRAFT, leaving it unable
+        # to afford the correction, and the mission halted CHALLENGED on
+        # AUTHORITY EXCEEDS EVIDENCE. Safe, and useless.
+        #
+        # The correction path is not left unguarded by this exemption. It
+        # still passes the independent challenger, the authenticated human
+        # gate, and the unmodified Gateway -- three checks recall cannot
+        # touch, none of which is a price.
+        #
+        # "On the correction path" is read from the REGISTRY (a role holding
+        # any `.write` scope) rather than from a role name, so a future
+        # mutating specialist is exempt on the day it is registered rather
+        # than on the day somebody remembers to add it here.
+        role = BY_AGENT_ROLE.get(step.role)
+        holds_write = bool(role) and any(".write" in sc for sc in role.authority_scope)
+        if holds_write or parse_action_kind(step.action_kind) in MUTATING_ACTIONS:
+            applied.append(
+                f"step {step.seq}: on the correction path ({step.action_kind} by "
+                f"{role.agent_id if role else step.role.value}); left at {step.risk_class}"
+            )
+            continue
+        raised = raise_to(step.risk_class, directive.raise_risk_class)
+        if raised != step.risk_class:
+            applied.append(
+                f"step {step.seq}: risk class raised {step.risk_class} -> {raised} "
+                f"on recalled evidence"
+            )
+            step.risk_class = raised
+
+    if directive.require_verification:
+        has_verification = any(s.tool == "verify.check" for s in steps)
+        if has_verification:
+            applied.append(
+                "an independent verification step was already planned; "
+                "recalled evidence required one and it is present"
+            )
+        elif len(steps) >= MAX_PLAN_STEPS:
+            applied.append(
+                f"recalled evidence required a verification step and the plan is already at "
+                f"the {MAX_PLAN_STEPS}-step ceiling; NOT added -- the ceiling is not "
+                "negotiable by recall"
+            )
+        else:
+            steps.append(
+                _step(
+                    len(steps) + 1,
+                    VERIFIER,
+                    "verify.check",
+                    ActionKind.READ_INTERNAL,
+                    "Independently confirm the finding: prior missions left this contested.",
+                    scope=["verify.read"],
+                    rationale=(
+                        "Recalled evidence from a previous mission left a premise disputed "
+                        "or coverage incomplete; a read-only confirmation is added."
+                    ),
+                )
+            )
+            applied.append(
+                f"step {len(steps)}: read-only verification appended on recalled evidence"
+            )
+
+    if not applied:
+        return plan, applied
+    return plan.model_copy(update={"steps": steps}), applied
 
 
 def _model_available() -> bool:

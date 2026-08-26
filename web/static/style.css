@@ -1270,6 +1270,30 @@ html, body {
 .cmdos-plan-clamps { opacity: 0.75; }
 .cmdos-plan-clamps { margin-top: 0.5rem; }
 
+/* Recall and reconciliation rows. Same visual grammar as the plan steps
+   above -- a bordered row, a tag, a condensed identifier, dimmed provenance
+   -- so a reader does not have to learn a second layout to read them. */
+.cmdos-recall-row,
+.cmdos-recall-directive {
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.cmdos-recall-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.cmdos-recall-subject { word-break: break-all; }
+
+.cmdos-recall-statement {
+  margin-top: 0.25rem;
+  opacity: 0.85;
+  max-width: 78ch;
+}
+
 .cmdos-fleet-row {
   padding: 0.4rem 0;
   border-top: 1px solid rgba(128, 128, 128, 0.25);

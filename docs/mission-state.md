@@ -127,6 +127,32 @@ reconstruction**, not literal time travel or live replay — every checkpoint
 shown is the actual document written at that point, read back, not
 re-executed.
 
+## Recall — the state that outlives one mission
+
+Everything above is state *within* a mission. `recall/` is the state that
+crosses missions, and it is deliberately a different shape:
+
+| | Mission state | Recall knowledge |
+| --- | --- | --- |
+| Written by | every phase, after every stage | one caller, once, **after the terminal report** |
+| Shape | a continuation (`ctx`, cursor, work queue) | atomic facts with provenance |
+| Lifetime | one mission | every mission after this one |
+| Read by | `resume_mission` | the PLAN phase of a later mission |
+| May influence | everything | a risk-class raise and a read-only check, and nothing else |
+
+The write happens **after** the report on purpose: a mission that could
+retrieve its own findings mid-flight would be treating its own output as
+corroboration. `tests/test_recall_mission.py::test_knowledge_is_written_after_the_report_so_a_mission_cannot_cite_itself`
+asserts it.
+
+What a later mission sees is bounded before it is seen: `RECALL_TOP_K = 5`
+records and `RECALL_CHAR_BUDGET = 1200` characters, with the retrieval
+reporting `considered`, `filtered_out`, `zero_scored`, `dropped_for_budget`
+and `chars_returned` alongside what it selected. The PLAN checkpoint stores
+all of it, plus the plan's risk profile **before and after** recall — so a
+judge reading the stored mission, not the live response, can see exactly what
+prior knowledge did to it.
+
 ## What is honestly not built
 
 - No live agent-spawning fleet — `singularity/fleet.py`'s roster is

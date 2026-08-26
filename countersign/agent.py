@@ -42,7 +42,8 @@ the identical `Workflow`/`Edge`/`START` idiom `tower/gateway.py` already
 uses one layer down, run through `InMemoryRunner(node=workflow)`. The
 `AgentTool` object itself is still real and independently inspectable
 (`isinstance(countersign_tool, AgentTool)`, `countersign_tool.agent.mode ==
-"single_turn"`) -- `tests/test_countersign_agent.py` proves this the same
+"single_turn"`) -- `tests/test_countersign_verify.py::test_countersign_agent_is_a_real_single_turn_agent_tool`
+proves this the same
 way `test_gateway_workflow_is_a_real_adk_workflow` proves the Gateway's
 graph is real rather than asserted in prose. See `countersign/DESIGN.md`
 for the live-Vertex verification this execution path was checked against.

@@ -2106,6 +2106,175 @@ async def evolution_history(
 
 
 # ---------------------------------------------------------------------------
+# RECALL -- what the system knows because a previous mission measured it
+#
+# Read-only, and there is deliberately NO write route. `recall/` is written
+# by exactly one caller (`command_os/mission.py:_record_knowledge`, after the
+# terminal report), and adding an HTTP write path would turn the knowledge
+# store into an injection surface reachable from outside the process. The
+# guard in `recall/guard.py` would still hold -- nothing a record contains
+# can widen authority -- but "an attacker cannot escalate through it" is not
+# a reason to give them a door.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/recall/corpus")
+async def recall_corpus(caller: Principal = Depends(require_principal)) -> dict[str, Any]:
+    """What the knowledge store actually holds, counted rather than estimated."""
+    if not _firestore_available():
+        return {"available": False, "reason": _firestore_unavailable_reason()}
+    from recall.store import corpus_stats
+
+    return {"available": True, **corpus_stats()}
+
+
+@app.get("/api/recall/search")
+async def recall_search(
+    q: str = Query(..., min_length=1, max_length=400),
+    k: int = Query(5, ge=1, le=25),
+    char_budget: int = Query(2000, ge=100, le=20000),
+    kind: str | None = Query(None),
+    subject: str | None = Query(None),
+    caller: Principal = Depends(require_principal),
+) -> dict[str, Any]:
+    """Run the real retriever and return WHAT IT LEFT BEHIND as well as what
+    it selected.
+
+    The counts (`considered`, `filtered_out`, `zero_scored`,
+    `dropped_for_budget`) are the point of this route: they are how a reader
+    checks that retrieval is selection rather than a full load with extra
+    steps.
+    """
+    if not _firestore_available():
+        return {"available": False, "reason": _firestore_unavailable_reason()}
+    from recall.index import search
+    from recall.schema import RecordKind
+    from recall.store import list_records
+
+    kinds = None
+    if kind:
+        try:
+            kinds = {RecordKind(kind.upper())}
+        except ValueError as exc:
+            raise HTTPException(400, f"unknown record kind {kind!r}") from exc
+
+    result = search(
+        q,
+        list_records(),
+        k=k,
+        char_budget=char_budget,
+        kinds=kinds,
+        subjects={subject} if subject else None,
+    )
+    return {
+        "available": True,
+        **result.model_dump(mode="json"),
+        "selection_ratio": round(result.selection_ratio, 4),
+    }
+
+
+@app.get("/api/recall/mission/{mission_id}")
+async def recall_for_mission(
+    mission_id: str, caller: Principal = Depends(require_principal)
+) -> dict[str, Any]:
+    """Both directions for one mission: what it CONSULTED and what it LEFT.
+
+    Consulted comes from the PLAN checkpoint, so it is the retrieval that
+    actually informed the plan -- not a re-run that could return something
+    different now.
+    """
+    if not _firestore_available():
+        return {"available": False, "reason": _firestore_unavailable_reason()}
+    from command_os.checkpoint import list_checkpoints
+    from recall.store import list_records
+
+    checkpoints = list_checkpoints(mission_id)
+    if not checkpoints:
+        raise HTTPException(404, f"no mission {mission_id!r} found")
+    plan_stage = checkpoints[0].stage.detail
+    return {
+        "available": True,
+        "mission_id": mission_id,
+        "consulted": plan_stage.get("recall", {}),
+        "scrutiny_applied": plan_stage.get("scrutiny_applied", []),
+        "risk_profile_before_recall": plan_stage.get("risk_profile_before_recall"),
+        "risk_profile": plan_stage.get("risk_profile"),
+        "produced": [r.model_dump(mode="json") for r in list_records(mission_id=mission_id)],
+    }
+
+
+# ---------------------------------------------------------------------------
+# ARCHITECTURE PROOF -- the contracts and the fleet topology, from the code
+#
+# Public and read-only. Every field below is generated from the same
+# constants the running system enforces (`fleet/roles.py`,
+# `fleet/contracts.py`, `fleet/tools.py`, `command_os/mission.py`), so this
+# route cannot describe a boundary the system does not have. That is the
+# whole reason it exists rather than a document: a document can be wrong.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/architecture/proof")
+async def architecture_proof() -> dict[str, Any]:
+    """The enforced boundaries, read out of the modules that enforce them."""
+    from command_os.mission import (
+        MAX_MISSION_PHASES,
+        MAX_TOOL_ATTEMPTS,
+        RECALL_CHAR_BUDGET,
+        RECALL_TOP_K,
+        TOOL_TIMEOUT_SECONDS,
+    )
+    from fleet.contracts import contract_summary
+    from fleet.planner import MAX_PLAN_STEPS
+    from fleet.roles import ALL_ROLES, SPECIALISTS
+    from fleet.tools import AUTHORITY_LADDER, TOOL_REGISTRY
+    from recall.guard import GRANT_LANGUAGE, RISK_ORDER, ScrutinyDirective
+    from tower.gateway import DEFAULT_STEP_CEILING
+
+    return {
+        "fleet": [
+            {
+                "agent_id": r.agent_id,
+                "principal": r.principal,
+                "title": r.title,
+                "purpose": r.purpose,
+                "agent_role": r.agent_role.value,
+                "authority_scope": list(r.authority_scope),
+                "data_scope": list(r.data_scope),
+                "tools": list(r.tools),
+                "permitted_actions": sorted(a.value for a in r.permitted_actions),
+                "delegable": r in SPECIALISTS,
+                "can_write": any(".write" in sc for sc in r.authority_scope),
+                "can_read_secrets": any("secret" in sc for sc in r.authority_scope),
+            }
+            for r in ALL_ROLES
+        ],
+        "tools": [{"tool": t, "purpose": p} for t, p in sorted(TOOL_REGISTRY.items())],
+        "output_contracts": contract_summary(),
+        "authority_ladder": {k: list(v) for k, v in sorted(AUTHORITY_LADDER.items())},
+        "bounds": {
+            "tool_timeout_seconds": TOOL_TIMEOUT_SECONDS,
+            "max_tool_attempts": MAX_TOOL_ATTEMPTS,
+            "max_mission_phases": MAX_MISSION_PHASES,
+            "max_plan_steps": MAX_PLAN_STEPS,
+            "worker_step_ceiling": DEFAULT_STEP_CEILING,
+            "recall_top_k": RECALL_TOP_K,
+            "recall_char_budget": RECALL_CHAR_BUDGET,
+        },
+        "recall_guard": {
+            "directive_fields": sorted(ScrutinyDirective.__dataclass_fields__),
+            "risk_order": list(RISK_ORDER),
+            "grant_language_markers": len(GRANT_LANGUAGE),
+            "note": (
+                "A recalled record may raise a risk class or require a read-only "
+                "verification. ScrutinyDirective has no field capable of granting "
+                "scope, adding a tool, or approving anything."
+            ),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # STATIC UI -- mounted last so it cannot shadow an API route
 # ---------------------------------------------------------------------------
 

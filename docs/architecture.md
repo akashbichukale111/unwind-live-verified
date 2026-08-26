@@ -100,6 +100,9 @@ Every row names a file. A layer without one gets deleted rather than described.
 | Control Tower | `tower/gateway.py:evaluate_gateway` | LIVE — **the only source of an ALLOW in the repository** |
 | Warrant ledger | `warrant/ledger.py` | LIVE — append-only, atomic spend, mint gated on two independent records |
 | Specialist tools | `fleet/tools.py` | LIVE — deterministic parse/compare/verify; structured output only |
+| Output contracts | `fleet/contracts.py` | LIVE — shape, self-consistency and **grounding in the worker's own inputs**, checked before a result may write into mission state |
+| Authority reconciliation | `fleet/tools.py:reconcile_adjudicate` | LIVE — a second derivation from an authority ladder; the disagreement with the recency rule is the finding |
+| Supervised tool runner | `command_os/mission.py:_run_tool` | LIVE — real timeout, bounded retries, three named failure kinds (TIMED_OUT / RAISED / CONTRACT) |
 
 ### The governance layer
 
@@ -112,6 +115,7 @@ Every row names a file. A layer without one gets deleted rather than described.
 | Challenger (Gemma) | `countersign/agent.py` + `_run_gemma_async` | CONFIGURED_NOT_EXERCISED — real path; `evidence/adk/live-call-attempt-*.log` shows it failing closed |
 | Human Override Gate | `command_os/mission.py:_phase_gate` | LIVE — records the **authenticated** principal; cannot overturn a Gateway refusal |
 | Decision Memory | `tower/memory.py` | LIVE — append-only causal chain, not a vector store |
+| Recall one-way valve | `recall/guard.py` | LIVE — recalled knowledge may raise a risk class or ask for a read-only check; `ScrutinyDirective` has no field capable of granting scope, and one that gains such a field is refused at construction |
 
 ### State, effect and evidence
 
@@ -123,7 +127,9 @@ Every row names a file. A layer without one gets deleted rather than described.
 | Messy-data synthesis | `fleet/tools.py:recon_extract_claims` over `fleet/data/incident/` | LIVE — measured coverage 16/20, and that number feeds the tax |
 | Trusted State | `command_os/trust.py` | LIVE — categorical, never a score |
 | Context Firewall | `command_os/context_firewall.py` | LIVE (DISPLAY FILTER) — scores context; does not gate what resume reconstructs |
-| Red team | `tests/test_adversarial.py` | LIVE (TEST SUITE) — 20 attacks + one declared undefended gap |
+| Mission knowledge | `recall/distill.py` → `recall/store.py` | LIVE — every completed mission distils what it MEASURED into atomic, provenanced, content-addressed records; append-only, no model anywhere |
+| Bounded retrieval | `recall/index.py` | LIVE — metadata filter + BM25-shaped lexical score, capped at `RECALL_TOP_K` records and `RECALL_CHAR_BUDGET` characters, reporting what it dropped. **No vector store**, and the module argues the case from this corpus's properties rather than inheriting `tower/memory.py`'s argument — and names the condition for revisiting it |
+| Red team | `tests/test_adversarial.py` + `tests/test_recall_guard.py` | LIVE (TEST SUITE) — 20 attacks + one declared undefended gap, plus the knowledge store attacked directly |
 | Digital Twin / Veo / Lyria / multi-tenancy | — | DESIGNED — not built |
 
 ## What this system does not do

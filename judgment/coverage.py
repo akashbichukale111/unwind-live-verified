@@ -12,8 +12,9 @@ ONE RULE, ENFORCED IN CODE
 A decision whose premises were under-extracted has not been shown to be
 unharmed; it has been shown to be unexamined. Those are opposite claims and the
 difference is the entire product. `mark_coverage()` therefore has no code path
-that returns a clean status, and `tests/test_coverage.py` includes a vacuity
-case that asserts the guard would catch one if it appeared.
+that returns a clean status, and
+`tests/test_judgment.py::test_the_never_safe_guard_catches_a_clean_status` is a
+vacuity case asserting the guard would catch one if it appeared.
 
 RELATIVE DATES GET THEIR OWN ROW
 --------------------------------

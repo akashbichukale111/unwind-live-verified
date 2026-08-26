@@ -21,8 +21,9 @@ exists to answer is the other one:
 A judge reading `command_os/` and `spine/` side by side would previously
 have found two products sharing a repository: a consequence engine used by a
 demo, and an authority layer that never consulted it. This module is the
-join. `tests/test_consequence.py::test_the_agent_layer_actually_imports_the_
-consequence_engine` fails if that join is ever removed.
+join. If that join is ever removed,
+`tests/test_consequence.py::test_the_agent_layer_actually_imports_the_consequence_engine`
+fails.
 
 HOW AN AGENT ACTION BECOMES A BLAST RADIUS
 ---------------------------------------------

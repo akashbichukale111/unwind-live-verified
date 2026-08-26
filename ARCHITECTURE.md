@@ -143,6 +143,45 @@ extraction so attacker text cannot name a claim its source has no standing over.
 Renders what the system understood before it acts, so a misparse arrives as a
 question somebody answers rather than as a correction somebody receives.
 
+### `fleet/contracts.py`
+Declares what each tool's output must contain, must be self-consistent about,
+and must be grounded in — because `tower/gateway.py:check_worker_fault` can
+only see that a result is a `dict`, and the failure that matters for an agent
+fleet is a `dict` with the right shape and fabricated contents.
+
+### `fleet/tools.py:reconcile_adjudicate`
+Re-derives every contradicted claim from source AUTHORITY rather than
+recency, so that the product of two independent derivations is the
+DISAGREEMENT between them — a signal neither rule can produce alone, and the
+one the committed evidence's tariff claim actually carries.
+
+### `recall/schema.py`
+Types one atomic operational fact with the provenance needed to answer "which
+mission measured this, at which checkpoint, from which source", because a
+retrieved fact with no mission behind it is a rumour.
+
+### `recall/distill.py`
+Turns a finished mission into those facts by fixed template from typed
+fields, with no model anywhere, so the retrieval corpus does not move when a
+sampler is re-run and a retrieval claim stays reproducible.
+
+### `recall/index.py`
+Filters on metadata, scores lexically, and stops at a stated `k` and
+character budget — reporting what it dropped — so "this system retrieves
+rather than loading everything" is four numbers in the response instead of a
+sentence in a README.
+
+### `recall/guard.py`
+Is the one-way valve: prior knowledge may raise a risk class or ask for a
+read-only check, and `ScrutinyDirective` has no field capable of granting
+scope, so a poisoned memory cannot escalate by construction rather than by
+the current call graph happening not to allow it.
+
+### `recall/store.py`
+Keeps knowledge append-only and content-addressed, and supersedes a bad
+record with an `UNTRUSTED` one rather than deleting it, because an edited-away
+memory is a memory with no evidence that it was attacked.
+
 ### `judgment/`
 Holds everything that may be wrong: the tier where being wrong is expected, so
 every module in it degrades to UNRESOLVED rather than to a guess.
@@ -266,6 +305,17 @@ Four, each justified in one sentence. Nothing else is used.
 | **Pub/Sub** | The cascade is a fan-out from one dead claim to thousands of independent re-derivations, which is exactly what a topic is for. |
 | **Cloud Run** | `adk deploy cloud_run` is the framework's own path, and a cascade is bursty work that should scale to zero between retractions. |
 | **Vertex AI** | The only T2 dependency: ambiguous materiality, the repair court, and drafting the correction that goes to a counterparty. |
+
+Firestore carries one more collection since this table was written:
+`recall_knowledge`, holding what previous missions measured. It is queried
+with single-field equality filters and a `limit` on every read, so it adds no
+composite index — see `recall/store.py` for why the query shape is chosen
+rather than incidental. **No vector database was added**, and
+`recall/index.py`'s module docstring argues the case from this corpus's own
+properties (machine-written statements, no paraphrase, exact-identifier
+queries with metadata filters) rather than inheriting `tower/memory.py`'s
+argument — and states the condition under which the decision should be
+revisited: the day the corpus carries human free text.
 
 Deliberately **NOT USED**: GKE (Cloud Run already runs the container, and
 `adk deploy gke` would add a cluster nobody needs), Cloud SQL and Spanner

@@ -2,7 +2,7 @@
 
 **This file is generated.** `python scripts/evaluation_report.py` rebuilds it by running `evolution/replay.py` over the committed evidence bundle. Every number below was produced at generation time by the same code the API serves. A number here that no longer reproduces is a build failure, not a stale sentence.
 
-**Generated:** 2026-08-26 11:46:13Z  
+**Generated:** 2026-08-26 17:39:46Z  
 **Model:** none. Generated with `UNWIND_VERTEX_DISABLED=1`; the deterministic planner produced every plan. See *Limitations*.
 
 ---

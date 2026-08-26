@@ -24,7 +24,7 @@ DURABILITY
 -----------
 Every entry is written to Firestore before this function returns. A process
 that dies immediately after `write_entry` returns has already made the entry
-durable; `tests/test_tower_memory.py::test_chain_survives_process_restart`
+durable; `tests/test_tower_memory.py::test_chain_survives_a_genuine_process_restart`
 proves this by dropping every in-process object (including the Firestore
 client) and reading the chain back through a brand new one.
 """

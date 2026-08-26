@@ -54,9 +54,70 @@ def system_reality() -> list[dict[str, Any]]:
         (
             "agent_delegation",
             "LIVE",
-            "five registered identities with distinct principals, scopes, budgets and "
+            "six registered identities with distinct principals, scopes, budgets and "
             "warrant rows; the Orchestrator cannot delegate to itself and a read-only "
             "role is refused SCOPE_EXCEEDED by the unmodified Gateway",
+        ),
+        (
+            "tool_output_contracts",
+            "LIVE",
+            "fleet/contracts.py checks every worker result for shape, self-consistency "
+            "and GROUNDING IN THE WORKER'S OWN INPUTS before it may write into mission "
+            "state; a violating result is discarded and the violations are kept in the "
+            "checkpoint. See tests/test_fleet_contracts.py and "
+            "tests/test_mission_failure_recovery.py::test_a_rejected_result_never_reaches_the_mission_context",
+        ),
+        (
+            "supervised_workers",
+            "LIVE",
+            "every tool call runs under a real timeout with a bounded retry budget and "
+            "three named failure kinds (TIMED_OUT / RAISED / CONTRACT). The timeout "
+            "bounds the SUPERVISOR'S wait, not the worker's execution -- CPython cannot "
+            "kill a thread, and command_os/mission.py says so rather than implying "
+            "otherwise (tests/test_mission_failure_recovery.py)",
+        ),
+        (
+            "authority_reconciliation",
+            "LIVE",
+            "a separately-scoped agent (fleet_reconciler) re-derives every contradicted "
+            "claim from an authority ladder and compares it against the extractor's "
+            "recency ruling; where the two disagree NOTHING is decided -- the claim is "
+            "DISPUTED, the dispute raises the uncertainty tax and reaches the human "
+            "(tests/test_reconcile.py)",
+        ),
+        (
+            "mission_knowledge",
+            "LIVE",
+            "every completed mission distils what it MEASURED into atomic, provenanced, "
+            "content-addressed records -- deterministically, with no model anywhere "
+            "See recall/distill.py and "
+            "tests/test_recall_mission.py::test_a_mission_writes_what_it_measured_into_the_knowledge_store",
+        ),
+        (
+            "bounded_recall",
+            "LIVE",
+            "retrieval is a metadata filter plus a BM25-shaped lexical score, capped at "
+            "5 records and 1200 characters, reporting what it dropped. NO VECTOR STORE: "
+            "recall/index.py argues the case from this corpus's own properties and names "
+            "the condition for revisiting it "
+            "See tests/test_recall_index.py::test_retrieval_selects_rather_than_loading",
+        ),
+        (
+            "cross_mission_learning",
+            "LIVE",
+            "mission N+1 plans differently because of mission N, and the PLAN checkpoint "
+            "carries the risk profile before and after recall plus the records that "
+            "changed it. n is small -- a handful of missions over one incident bundle -- "
+            "and this is NOT a longitudinal self-improvement claim. See "
+            "tests/test_recall_mission.py::test_the_second_mission_plans_differently_because_of_the_first",
+        ),
+        (
+            "recall_one_way_valve",
+            "LIVE",
+            "recalled knowledge may raise a risk class or require a read-only check and "
+            "can do nothing else: recall.guard.ScrutinyDirective has no field capable of "
+            "granting scope, and one that gains such a field is refused at construction "
+            "See tests/test_recall_guard.py::test_no_knowledge_record_can_widen_scope",
         ),
         (
             "specialist_agents",

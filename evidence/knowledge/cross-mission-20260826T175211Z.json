@@ -1,0 +1,120 @@
+{
+  "generated_at": "2026-08-26T17:55:35.415596+00:00",
+  "objective": "Investigate an anomalous finance capability request.",
+  "mission_1": {
+    "mission_id": "mission_247c0d3131",
+    "status": "COMPLETED_WITH_RESTRICTIONS",
+    "recall": {
+      "available": true,
+      "corpus_records": 0,
+      "selected": 0
+    },
+    "risk_profile_before_recall": "1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW",
+    "risk_profile": "1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW",
+    "scrutiny_applied": [],
+    "reconciliation_verdict": "RESOLVED_WITH_DISPUTES",
+    "disputed_claims": [
+      "clm_tariff_rate_K"
+    ],
+    "knowledge_written": {
+      "records": 6,
+      "missions": 1,
+      "by_kind": {
+        "AGENT_ISOLATION": 1,
+        "DISPUTED_PREMISE": 1,
+        "EVIDENCE_COVERAGE": 1,
+        "EXTERNAL_EFFECT": 1,
+        "SCOPE_ESCALATION": 1,
+        "SETTLED_PREMISE": 1
+      },
+      "by_standing": {
+        "CAUTION": 4,
+        "OBSERVED": 2
+      },
+      "truncated": false,
+      "max_fetch": 500
+    }
+  },
+  "mission_2": {
+    "mission_id": "mission_c4a90daee7",
+    "status": "COMPLETED_WITH_RESTRICTIONS",
+    "recall": {
+      "available": true,
+      "corpus_records": 6,
+      "selected": 2,
+      "filtered_out": 0,
+      "zero_scored": 4,
+      "dropped_for_budget": 0,
+      "chars_returned": 292,
+      "char_budget": 1200,
+      "selection_ratio": 0.3333
+    },
+    "selected_records": [
+      {
+        "record_id": "kr_fbc81a6667c75c3dbee8d303",
+        "kind": "AGENT_ISOLATION",
+        "subject": "fleet_recon",
+        "statement": "Agent fleet_recon was ISOLATED after requesting 'finance.secret_read' with 147 tool calls on dataset 'finance'; the Gateway refused it.",
+        "mission_id": "mission_247c0d3131",
+        "checkpoint_seq": 6,
+        "source": "fleet/data/incident/capability-requests.csv",
+        "score": 2.459392,
+        "matched_terms": [
+          "capability",
+          "finance"
+        ]
+      },
+      {
+        "record_id": "kr_360b7026ae9a26bba305c5b0",
+        "kind": "SCOPE_ESCALATION",
+        "subject": "fleet_recon",
+        "statement": "Agent fleet_recon requested 'finance.secret_read', outside its registered scope ['corpus.read', 'evidence.read'], on request 'req-8802' at risk class 'HIGH'.",
+        "mission_id": "mission_247c0d3131",
+        "checkpoint_seq": 5,
+        "source": "fleet/data/incident/capability-requests.csv",
+        "score": 0.907154,
+        "matched_terms": [
+          "capability"
+        ]
+      }
+    ],
+    "directive": {
+      "raise_risk_class": "MEDIUM",
+      "require_verification": false,
+      "scrutiny_notes": [
+        "prior mission mission_247c0d3131 recorded AGENT_ISOLATION for fleet_recon; risk floor raised to MEDIUM",
+        "prior mission mission_247c0d3131 recorded SCOPE_ESCALATION for fleet_recon; risk floor raised to MEDIUM"
+      ],
+      "subjects_of_concern": [
+        "fleet_recon"
+      ],
+      "derived_from": [
+        "kr_360b7026ae9a26bba305c5b0",
+        "kr_fbc81a6667c75c3dbee8d303"
+      ]
+    },
+    "risk_profile_before_recall": "1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW",
+    "risk_profile": "1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM",
+    "scrutiny_applied": [
+      "step 1: risk class raised LOW -> MEDIUM on recalled evidence",
+      "step 3: on the correction path (ANALYZE by fleet_remediation); left at LOW",
+      "step 4: on the correction path (CREATE_TICKET by fleet_remediation); left at MEDIUM",
+      "step 5: risk class raised LOW -> MEDIUM on recalled evidence"
+    ]
+  },
+  "bounded_context_at_scale": {
+    "corpus_records": 512,
+    "selected": 4,
+    "zero_scored": 508,
+    "dropped_for_budget": 0,
+    "chars_returned": 584,
+    "char_budget": 1200,
+    "selection_ratio": 0.00781,
+    "selected_subjects": [
+      "fleet_recon",
+      "fleet_recon",
+      "fleet_recon",
+      "fleet_recon"
+    ]
+  }
+}

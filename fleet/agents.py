@@ -143,8 +143,9 @@ def build_planner_agent():
 def build_specialist_agent(role: FleetRole):
     """One real `LlmAgent` per specialist, carrying that role's own
     instruction and description. Distinct objects with distinct identities --
-    `tests/test_fleet_agents.py` asserts there are as many as there are
-    roles and that no two share a name."""
+    `tests/test_fleet.py::test_there_is_one_agent_name_per_registered_role`
+    asserts there are as many as there are roles and that no two share a
+    name."""
     from google.adk.agents.llm_agent import Agent
 
     configure_vertex_backend()
@@ -189,8 +190,9 @@ def planner_prompt(objective: str, menu: list[dict[str, Any]], evidence: dict[st
 
 
 #: Names only, importable without constructing a model-backed object -- used
-#: by the UI and by `tests/test_fleet_agents.py` to assert the fleet's shape
-#: without needing credentials.
+#: by the UI and by
+#: `tests/test_fleet.py::test_there_is_one_agent_name_per_registered_role` to
+#: assert the fleet's shape without needing credentials.
 AGENT_NAMES: tuple[str, ...] = tuple(r.agent_id for r in ALL_ROLES)
 
 __all__ = [

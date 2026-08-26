@@ -7,9 +7,9 @@
       "detail": ""
     },
     {
-      "check": "      fleet: 5 bounded identities",
+      "check": "      fleet: every registered identity is on screen",
       "pass": true,
-      "detail": "5 rows"
+      "detail": "6 rows, 6 registered"
     },
     {
       "check": "      warrant market prices live",
@@ -19,7 +19,7 @@
     {
       "check": "      anonymous mutation refused",
       "pass": true,
-      "detail": "env development \u00b7 1 bearer token(s) configured \u00b7 dev principal active "
+      "detail": "env development \u00b7 1 bearer token(s) configured \u00b7 anonymous mutation: r"
     },
     {
       "check": "      System Reality panel populated",
@@ -34,7 +34,7 @@
     {
       "check": "      mission runs end to end",
       "pass": true,
-      "detail": "44 stages"
+      "detail": "29 stages"
     },
     {
       "check": "      report is truthful",
@@ -94,7 +94,7 @@
     {
       "check": "      HYPERION-ZERO renders real content",
       "pass": true,
-      "detail": "2001 chars"
+      "detail": "2127 chars"
     },
     {
       "check": "[7/7] SINGULARITY-MESH opens",
@@ -119,7 +119,7 @@
     {
       "check": "      every failed request identified by URL",
       "pass": true,
-      "detail": "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:; GET http://127.0.0.1:8099/static/media/mission-replay.webm; GET http://127.0.0.1:8099/static/media/mission-signal.wav"
+      "detail": "GET http://127.0.0.1:8099/static/media/mission-replay.webm; GET http://127.0.0.1:8099/static/media/mission-signal.wav; GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:"
     },
     {
       "check": "      no failed request is a product defect",
@@ -129,15 +129,16 @@
     {
       "check": "      zero server-side errors",
       "pass": true,
-      "detail": "1 console error(s), all traced to the requests above"
+      "detail": "2 console error(s), all traced to the requests above"
     }
   ],
   "console_errors": [
-    "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+    "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console.error: Failed to load resource: net::ERR_CONNECTION_RESET"
   ],
   "failed_requests": [
-    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CERT_AUTHORITY_INVALID",
     "GET http://127.0.0.1:8099/static/media/mission-replay.webm -> net::ERR_ABORTED",
-    "GET http://127.0.0.1:8099/static/media/mission-signal.wav -> net::ERR_ABORTED"
+    "GET http://127.0.0.1:8099/static/media/mission-signal.wav -> net::ERR_ABORTED",
+    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CONNECTION_RESET"
   ]
 }

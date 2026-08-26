@@ -1,0 +1,40 @@
+
+A. first mission — an empty knowledge store, honestly labelled
+  PASS  the recall panel exists in the DOM
+  PASS  the recall panel is visible
+  PASS  it says the store was empty rather than hiding — records in the store0
+
+B. reconciliation — the dispute the committed evidence contains
+  PASS  the reconciliation panel is visible
+  PASS  a claim was SETTLED
+  PASS  a claim was DISPUTED
+  PASS  the disputed claim is named
+  PASS  both candidate answers are shown
+  PASS  the verdict is on screen — verdictRESOLVED_WITH_DISPUTES
+
+C. second mission — the plan changes because of the first
+    (waiting 65s for the rate-limit window)
+  PASS  records were recalled
+  PASS  the risk profile is shown before and after recall
+  PASS  a scrutiny directive was derived
+  PASS  the directive names what it changed in the plan
+
+D. the panel matches the API for the same mission
+  PASS  corpus size on screen matches the API — api=6
+  PASS  the API and the screen agree the profile changed — 1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW -> 1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM
+  PASS  every recalled record on screen names its source mission
+
+E. retrieval is selection, and the page says so in numbers
+  PASS  the API reports more considered than selected — 2 of 12
+  PASS  the API reports what it rejected
+
+F. a hostile knowledge record renders as text and influences nothing
+    (waiting 65s for the rate-limit window)
+  PASS  the poisoned record was retrieved, not hidden
+  PASS  no script executed from its statement
+  PASS  the markup is shown as literal text
+  PASS  it was excluded from influencing the plan — ecord(s)
+· record kr_browser_poison was excluded: its text reads as a grant, which a distilled recor
+  PASS  no step in the executed plan carries the requested scope
+
+23/23 checks passed

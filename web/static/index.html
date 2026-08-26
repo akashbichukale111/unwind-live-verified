@@ -272,6 +272,25 @@
     <div id="cmdos-plan" class="cmdos-plan mono"></div>
   </div>
 
+  <div id="cmdos-recall-panel" class="cmdos-panel" hidden>
+    <h3 class="mono cmdos-h">Recall — what an earlier mission taught this one</h3>
+    <p class="cmdos-hint mono">every number below comes from the retrieval that actually informed
+      this plan, read back from its PLAN checkpoint. The counts are the point: a system that
+      &ldquo;retrieves&rdquo; everything it stored has not retrieved anything. A recalled record can
+      raise a risk class or ask for a read-only check — it has no field capable of granting scope
+      (<span class="cond">recall/guard.py</span>).</p>
+    <div id="cmdos-recall" class="cmdos-recall mono"></div>
+  </div>
+
+  <div id="cmdos-reconcile-panel" class="cmdos-panel" hidden>
+    <h3 class="mono cmdos-h">Reconciliation — two derivations, and the disagreement</h3>
+    <p class="cmdos-hint mono">the extractor settles a contradiction by RECENCY; a separately-scoped
+      agent (<span class="cond">fleet_reconciler</span>) re-derives it from AUTHORITY. Where they
+      agree the premise is settled. Where they disagree nothing is decided here — the claim is
+      DISPUTED, the dispute raises the price of every later action, and it reaches the human.</p>
+    <div id="cmdos-reconcile" class="cmdos-reconcile mono"></div>
+  </div>
+
   <div id="cmdos-gate" class="cmdos-gate mono" hidden>
     <div class="cmdos-gate-title cond">HUMAN OVERRIDE GATE — AWAITING DECISION</div>
     <p class="cmdos-gate-body">The mission paused after isolating the agent. Approving resumes the SAME
@@ -311,8 +330,9 @@
   <div class="cmdos-tf-grid">
     <div>
       <h3 class="mono cmdos-h">Agent Fleet</h3>
-      <p class="cmdos-hint mono">five identities with their own principals and bounded scope —
-        served from the same constants the registry enforces</p>
+      <p class="cmdos-hint mono">six identities with their own principals and bounded scope —
+        served from the same constants the registry enforces. Verify it yourself:
+        <span class="cond">GET /api/architecture/proof</span></p>
       <div id="cmdos-fleet" class="cmdos-fleet mono"></div>
     </div>
     <div>

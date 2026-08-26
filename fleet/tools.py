@@ -13,8 +13,9 @@ have to re-check. So the fleet splits along that line:
 
 Every function here is a pure function of its inputs plus explicitly-passed
 `as_of`. No clock, no network, no model client, no random state.
-`tests/test_fleet_zero_model.py` walks this module's import graph the same
-way `tests/test_warrant_zero_model.py` already walks `warrant/`.
+`tests/test_fleet.py::test_fleet_tools_and_roles_import_no_model_client` walks
+this module's import graph the same way `tests/test_warrant_zero_model.py`
+already walks `warrant/`.
 
 STRUCTURED OUTPUT, ALWAYS
 ----------------------------
@@ -55,6 +56,10 @@ TOOL_REGISTRY: dict[str, str] = {
     "risk.probe": "Adversarially analyse extracted claims for escalation and staleness.",
     "remediation.prepare": "Prepare a minimal, reversible correction.",
     "remediation.execute": "Execute the prepared correction against the sandbox.",
+    "reconcile.adjudicate": (
+        "Re-derive every contradicted claim from AUTHORITY, compare against recon's "
+        "recency rule, and escalate where the two rules disagree."
+    ),
     "verify.check": "Independently re-read the system of record and confirm the effect.",
 }
 
@@ -419,6 +424,225 @@ def risk_probe(*, recon: dict[str, Any], fleet_scopes: dict[str, list[str]]) -> 
 
 
 # ---------------------------------------------------------------------------
+# RECONCILE
+# ---------------------------------------------------------------------------
+
+#: [ASSUMPTION] Authority precedence, per predicate. Stated as a table
+#: because the alternative -- a general "which department outranks which"
+#: rule -- does not exist: procurement outranks planning about a supplier's
+#: lead time and has no standing at all over a tariff rate. This is the same
+#: shape `spine/authority.py` enforces for retraction (a source's authority
+#: is scoped to specific claims, never global), expressed for the incident
+#: feed's `authority` field.
+#:
+#: Highest authority FIRST. An authority absent from a predicate's ladder
+#: holds no standing over it, which is not the same as ranking last: a
+#: contradiction whose records carry no ranked authority at all is
+#: DISPUTED, not resolved by falling back to recency.
+AUTHORITY_LADDER: dict[str, tuple[str, ...]] = {
+    "lead_time_days": ("procurement", "planning"),
+    "tariff_rate_pct": ("compliance", "erp"),
+    "cutoff_local": ("carrier", "planning"),
+}
+
+
+def reconcile_adjudicate(*, recon: dict[str, Any]) -> dict[str, Any]:
+    """Adjudicate every contradiction recon reported -- and DISAGREE when the
+    two rules disagree, rather than picking one and moving on.
+
+    WHY THIS IS A SEPARATE SPECIALIST AND NOT A BRANCH INSIDE RECON
+    -----------------------------------------------------------------
+    `recon_extract_claims` resolves a contradiction by RECENCY and says so
+    in the record it emits (`resolution_rule`). Recency is the honest rule
+    available to a parser: it needs nothing but the timestamps already in
+    the data. It is also, on real operational data, frequently wrong -- a
+    compliance note from May outranks an ERP row from July on a tariff rate,
+    and no amount of reading timestamps will discover that.
+
+    So a second, independently-scoped agent re-derives every contradiction
+    from AUTHORITY instead, and the interesting output is not either answer.
+    It is the **disagreement between the two answers**, which is a signal
+    neither rule can produce alone. The same shape `judgment/rederive.py`
+    uses for a commitment and `countersign/` uses for a verdict: two
+    derivations, and the divergence is the finding.
+
+    On the committed incident bundle this is not hypothetical:
+
+      - `clm_supplier_K_lead_time` -- recency picks procurement's 20;
+        authority picks procurement. AGREE, so it is RESOLVED.
+      - `clm_tariff_rate_K` -- recency picks the ERP row (8.0, July);
+        authority picks the compliance note (8.5, May). DISAGREE, so it is
+        DISPUTED and escalates rather than being silently decided.
+
+    And the operator's own handover note says of exactly that claim: "never
+    reconciled. flagging it." The dispute this returns is that flag, resolved
+    into a decision a human can act on.
+
+    Pure function of `recon`. No clock, no model, no network.
+    """
+    contradictions = [c for c in recon.get("contradictions", []) if isinstance(c, dict)]
+    claims = [c for c in recon.get("claims", []) if isinstance(c, dict)]
+    by_claim: dict[str, list[dict[str, Any]]] = {}
+    for claim in claims:
+        by_claim.setdefault(str(claim.get("claim_id")), []).append(claim)
+
+    resolutions: list[dict[str, Any]] = []
+    disputes: list[dict[str, Any]] = []
+
+    for contradiction in contradictions:
+        claim_id = str(contradiction.get("claim_id"))
+        group = by_claim.get(claim_id, [])
+        predicate = str(group[0].get("predicate", "")) if group else ""
+        ladder = AUTHORITY_LADDER.get(predicate, ())
+
+        recency_value = contradiction.get("most_recent_value")
+        recency_source = str(contradiction.get("most_recent_source", ""))
+
+        ranked = [
+            (ladder.index(str(g.get("authority", ""))), g)
+            for g in group
+            if str(g.get("authority", "")) in ladder
+        ]
+        if not ranked:
+            disputes.append(
+                {
+                    "claim_id": claim_id,
+                    "predicate": predicate,
+                    "dispute_kind": "NO_AUTHORITY_LADDER",
+                    "recency_value": recency_value,
+                    "recency_source": recency_source,
+                    "authority_value": None,
+                    "authority_source": None,
+                    "why": (
+                        f"no ranked authority holds standing over {predicate!r}; "
+                        "recency alone is not a ruling, so this is escalated rather "
+                        "than decided"
+                    ),
+                    "records": [
+                        {
+                            "source": g.get("source"),
+                            "authority": g.get("authority"),
+                            "value": g.get("value"),
+                            "recorded_at": g.get("recorded_at"),
+                        }
+                        for g in group
+                    ],
+                }
+            )
+            continue
+
+        ranked.sort(key=lambda pair: pair[0])
+        top_rank = ranked[0][0]
+        top = [g for rank, g in ranked if rank == top_rank]
+        # Two records from the SAME top authority disagreeing with each other
+        # is not something an authority ladder can settle either.
+        top_values = {str(g.get("value")) for g in top}
+        if len(top_values) > 1:
+            disputes.append(
+                {
+                    "claim_id": claim_id,
+                    "predicate": predicate,
+                    "dispute_kind": "AUTHORITY_SELF_CONTRADICTION",
+                    "recency_value": recency_value,
+                    "recency_source": recency_source,
+                    "authority_value": None,
+                    "authority_source": ladder[top_rank],
+                    "why": (
+                        f"{ladder[top_rank]!r} is the ranking authority over {predicate!r} "
+                        f"and its own records disagree {sorted(top_values)!r}"
+                    ),
+                    "records": [
+                        {
+                            "source": g.get("source"),
+                            "authority": g.get("authority"),
+                            "value": g.get("value"),
+                            "recorded_at": g.get("recorded_at"),
+                        }
+                        for g in group
+                    ],
+                }
+            )
+            continue
+
+        winner = top[0]
+        authority_value = winner.get("value")
+        authority_source = str(winner.get("source", ""))
+
+        if str(authority_value) == str(recency_value):
+            resolutions.append(
+                {
+                    "claim_id": claim_id,
+                    "predicate": predicate,
+                    "chosen_value": authority_value,
+                    "chosen_source": authority_source,
+                    "chosen_authority": winner.get("authority"),
+                    "agreed_with_recency": True,
+                    "why": (
+                        f"{winner.get('authority')!r} holds standing over {predicate!r} "
+                        "and its value is also the most recent: two independent rules, "
+                        "one answer"
+                    ),
+                    "superseded": [
+                        {
+                            "source": g.get("source"),
+                            "authority": g.get("authority"),
+                            "value": g.get("value"),
+                        }
+                        for g in group
+                        if g is not winner
+                    ],
+                }
+            )
+        else:
+            disputes.append(
+                {
+                    "claim_id": claim_id,
+                    "predicate": predicate,
+                    "dispute_kind": "AUTHORITY_CONTRADICTS_RECENCY",
+                    "recency_value": recency_value,
+                    "recency_source": recency_source,
+                    "authority_value": authority_value,
+                    "authority_source": authority_source,
+                    "authority_holder": winner.get("authority"),
+                    "why": (
+                        f"recency selects {recency_value!r} from {recency_source!r} while "
+                        f"{winner.get('authority')!r} -- which holds standing over "
+                        f"{predicate!r} -- states {authority_value!r}. A newer record from a "
+                        "source with no standing does not overrule one that has it, and a "
+                        "parser cannot make that call."
+                    ),
+                    "records": [
+                        {
+                            "source": g.get("source"),
+                            "authority": g.get("authority"),
+                            "value": g.get("value"),
+                            "recorded_at": g.get("recorded_at"),
+                        }
+                        for g in group
+                    ],
+                }
+            )
+
+    if not contradictions:
+        verdict = "NO_CONTRADICTIONS"
+    elif disputes and resolutions:
+        verdict = "RESOLVED_WITH_DISPUTES"
+    elif disputes:
+        verdict = "DISPUTED"
+    else:
+        verdict = "RESOLVED"
+
+    return {
+        "resolutions": resolutions,
+        "disputes": disputes,
+        "verdict": verdict,
+        "contradictions_considered": len(contradictions),
+        "rules_compared": ["recency", "authority"],
+        "ladder": {k: list(v) for k, v in sorted(AUTHORITY_LADDER.items())},
+    }
+
+
+# ---------------------------------------------------------------------------
 # REMEDIATION
 # ---------------------------------------------------------------------------
 
@@ -511,9 +735,11 @@ def verify_check(*, proposal: dict[str, Any], recorded: dict[str, Any] | None) -
 
 
 __all__ = [
+    "AUTHORITY_LADDER",
     "INCIDENT_DIR",
     "TOOL_REGISTRY",
     "recon_extract_claims",
+    "reconcile_adjudicate",
     "remediation_prepare",
     "risk_probe",
     "verify_check",

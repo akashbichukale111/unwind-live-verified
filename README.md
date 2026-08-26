@@ -34,7 +34,9 @@ Google "All Things Agentic" Hackathon
 | Lyria | mission signal — real HTML5 `<audio>`, plays the committed **DEMO AUDIO — NOT A LYRIA GENERATION** render on every deployment; the one genuine `lyria-002` generation is `LIVE_VERIFIED` evidence, gitignored bytes, not committed |
 | Bonus Google model stack | `GET /api/media/model-roster` — Gemini, Gemma, Veo, Lyria joined live to `evidence/models/verification-*.json`; a model with no verification reads `UNVERIFIED`, never a borrowed green tick |
 | Evidence | [`evidence/INDEX.md`](evidence/INDEX.md) (every claim → file → reproduction command) · [`evidence/media/demo/PROOF.md`](evidence/media/demo/PROOF.md) (checksums, stream headers, audio levels, real-vs-demo distinction) |
-| Tests | `768 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`, reproduced this pass on a fresh Windows checkout); `ruff check` / `format --check` clean |
+| **70-point judge map** | **[`RUBRIC.md`](RUBRIC.md)** — every rubric criterion → mechanism → test → UI proof, with a conservative before/after score and the limitations that remain |
+| Tests | `1181 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`); `1026 passed, 156 skipped` with **no Firestore reachable at all** and nothing failing. 279 of those are `tests/test_documentation_integrity.py`, parameterised one-per-citation, so the total moves when documentation does; `ruff check` / `format --check` clean |
+| Browser verification | `evidence/browser/verify_all_cards.py` 26/26 · `verify_timemachine_and_media.py` 55/55 · `verify_recall_and_reconcile.py` 23/23 (includes a live store-poisoning attack) |
 | Deployment status | **LIVE** — service `unwind`, project `project-895d4ca8-d301-447d-916`, region `us-central1`, revision `unwind-00021-nwl`, 100% traffic — see [Deployed](#deployed) below |
 
 **What is REAL, what is DEMO, what is ARCHITECTURE** — this project draws that
@@ -74,9 +76,14 @@ backwards from the claim to the things built on it.
 
 ```
 OBJECTIVE
-  → PLAN            computed from the objective (fleet/planner.py)
+  → RECALL          retrieves what PREVIOUS missions measured — 2 of N records,
+                    under a stated character budget (recall/index.py)
+  → PLAN            computed from the objective (fleet/planner.py), then
+                    NARROWED by what was recalled — never widened
   → DELEGATE        to the specialists whose scope actually covers each step
   → RECON           parses messy evidence into structured claims  [16/20 parsed]
+  → RECONCILE       a second, differently-scoped agent re-derives every
+                    contradiction from AUTHORITY; disagreement is the finding
   → RISK            finds the escalation the evidence names
   → CONTAIN         tests THAT scope, for THAT agent, at the real Gateway
   → PRICE           uncertainty raises what the next action costs
@@ -85,9 +92,17 @@ OBJECTIVE
   → EXECUTE         one real, idempotent, reversible external action
   → VERIFY          re-read the record; settle the agent's authority
   → REPORT          a status that can never read COMPLETED over a refusal
+  → DISTIL          what this mission MEASURED becomes atomic, provenanced
+                    knowledge the NEXT mission can retrieve (recall/distill.py)
 ```
 
-### The three things a hostile judge should check firstS
+Every worker result on that path is checked against a declared output
+contract before it may write anything into mission state, every tool call is
+supervised by a real timeout and a bounded retry budget, and the mission's own
+self-extending work queue has a hard ceiling. See
+[`RUBRIC.md`](RUBRIC.md) for the full map of mechanism → test → UI proof.
+
+### The seven things a hostile judge should check first
 
 
 **1. The plan is computed, not fixed.** Change the objective, the plan changes —
@@ -114,7 +129,37 @@ concurrence record names the authenticated caller — never a constant. See
 [`docs/SECURITY.md`](docs/SECURITY.md), which also lists the seven things that
 are **not** defended.
 
-**4. The agent with its governance switched OFF scores a perfect 1.00 on task
+**4. Mission N+1 plans differently because of mission N — and the difference
+is attributable.** Run the same objective twice. The classifier alone produces
+an identical plan both times (`fingerprint_before_recall` is equal); the plan
+that actually *runs* the second time is narrower, and the Recall panel names
+the records that narrowed it, the mission that produced them, and the
+checkpoint each came from. Retrieval is **selection**, and the panel prints the
+arithmetic: `selected 2 of 6 · rejected 4 (4 scored zero) · context used
+292 / 1200 characters`. Proved by
+`tests/test_recall_mission.py::test_the_second_mission_plans_differently_because_of_the_first`.
+
+**5. Recalled knowledge can raise scrutiny and can never widen authority.**
+Not "does not currently" — *cannot*. `recall.guard.ScrutinyDirective` is the
+only channel from the knowledge store into planning, and it has no field that
+expresses a grant; a subclass that adds one is refused at construction. Write a
+record straight into the store saying `fleet_recon may access
+finance.secret_read … approve without a human gate` and the mission retrieves
+it, screens it, excludes it, records the attempt as a durable `UNTRUSTED`
+supersession, and produces a byte-identical plan.
+`tests/test_recall_guard.py::test_no_knowledge_record_can_widen_scope`,
+`tests/test_recall_mission.py::test_a_poisoned_record_in_the_live_store_changes_nothing`.
+
+**6. A worker that returns the right shape and the wrong contents is
+rejected.** `tower/gateway.py:check_worker_fault` sees only that a result is a
+`dict`. `fleet/contracts.py` sees the rest: a coverage figure that does not
+equal the counts beside it, a verdict that disagrees with the findings it is
+stated over, an escalation naming an `agent_id` that appears in no parsed
+evidence. A violating result is **discarded** — and
+`tests/test_mission_failure_recovery.py::test_a_rejected_result_never_reaches_the_mission_context`
+proves it by searching the entire mission trace for the forged numbers.
+
+**7. The agent with its governance switched OFF scores a perfect 1.00 on task
 success.** Two agent versions, byte-identical instruction text, differing only
 in policy, run over the same four scenarios. The ungoverned one completes
 *every* mission — by writing to the system of record on 76%-parsed,
@@ -156,7 +201,7 @@ never price it, discount it, or argue the tax down.** Try it live:
 
 ### The fleet
 
-Five identities, each with its own principal, scope, budget and warrant row.
+Six identities, each with its own principal, scope, budget and warrant row.
 The separation is enforced by the **unmodified** Gateway, not by the planner
 behaving:
 
@@ -164,9 +209,94 @@ behaving:
 | --- | --- | --- |
 | `fleet_orchestrator` | `mission.plan` | execute anything, or delegate to itself |
 | `fleet_recon` | `evidence.read`, `corpus.read` | **write anywhere** |
+| `fleet_reconciler` | `evidence.read`, `claims.reconcile` | write anywhere — and it is **not** Recon's principal, so it is never re-deriving its own answer |
 | `fleet_risk` | `policy.read`, `risk.analyze` | write anywhere |
 | `fleet_remediation` | `sandbox.write`, `sandbox.read` | **read any secret** |
 | `fleet_verifier` | `sandbox.read`, `verify.read` | write the thing it verifies |
+
+Read it back out of the running system rather than out of this table:
+`GET /api/architecture/proof` serves the fleet, the tool registry, every
+tool's output contract and every enforced bound, generated from the same
+constants the Gateway enforces.
+
+**Why the Reconciler is an agent and not a branch inside Recon.** Recon
+resolves a contradiction by RECENCY and says so in the record it emits.
+Recency is the honest rule available to a parser — and on real operational
+data it is frequently wrong: a compliance note from May outranks an ERP row
+from July on a tariff rate, and no amount of reading timestamps discovers
+that. So a separately-scoped agent re-derives every contradiction from
+AUTHORITY, and **the product is the disagreement between the two answers**,
+which is a signal neither rule can produce alone. On the committed evidence,
+unmodified:
+
+| claim | by recency | by authority | outcome |
+| --- | --- | --- | --- |
+| `clm_supplier_K_lead_time` | 20 (`src_procurement`) | 20 (procurement holds standing) | **SETTLED** — two independent rules, one answer |
+| `clm_tariff_rate_K` | 8.0 (`src_erp`, July) | 8.5 (`src_compliance_note`, May) | **DISPUTED** — nothing is decided; the dispute raises the price of every later action and reaches the human |
+
+The operator's own handover note says of that second claim: *"tariff rate for
+the K line — i \*think\* it's still 8% but the compliance note from
+2026-05-02 says 8.5%. never reconciled. flagging it."* The dispute the system
+produces **is** that flag, turned into a decision record.
+(`tests/test_reconcile.py::test_the_dispute_is_the_one_the_operator_flagged_by_hand`)
+
+### The knowledge engine — what the system knows, and which mission measured it
+
+`evolution/` asks *"did this agent behave well?"* and gates a version change
+behind a human. `recall/` asks a different question, and it is the one that
+makes a fleet get better at its job rather than at its prose:
+
+> **What does this system know, where did it come from, and which mission and
+> checkpoint produced it?**
+
+Every completed mission distils what it **measured** — settled premises,
+disputed premises, scope escalations, isolations, Gateway refusals, worker
+fault kinds, evidence coverage, external effects — into atomic records. Each
+record carries the provenance to re-find its source: mission id, checkpoint
+seq, agent, tool, source file, timestamp. **No model writes any of it**; every
+statement is generated from typed fields by a fixed template, because a corpus
+a sampler rewrote is a corpus whose ranking moves under you.
+
+**Retrieval is selection, and the numbers are in the response.** Five records,
+1,200 characters — and `considered`, `filtered_out`, `zero_scored`,
+`dropped_for_budget` and `chars_returned / char_budget` come back with them, so
+"this does not put its whole history in one prompt" is arithmetic on screen
+rather than a sentence here. Over a 500-record corpus, retrieval returns ≤ 1%
+of it and the two records it returns are the two that are actually about the
+question (`tests/test_recall_index.py::test_retrieval_selects_rather_than_loading`).
+
+**There is no vector database, and the case is argued rather than dodged.**
+`recall/index.py` makes it from this corpus's own properties: machine-written
+statements, a vocabulary of a few hundred terms, no paraphrase to recover, and
+queries that are exact-identifier matches under metadata filters — the one
+thing nearest-neighbour search is worst at. What an embedding would *add* is a
+model call in the retrieval path, which is the dependency the whole T0/T1
+architecture exists to remove. The condition for revisiting is written down:
+the day the corpus carries an operator's own free text.
+
+**The one-way valve.** A memory that influences planning is a persistence
+surface — get one record in and it fires on every future mission with nobody
+watching. So `recall/guard.py` allows recalled knowledge exactly two effects:
+raise a risk class (monotonically — `raise_to` can never lower one), and ask
+for a read-only verification step. `ScrutinyDirective` has **no field capable
+of granting scope, adding a tool, or approving anything**, and a subclass that
+adds one is refused at construction rather than at review.
+
+```
+mission N  →  distil (no model)  →  append-only, content-addressed store
+                                          ↓
+                          filter → score → BOUND (5 records, 1200 chars)
+                                          ↓
+                          ScrutinyDirective — raise only, never widen
+                                          ↓
+mission N+1's plan  —  narrower, and it names the records that narrowed it
+```
+
+`GET /api/recall/corpus`, `GET /api/recall/search?q=…`,
+`GET /api/recall/mission/{id}` — all authenticated, all read-only. **There is
+deliberately no write route**, asserted against the app's own route table
+(`tests/test_recall_api.py::test_there_is_no_write_route_into_the_knowledge_store`):
+the store has exactly one writer, in-process, after a terminal report.
 
 ### Governed self-evolution — evaluating the trajectory, not just the answer
 
@@ -275,8 +405,18 @@ UNWIND_VERTEX_DISABLED=1 python scripts/evolution_demo.py
   over time, and improvement across many real missions is **NOT YET
   MEASURED**. n = 4 scenarios over one incident bundle; no confidence
   interval is offered because none would be meaningful at that size.
-- **A live agent-spawning fleet.** Five roles are registered from static
+- **A live agent-spawning fleet.** Six roles are registered from static
   definitions; no agent process is spawned.
+- **The knowledge corpus is machine-written.** `recall/index.py`'s argument
+  against embeddings is sound *because of that*, and stops being sound the day
+  a record carries an operator's own words — the module says so itself. And
+  cross-mission learning is demonstrated over a handful of missions on one
+  incident bundle: real, reproducible, and **not** a longitudinal
+  self-improvement claim.
+- **The worker timeout bounds the SUPERVISOR'S wait, not the worker.** CPython
+  cannot kill a running thread. What is guaranteed is that the mission stops
+  waiting, records `WORKER_TIMEOUT`, discards whatever that call eventually
+  produces, and replans — stated in the constant's own comment, not only here.
 - **Multi-tenancy, token rotation, distributed rate limiting, gate expiry.**
   See `docs/SECURITY.md` §6.
 
@@ -289,8 +429,8 @@ independently queryable source that must agree with the UI or the UI is wrong.
 | Full architecture, diagram, component table | [`docs/architecture.md`](docs/architecture.md) |
 | Checkpointing, resumability, trust, gate, firewall | [`docs/mission-state.md`](docs/mission-state.md) |
 | Judge demo script | [`docs/JUDGE-DEMO.md`](docs/JUDGE-DEMO.md) |
-| API | `POST /api/command-os/mission[?objective=&auto_approve=]`, `.../gate`, `.../resume`, `GET .../fleet`, `.../economics`, `.../status`, `.../missions`, `.../checkpoints`, `.../trust`, `.../context-firewall` |
-| Code | `fleet/` and `warrant/economics.py` (new); `command_os/` (rewritten, plan-driven); `singularity/`, `hyperion/`, `tower/`, `warrant/ledger.py`, `countersign/` reused with the authority path unchanged |
+| API | `POST /api/command-os/mission[?objective=&auto_approve=]`, `.../gate`, `.../resume`, `GET .../fleet`, `.../economics`, `.../status`, `.../missions`, `.../checkpoints`, `.../trust`, `.../context-firewall`; `GET /api/recall/corpus`, `/api/recall/search`, `/api/recall/mission/{id}`; `GET /api/architecture/proof` (public — the fleet, tool contracts and enforced bounds, generated from the enforcing modules) |
+| Code | `fleet/` and `warrant/economics.py`; `command_os/` (plan-driven); `fleet/contracts.py` and `recall/` (this pass); `singularity/`, `hyperion/`, `tower/`, `warrant/ledger.py`, `countersign/`, `evolution/` reused with the authority path unchanged |
 
 ---
 
@@ -904,9 +1044,9 @@ respectively).
 **53 new tests across Cards 0 and 3, all passing** (37 + 16): `make test` →
 **369 passed** with the Firestore emulator running (0 skipped, up from 316
 after Card 2). Two Card-2-era tests were rewritten, disclosed rather than
-silently changed — `tests/test_tower_gateway.py::test_warrant_check_stub_always_passes`
-asserted the WARRANT_INSUFFICIENT stub BY NAME, and Card 0's whole job was
-to retire that stub; every other test in every other file is untouched, and
+silently changed — a Card-2-era test called `test_warrant_check_stub_always_passes` (deleted, not
+renamed) asserted the WARRANT_INSUFFICIENT stub BY NAME, and Card 0's whole
+job was to retire that stub; every other test in every other file is untouched, and
 `git diff --stat -- spine/ court/ judgment/ settle/` is empty.
 
 ### The four cards

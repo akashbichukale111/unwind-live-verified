@@ -57,6 +57,32 @@ requires_emulator = pytest.mark.skipif(
 )
 
 
+def test_system_reality_names_every_capability_the_ui_claims() -> None:
+    """The README calls `/api/command-os/status` "a second, independently
+    queryable source that must agree with the UI or the UI is wrong".
+
+    That only holds if a capability added to the product is also added to the
+    table. A feature that renders a panel but has no honest status row is
+    precisely the UI-without-behaviour case this repository claims not to
+    ship, so the agreement is asserted rather than remembered.
+    """
+    from command_os.status import system_reality
+
+    features = {row["feature"] for row in system_reality()}
+    required = {
+        "tool_output_contracts",
+        "supervised_workers",
+        "authority_reconciliation",
+        "mission_knowledge",
+        "bounded_recall",
+        "cross_mission_learning",
+        "recall_one_way_valve",
+    }
+    assert required <= features, f"claimed but unstated: {sorted(required - features)}"
+    for row in system_reality():
+        assert row["status"], f"{row['feature']} has an empty status"
+
+
 def test_status_serves_the_system_reality_table_even_offline() -> None:
     """No Firestore dependency -- `system_reality()` is static composition
     over already-in-memory constants, the same offline-safe discipline
@@ -122,9 +148,28 @@ def test_mission_endpoint_runs_end_to_end() -> None:
 def test_gate_pause_approve_deny_and_resume_via_http() -> None:
     from command_os.mission import reset_for_test
 
+    # RESET THE ECONOMY FIRST, AND THE REASON IS NOT TIDINESS.
+    #
+    # Warrant is durable and cumulative by design: every mission in this
+    # file's session spends from the same ledger rows. This test is about the
+    # HUMAN GATE, and it can only reach the gate if the acting agent can
+    # still afford the action -- otherwise the independent challenger
+    # correctly disagrees on AUTHORITY EXCEEDS EVIDENCE and the mission ends
+    # CHALLENGED before the gate is ever offered.
+    #
+    # That is real behaviour and it is right (it is exactly what the
+    # uncertainty tax is for), which is why the fix is to give this test a
+    # known opening economy rather than to weaken the challenger. This call
+    # was imported and never made, so the test was passing on whatever
+    # balance the previous tests happened to leave behind.
+    reset_for_test()
+
     with TestClient(app) as client:
         paused = client.post("/api/command-os/mission?auto_approve=false", headers=AUTH).json()
-        assert paused["status"] == "AWAITING_HUMAN"
+        assert paused["status"] == "AWAITING_HUMAN", (
+            f"expected the mission to pause at the gate, got {paused['status']}: "
+            f"{[s['name'] for s in paused['stages']]}"
+        )
         assert paused["report"] is None
         mission_id = paused["mission_id"]
 

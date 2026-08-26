@@ -907,9 +907,22 @@
   }
 
   async function handleHyperionProbe() {
-    const res = await fetch("/api/hyperion/probe", { method: "POST" });
-    const d = await res.json();
+    // Server-side this is require_principal-gated; plain fetch() never sent
+    // a credential, so an unauthenticated caller got a JSON error body with
+    // no `.decision`, and this threw before the route element updated.
+    const res = await authedFetch("/api/hyperion/probe", { method: "POST" });
     const route = $("hd-probe-result");
+    if (!res.ok) {
+      const { status, help, detail } = await describeFailure(res);
+      route.hidden = false;
+      route.classList.remove("allowed");
+      route.classList.add("refused");
+      route.innerHTML =
+        `<span class="code">HTTP ${status}</span> — ${esc(help)}` +
+        (detail ? `<div class="cmdos-hint mono">${esc(detail)}</div>` : "");
+      return;
+    }
+    const d = await res.json();
     route.hidden = false;
     route.classList.remove("refused", "allowed");
     route.classList.add(d.decision.allowed ? "allowed" : "refused");
@@ -1093,9 +1106,26 @@
       (genome.allowed_actions.length ? `<br>allowed: ${genome.allowed_actions.join(", ")}` : "");
   }
 
+  //: Renders a failed action directly into the same result slot a success
+  //: would use, with the .refused styling the rest of this card already
+  //: uses for a denied outcome -- no second notification surface.
+  async function showProbeFailure(elId, res) {
+    const { status, help, detail } = await describeFailure(res);
+    const route = $(elId);
+    route.hidden = false;
+    route.classList.remove("allowed");
+    route.classList.add("refused");
+    route.innerHTML =
+      `<span class="code">HTTP ${status}</span> — ${esc(help)}` +
+      (detail ? `<br>${esc(detail)}` : "");
+  }
+
   async function handleGenomeProbe(scenario) {
     const res = await fetch(`/api/singularity/genome/probe?scenario=${scenario}`, { method: "POST" });
-    if (!res.ok) return;
+    if (!res.ok) {
+      await showProbeFailure("sm-genome-result", res);
+      return;
+    }
     const d = await res.json();
     renderGenomeResult(d.scenario, d.genome);
     renderSingularityDetail({ ...(await fetchSingularity()), ...d });
@@ -1114,7 +1144,10 @@
 
   async function handleBehaviorProbe(scenario) {
     const res = await fetch(`/api/singularity/behavior/probe?scenario=${scenario}`, { method: "POST" });
-    if (!res.ok) return;
+    if (!res.ok) {
+      await showProbeFailure("sm-behavior-result", res);
+      return;
+    }
     const d = await res.json();
     renderBehaviorResult(d.scenario, d.assessment);
     renderSingularityDetail({ ...(await fetchSingularity()), ...d });
@@ -1440,8 +1473,10 @@
     500: "the server errored — see the detail below and the server log",
   };
 
-  async function showMissionFailure(res) {
-    const el = $("cmdos-authfail");
+  //: Shared by every action handler below, so a failed request is described
+  //: the same way everywhere rather than each caller inventing its own
+  //: wording. Never throws -- a body that is not JSON just means no detail.
+  async function describeFailure(res) {
     let detail = "";
     try {
       const body = await res.json();
@@ -1449,13 +1484,19 @@
     } catch (err) {
       detail = "";
     }
-    const help = MISSION_FAILURE_HELP[res.status] || "the mission could not start";
+    const help = MISSION_FAILURE_HELP[res.status] || "the request failed";
+    return { status: res.status, help, detail };
+  }
+
+  async function showMissionFailure(res) {
+    const el = $("cmdos-authfail");
+    const { status, help, detail } = await describeFailure(res);
     el.hidden = false;
     el.innerHTML =
-      "<span class='cmdos-tag cmdos-unavailable'>HTTP " + res.status + "</span> " +
+      "<span class='cmdos-tag cmdos-unavailable'>HTTP " + status + "</span> " +
       esc(help) + (detail ? "<div class='cmdos-hint mono'>" + esc(detail) + "</div>" : "");
     // Put the operator where the fix is, rather than making them find it.
-    if (res.status === 401) {
+    if (status === 401) {
       const token = $("cmdos-token");
       if (token) { token.focus(); token.select(); }
     }
@@ -1512,7 +1553,14 @@
       "/api/command-os/mission/" + cmdosMissionId + "/gate?decision=" + decision,
       { method: "POST" }
     );
-    if (!res.ok) return;
+    // Same discipline as runMission(): a failed gate decision must be visible
+    // AT THE POINT OF ACTION, not a silent no-op that leaves the operator
+    // staring at an unchanged gate. Reuses the existing #cmdos-authfail
+    // banner rather than a second notification surface.
+    if (!res.ok) {
+      await showMissionFailure(res);
+      return;
+    }
     applyMissionResult(await res.json());
   }
 
@@ -2004,6 +2052,13 @@
         out.textContent = "NOT AUTHENTICATED — enter an operator token above";
         return;
       }
+      if (!res.ok) {
+        const { status, help, detail } = await describeFailure(res);
+        out.innerHTML =
+          "<span class='cmdos-tag cmdos-unavailable'>HTTP " + status + "</span> " +
+          esc(help) + (detail ? "<div class='cmdos-hint mono'>" + esc(detail) + "</div>" : "");
+        return;
+      }
       const r = await res.json();
       renderMediaResult(out, r);
     } catch (err) {
@@ -2417,12 +2472,37 @@
     renderSingularityHome(s);
   }
 
+  //: Both burn and earn are principal-scoped server side (require_principal /
+  //: require_human_principal in services/api/main.py) -- plain fetch() never
+  //: sent a credential, so these could only ever have worked where an
+  //: anonymous dev principal was configured, and failed invisibly everywhere
+  //: else: the error body has no `.bars`, so `applyInstrumentAction` threw
+  //: before anything on screen changed.
+  async function showInstrumentActionFailure(res) {
+    const { status, help, detail } = await describeFailure(res);
+    document.querySelectorAll(".instr-route").forEach((route) => {
+      route.hidden = false;
+      route.classList.remove("allowed");
+      route.classList.add("refused");
+      route.innerHTML =
+        `<span class="code">HTTP ${status}</span> — ${esc(help)}` +
+        (detail ? `<div class="cmdos-hint mono">${esc(detail)}</div>` : "");
+    });
+  }
   async function handleBurn() {
-    const res = await fetch("/api/instrument/burn", { method: "POST" });
+    const res = await authedFetch("/api/instrument/burn", { method: "POST" });
+    if (!res.ok) {
+      await showInstrumentActionFailure(res);
+      return;
+    }
     applyInstrumentAction(await res.json());
   }
   async function handleEarn() {
-    const res = await fetch("/api/instrument/earn", { method: "POST" });
+    const res = await authedFetch("/api/instrument/earn", { method: "POST" });
+    if (!res.ok) {
+      await showInstrumentActionFailure(res);
+      return;
+    }
     applyInstrumentAction(await res.json());
   }
   $("instr-burn").addEventListener("click", handleBurn);

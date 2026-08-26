@@ -87,6 +87,31 @@ for role in roles/aiplatform.user roles/datastore.user roles/pubsub.publisher; d
   echo "    bound ${role}"
 done
 
+# Operator bearer tokens (lib/auth.py:_parse_operator_tokens), wired from
+# Secret Manager rather than a plaintext --set-env-vars value. The ONLY name
+# that matters here is the environment variable name on the right of the
+# `=`: lib/auth.py reads exactly `UNWIND_OPERATOR_TOKENS` and nothing else,
+# so a secret bound under any other variable name is invisible to the app
+# and every bearer token is rejected with 401 -- silently, because IAM and
+# the mount both succeed; only the variable NAME was ever wrong. Optional:
+# a deploy with no such secret in this project runs exactly as before, with
+# bearer-token auth simply unavailable (IAP or UNWIND_DEV_PRINCIPAL still
+# work for local/dev use).
+OPERATOR_TOKEN_SECRET="${UNWIND_OPERATOR_TOKEN_SECRET:-unwind-operator-token}"
+SECRET_FLAGS=()
+if gcloud secrets describe "${OPERATOR_TOKEN_SECRET}" --project "${PROJECT_ID}" >/dev/null 2>&1; then
+  echo "==> Operator token secret '${OPERATOR_TOKEN_SECRET}' found -- wiring to UNWIND_OPERATOR_TOKENS"
+  gcloud secrets add-iam-policy-binding "${OPERATOR_TOKEN_SECRET}" \
+    --project "${PROJECT_ID}" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/secretmanager.secretAccessor" \
+    --quiet >/dev/null
+  echo "    bound roles/secretmanager.secretAccessor (scoped to this secret only)"
+  SECRET_FLAGS=(--set-secrets "UNWIND_OPERATOR_TOKENS=${OPERATOR_TOKEN_SECRET}:latest")
+else
+  echo "==> No '${OPERATOR_TOKEN_SECRET}' secret in this project -- deploying without bearer-token auth"
+fi
+
 echo "==> Pub/Sub topics"
 # Topic ids may not contain dots, so lib/config.py's logical names are
 # hyphenated on the wire. lib/pubsub.py:_wire_name performs the same mapping;
@@ -108,6 +133,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --service-account "${SA_EMAIL}" \
   --allow-unauthenticated \
   --set-env-vars "UNWIND_PROJECT_ID=${PROJECT_ID},UNWIND_VERTEX_LOCATION=${VERTEX_LOCATION},UNWIND_OTEL_CONSOLE=0" \
+  "${SECRET_FLAGS[@]}" \
   --memory 1Gi \
   --cpu 1 \
   --timeout 300 \

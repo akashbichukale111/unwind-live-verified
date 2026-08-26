@@ -830,6 +830,23 @@ the dataset and silently double-weighted one behaviour. It was removed, and
 `tests/test_evolution_replay.py::test_the_dataset_contains_no_duplicate_scenarios`
 stops the next one.
 
+### 15b. Deploy preflight and local browser verification at 580ec85 (2026-08-26)
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| Deploy preflight passes **20/20** at this commit, with no credentials | `evidence/deploy/preflight-580ec85-20260826T121215Z.md` | `make deploy-check` |
+| `.gcloudignore` excludes neither `evolution/` nor `web/static/`, so the new code and UI reach the build | `.gcloudignore` | `grep -E "^evolution/?$\|^web/static/?$" .gcloudignore` (no match = included) |
+| Time Machine, Media Lab, Consequence Preview, seven-card regression: **43/43** | `evidence/deploy/preflight-580ec85-20260826T121215Z.md` | `python evidence/browser/verify_timemachine_and_media.py` |
+| All seven cards render real content, mission runs end to end, zero server-side errors: **26/26** | `evidence/deploy/preflight-580ec85-20260826T121215Z.md` | `python evidence/browser/verify_all_cards.py` |
+| Evolution panel: 7 criteria, serving version named, real mission scored 0.9500, opens synchronously in **1.8 ms** | `evidence/evolution/browser-findings-*.json`, `evolution-panel-*.png` | `python evidence/browser/verify_evolution_panel.py /tmp/evo` |
+
+All of the above are **LOCAL**. No deployment was performed in this session
+and no Cloud Run revision was created — the full account, including the two
+sandbox blockers (`gcloud` absent with no credentials of any kind; the egress
+proxy answering 403 to `CONNECT *.a.run.app`), is in the file above. Every
+deployment claim elsewhere in this repository is from an earlier pass, carries
+its own date, was not re-verified here, and was not changed.
+
 ### What this pass did NOT do, stated plainly
 
 - **No model call of any kind.** No credentials existed in this environment.

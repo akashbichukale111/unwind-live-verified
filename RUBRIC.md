@@ -20,6 +20,7 @@ and **where it is visible in the running product**.
 
 ```bash
 make emulator                     # terminal 1 — Firestore emulator, needs Java 11+
+                                  # then, in terminal 2:
 FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q
 # 1181 passed, 1 skipped
 
@@ -27,6 +28,9 @@ FIRESTORE_EMULATOR_HOST=localhost:9999 python -m pytest -q
 # 1026 passed, 156 skipped — no Firestore anywhere, nothing fails
 
 ruff check . && ruff format --check .
+python scripts/check_contrast.py            # accessibility floor, a CI gate
+python -m corpus.generate --verify --out corpus/data
+python scripts/evaluation_report.py --check # the generated report still matches the code
 ```
 
 No credentials, no API keys, no model calls, no cost. `UNWIND_VERTEX_DISABLED=1`

@@ -1366,17 +1366,30 @@ html, body {
 .evo-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* A failed criterion states WHY in the last column; the row tint is a second
- * channel on top of that text, never the only one carrying the meaning. */
-.evo-table tr.evo-failed td { color: var(--oxide); opacity: 1; }
+ * channel on top of that text, never the only one carrying the meaning.
+ *
+ * ⚠ THE TINT IS --amber, NOT --oxide, AND THAT IS NOT A TASTE DECISION.
+ * `scripts/check_contrast.py` measures --oxide at 2.40:1 on the field, well
+ * under the 4.5:1 floor, and failed the build on this exact rule: rust is a
+ * LINE colour here and never a text colour (see this file's header). --amber
+ * is 6.21:1 and is already the field's warning hue -- `.evo-bar-fill` uses
+ * it. A "failed" row rendered in a colour nobody can read is a worse
+ * accessibility outcome than no tint at all. */
+.evo-table tr.evo-failed td { color: var(--amber); opacity: 1; }
 .evo-table tr.evo-serving td { color: var(--bone); opacity: 1; }
 
 .evo-why { opacity: 0.66; line-height: 1.55; min-width: 15rem; }
 
+/* ⚠ THE TEXT IS --bone, THE BORDER IS --verdigris. Same measurement, same
+ * rule: --verdigris is 3.67:1 on the field and this rule failed the contrast
+ * build using it as a text colour. The patina survives where it is legal --
+ * as a line -- and the label itself is read at 14.98:1. Hierarchy from
+ * opacity and hue-on-the-border, never from a hue nobody can read. */
 .evo-tag {
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--verdigris);
+  color: var(--bone);
   border: 1px solid var(--verdigris);
   border-radius: 2px;
   padding: 0 4px;

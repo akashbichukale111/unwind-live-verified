@@ -1419,6 +1419,10 @@
       renderExternal(d.report);
       loadTrustAndFirewall(d.mission_id);
     }
+    // The Time Machine sits right below this report and must show the
+    // mission that just ran, not whatever was on screen before it started —
+    // otherwise a mission that visibly completed above reads as absent below.
+    renderTimeMachine();
   }
 
   //: Status -> what an operator should DO about it. Never a bare code: a

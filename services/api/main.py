@@ -1694,6 +1694,252 @@ async def media_signal(
 
 
 # ---------------------------------------------------------------------------
+# EVALUATION AND GOVERNED EVOLUTION
+#
+# Read routes take any authenticated principal. The ONE route that can change
+# what is serving -- `/promote` -- takes `require_human_principal`, the same
+# dependency the mission's Human Override Gate uses, and
+# `evolution/promote.py:assert_human_principal` independently refuses an
+# `agent::` or `service::` principal even if one reached it. There is no
+# route anywhere in this file by which an agent can promote an agent version.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/evolution/versions")
+async def evolution_versions(
+    agent_key: str = Query("orchestrator"),
+    caller: Principal = Depends(require_principal),
+) -> dict[str, Any]:
+    """Every version of one agent, oldest first, with the serving one named."""
+    if not _firestore_available():
+        return {"available": False, "reason": "Firestore not reachable."}
+    from evolution.store import active_version, ensure_seeded, list_versions
+
+    ensure_seeded()
+    serving = active_version(agent_key)
+    return {
+        "available": True,
+        "agent_key": agent_key,
+        "active_version_id": serving.version_id if serving else None,
+        "versions": [v.model_dump(mode="json") for v in list_versions(agent_key=agent_key)],
+    }
+
+
+@app.get("/api/evolution/mission/{mission_id}/evaluation")
+async def evolution_mission_evaluation(
+    mission_id: str, caller: Principal = Depends(require_principal)
+) -> dict[str, Any]:
+    """The behavioural evaluation of one mission.
+
+    Honestly empty when the mission has not been scored -- a mission that ran
+    before this package existed, or one whose evaluation write failed. It is
+    never backfilled with a computed-on-read score, because that would be a
+    number nobody measured at the time.
+    """
+    if not _firestore_available():
+        return {"available": False, "reason": "Firestore not reachable."}
+    from evolution.store import evaluations_for_mission
+
+    rows = evaluations_for_mission(mission_id)
+    return {
+        "available": True,
+        "mission_id": mission_id,
+        "evaluations": [e.model_dump(mode="json") for e in rows],
+    }
+
+
+@app.get("/api/evolution/evaluations")
+async def evolution_evaluations(
+    limit: int = Query(50), caller: Principal = Depends(require_principal)
+) -> dict[str, Any]:
+    if not _firestore_available():
+        return {"available": False, "reason": "Firestore not reachable."}
+    from evolution.store import list_evaluations
+
+    return {
+        "available": True,
+        "evaluations": [e.model_dump(mode="json") for e in list_evaluations(limit=limit)],
+    }
+
+
+@app.post("/api/evolution/propose")
+async def evolution_propose(
+    agent_key: str = Query("orchestrator"),
+    caller: Principal = Depends(require_principal),
+) -> dict[str, Any]:
+    """Analyse measured failures and generate ONE candidate version.
+
+    Generates a candidate; promotes nothing. The candidate is written with
+    status CANDIDATE and does not serve.
+
+    Returns 409 when no criterion has failed: an evolution loop that
+    manufactures a candidate for a clean history is a loop that will
+    eventually promote noise.
+    """
+    if not _firestore_available():
+        raise HTTPException(503, "Firestore not reachable.")
+    from evolution.propose import ProposalRejected, propose_candidate
+    from evolution.store import (
+        active_version,
+        ensure_seeded,
+        evaluations_for_version,
+        next_version_n,
+        write_proposal,
+        write_version,
+    )
+
+    ensure_seeded()
+    baseline = active_version(agent_key)
+    if baseline is None:
+        raise HTTPException(404, f"no active version for {agent_key!r}")
+
+    evaluations = evaluations_for_version(baseline.version_id)
+    try:
+        proposal, candidate = propose_candidate(
+            baseline=baseline,
+            evaluations=evaluations,
+            version_n=next_version_n(agent_key),
+        )
+    except ProposalRejected as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+    write_version(candidate)
+    write_proposal(proposal)
+    return {
+        "proposal": proposal.model_dump(mode="json"),
+        "candidate": candidate.model_dump(mode="json"),
+        "baseline": baseline.model_dump(mode="json"),
+        "evaluations_considered": len(evaluations),
+    }
+
+
+@app.get("/api/evolution/compare")
+async def evolution_compare(
+    candidate_version_id: str = Query(...),
+    caller: Principal = Depends(require_principal),
+) -> dict[str, Any]:
+    """Run every gate WITHOUT promoting. A dry run, deliberately on GET.
+
+    This is the route a human reads before deciding. It performs the same
+    measurement `/promote` does and cannot change what is serving.
+    """
+    if not _firestore_available():
+        return {"available": False, "reason": "Firestore not reachable."}
+    from evolution.promote import evaluate_promotion
+    from evolution.store import active_version, get_version
+
+    candidate = get_version(candidate_version_id)
+    if candidate is None:
+        raise HTTPException(404, f"unknown version {candidate_version_id!r}")
+    baseline = active_version(candidate.agent_key)
+    if baseline is None:
+        raise HTTPException(404, f"no active version for {candidate.agent_key!r}")
+
+    decision = evaluate_promotion(baseline, candidate)
+    return {
+        "available": True,
+        "dry_run": True,
+        "decision": decision.model_dump(mode="json"),
+        "baseline": baseline.model_dump(mode="json"),
+        "candidate": candidate.model_dump(mode="json"),
+    }
+
+
+@app.post("/api/evolution/promote")
+async def evolution_promote(
+    candidate_version_id: str = Query(...),
+    caller: Principal = Depends(require_human_principal),
+) -> dict[str, Any]:
+    """Promote a candidate. The ONE route that changes what is serving.
+
+    `require_human_principal` rejects an anonymous caller with 401 and a
+    service credential with 403 before this body runs.
+    `evolution/promote.py:assert_human_principal` then independently refuses
+    an `agent::` principal -- defence in depth, not a duplicate: the first is
+    an HTTP concern and the second is a property of the promotion itself,
+    which holds for every caller of `promote()` including a future one that
+    does not arrive over HTTP.
+    """
+    if not _firestore_available():
+        raise HTTPException(503, "Firestore not reachable.")
+    from evolution.promote import PromotionRefused, promote
+    from evolution.store import active_version, get_version
+
+    candidate = get_version(candidate_version_id)
+    if candidate is None:
+        raise HTTPException(404, f"unknown version {candidate_version_id!r}")
+    baseline = active_version(candidate.agent_key)
+    if baseline is None:
+        raise HTTPException(404, f"no active version for {candidate.agent_key!r}")
+
+    try:
+        decision = promote(baseline, candidate, human_principal=caller.principal)
+    except PromotionRefused as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+    return {
+        **decision.model_dump(mode="json"),
+        "decided_by": caller.principal,
+        "auth_method": caller.method,
+        "correlation_id": caller.correlation_id,
+    }
+
+
+@app.post("/api/evolution/rollback")
+async def evolution_rollback(
+    rollback_to_version_id: str = Query(...),
+    reason: str = Query(...),
+    caller: Principal = Depends(require_human_principal),
+) -> dict[str, Any]:
+    """Restore a previous version. Takes a human principal for the same reason
+    promotion does: un-deciding is a decision, and it must name who made it."""
+    if not _firestore_available():
+        raise HTTPException(503, "Firestore not reachable.")
+    from evolution.promote import PromotionRefused, rollback
+    from evolution.store import active_version, get_version
+
+    restore_to = get_version(rollback_to_version_id)
+    if restore_to is None:
+        raise HTTPException(404, f"unknown version {rollback_to_version_id!r}")
+    promoted = active_version(restore_to.agent_key)
+    if promoted is None:
+        raise HTTPException(409, f"no active version for {restore_to.agent_key!r} to roll back")
+    if promoted.version_id == restore_to.version_id:
+        raise HTTPException(409, "that version is already the one serving")
+
+    try:
+        decision = rollback(
+            promoted=promoted,
+            restore_to=restore_to,
+            human_principal=caller.principal,
+            reason=reason,
+        )
+    except (PromotionRefused, ValueError) as exc:
+        raise HTTPException(403, str(exc)) from exc
+    return {**decision.model_dump(mode="json"), "decided_by": caller.principal}
+
+
+@app.get("/api/evolution/history")
+async def evolution_history(
+    limit: int = Query(50), caller: Principal = Depends(require_principal)
+) -> dict[str, Any]:
+    """Every promotion decision, refusals included.
+
+    A refused candidate is kept, never deleted: a rejected proposal is
+    evidence about the loop's judgement and part of the audit record.
+    """
+    if not _firestore_available():
+        return {"available": False, "reason": "Firestore not reachable."}
+    from evolution.store import list_decisions, list_proposals
+
+    return {
+        "available": True,
+        "proposals": [p.model_dump(mode="json") for p in list_proposals(limit=limit)],
+        "decisions": [d.model_dump(mode="json") for d in list_decisions(limit=limit)],
+    }
+
+
+# ---------------------------------------------------------------------------
 # STATIC UI -- mounted last so it cannot shadow an API route
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,63 @@
+%% UNWIND — the governed self-evolution loop.
+%% Renders on GitHub natively. The mission path is the existing system
+%% (unchanged by this work); the evaluation and evolution path is what
+%% evolution/ adds. The dashed edge is the one an agent can never traverse.
+flowchart TD
+    subgraph RUN["MISSION RUNTIME — existing, unchanged"]
+        OBJ[Operator objective] --> PLAN["Planner<br/>fleet/planner.py<br/>Gemini or deterministic"]
+        PLAN --> VAL["validate_plan<br/>the tool boundary"]
+        VAL --> CTX["Context<br/>recon.extract_claims<br/>real coverage measured"]
+        CTX --> RISK["risk.probe<br/>escalation + drift"]
+        RISK --> POL{"Version policy<br/>evolution/policy.py"}
+        POL -->|declines| REST["COMPLETED_WITH_RESTRICTIONS"]
+        POL -->|permits| GATE["Gateway + Warrant + Hyperion<br/>tower/gateway.py"]
+        GATE -->|refused| REST
+        GATE -->|allowed| CS["Countersign<br/>independent challenger"]
+        CS --> HG["Human gate<br/>authenticated principal"]
+        HG --> EXEC["External action<br/>idempotent, reversible"]
+        EXEC --> VER["verify.check"]
+        VER --> REP["Mission report<br/>every field measured"]
+        REST --> REP
+    end
+
+    subgraph EVAL["TRAJECTORY EVALUATION — evolution/criteria.py"]
+        REP --> SCORE["7 deterministic criteria<br/>scored from measured fields<br/>never a model self-report"]
+        SCORE --> TS["TASK_SUCCESS"]
+        SCORE --> SAFE["POLICY_COMPLIANCE · RISK_DISCIPLINE<br/>CONTEXT_QUALITY · TOOL_CORRECTNESS · RECOVERY"]
+        SCORE --> EFF["EFFICIENCY"]
+        TS --> STORE[("evolution_evaluations<br/>append-only")]
+        SAFE --> STORE
+        EFF --> STORE
+    end
+
+    subgraph EVO["GOVERNED EVOLUTION — evolution/propose.py, promote.py"]
+        STORE --> FA["analyse_failures<br/>deterministic; empty history = no proposal"]
+        FA --> CAND["Candidate version<br/>Gemini writes the prose where reachable<br/>provenance set by the path that ran"]
+        CAND --> CLAMP["validate_candidate<br/>authority key = whole proposal void<br/>governance anchor dropped = rejected"]
+        CLAMP --> REPLAY["Offline replay<br/>same 4 scenarios, real evidence"]
+        REPLAY --> G3{"Safety criterion fell?"}
+        G3 -->|yes| REFUSE["REFUSED<br/>kept as audit evidence"]
+        G3 -->|no| G4{"Throughput fell,<br/>paid for by safety?"}
+        G4 -->|unpaid| REFUSE
+        G4 -->|paid| TRADE["TRADE named in the record"]
+        TRADE --> G5{"Composite gain<br/>above noise?"}
+        G5 -->|no| REFUSE
+        G5 -->|yes| G6{"Countersign<br/>disagrees?"}
+        G6 -->|yes| REFUSE
+        G6 -->|no| HUMAN{{"AUTHENTICATED HUMAN<br/>require_human_principal"}}
+        HUMAN -->|no human| AWAIT["AWAITING_HUMAN<br/>candidate does NOT serve"]
+        HUMAN -->|concurs| PROMOTE["PROMOTED<br/>version N+1 serves"]
+        PROMOTE --> MON["Monitor next missions"]
+        MON -->|regression| RB["Rollback<br/>human principal required"]
+        RB --> PROMOTE
+    end
+
+    PROMOTE -.->|"instruction + policy<br/>for the NEXT mission"| PLAN
+    AGENT["Any agent::  principal"] -.->|"REFUSED before<br/>any measurement runs"| HUMAN
+
+    classDef refused fill:#3a1414,stroke:#a33,color:#fdd
+    classDef human fill:#132a3a,stroke:#39a,color:#dff
+    classDef never stroke-dasharray:6 4,fill:#2a1a1a,stroke:#a44,color:#fcc
+    class REFUSE,REST refused
+    class HUMAN,HG,AWAIT human
+    class AGENT never

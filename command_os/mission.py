@@ -61,6 +61,7 @@ guaranteed additionally by `command_os/external.py`'s idempotency key.
 
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from datetime import UTC, datetime
@@ -77,6 +78,8 @@ from warrant.economics import (
     parse_action_kind,
     price_action,
 )
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_OBJECTIVE = "Investigate an anomalous finance capability request."
 
@@ -1307,6 +1310,44 @@ def _handler_for(phase: str):
 # ===========================================================================
 
 
+def _evaluate_trajectory(mission_id: str, report: MissionReport) -> None:
+    """Score the mission's BEHAVIOUR, and persist the evaluation.
+
+    WHY THIS IS BEST-EFFORT AND SWALLOWS ITS OWN FAILURE
+    -------------------------------------------------------
+    Evaluation is observability. It reads what the mission already did and
+    writes a separate document; it can change no mission outcome, and it runs
+    only once the terminal report exists. So an evaluation that fails -- a
+    Firestore write error, a version store that has not been seeded -- must
+    not turn a COMPLETED mission into a crashed one. A mission that ran
+    correctly and could not be scored is exactly that, and the missing
+    evaluation is visible by its absence rather than papered over with a
+    fabricated row.
+
+    The evaluation is scored against the agent version that was ACTUALLY
+    serving when the mission ran, so a score is always attributable to the
+    exact instruction and policy text that produced it.
+    """
+    try:
+        from evolution.store import active_version, ensure_seeded, write_evaluation
+        from evolution.trajectory import evaluate_trajectory
+
+        ensure_seeded()
+        serving = active_version("orchestrator")
+        checkpoints = [cp.model_dump(mode="json") for cp in checkpoint.list_checkpoints(mission_id)]
+        write_evaluation(
+            evaluate_trajectory(
+                report=report.model_dump(mode="json"),
+                checkpoints=checkpoints,
+                mission_id=mission_id,
+                agent_version_id=serving.version_id if serving else "unseeded",
+                agent_key="orchestrator",
+            )
+        )
+    except Exception:  # noqa: BLE001 -- observability must never fail a mission
+        logger.exception("trajectory evaluation failed for mission %s", mission_id)
+
+
 def _run_phases(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionResult:
     """The one loop `run_mission` and `resume_mission` share.
 
@@ -1346,6 +1387,7 @@ def _run_phases(ctx: dict[str, Any], stages: list[MissionStage]) -> MissionResul
 
     report = _build_report(ctx, stages)
     checkpoint.update_mission_status(mission_id, report.status)
+    _evaluate_trajectory(mission_id, report)
     return MissionResult(
         mission_id=mission_id,
         objective=ctx["objective"],

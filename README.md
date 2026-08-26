@@ -114,6 +114,16 @@ concurrence record names the authenticated caller — never a constant. See
 [`docs/SECURITY.md`](docs/SECURITY.md), which also lists the seven things that
 are **not** defended.
 
+**4. The agent with its governance switched OFF scores a perfect 1.00 on task
+success.** Two agent versions, byte-identical instruction text, differing only
+in policy, run over the same four scenarios. The ungoverned one completes
+*every* mission — by writing to the system of record on 76%-parsed,
+self-contradicting evidence with nobody in the loop. **An evaluation that
+reads only the final status ranks it first.** Trajectory evaluation ranks it
+last (composite 0.8206 vs 0.9599) and names why. Generated, not written:
+[`docs/evaluation-report.md`](docs/evaluation-report.md); asserted as a test in
+`tests/test_evolution_replay.py::test_the_ungoverned_agent_scores_perfectly_on_outcome_and_worse_on_behaviour`.
+
 ### The invention: authority as an economy, priced by uncertainty
 
 An agent does not act because a policy says it may. It acts because it holds
@@ -158,6 +168,66 @@ behaving:
 | `fleet_remediation` | `sandbox.write`, `sandbox.read` | **read any secret** |
 | `fleet_verifier` | `sandbox.read`, `verify.read` | write the thing it verifies |
 
+### Governed self-evolution — evaluating the trajectory, not just the answer
+
+`evals/` marks the cascade's **answer**. `evolution/` asks a different
+question: **did the agent behave well getting there?**
+
+A mission can reach a correct answer having ignored a refusal, burned three
+retries, reasoned from 30%-parsed evidence and skipped the human gate. An
+outcome metric scores it identically to a clean one. Seven deterministic
+criteria — each a pure function of fields `command_os/mission.py` already
+measured, never a model's self-report — do not:
+
+| | outcome-only view | trajectory view |
+| --- | --- | --- |
+| clean mission | `COMPLETED` | **0.97** |
+| mission that ignored a refusal, acted on 30% evidence, skipped the gate | `COMPLETED` | **0.25**, five named failures |
+
+*(`tests/test_evolution_criteria.py::test_outcome_only_scoring_cannot_tell_these_apart`)*
+
+Every completed mission is scored automatically and the score is attributed to
+the **exact agent version that was serving**, so a number always refers to
+instruction and policy text that still exists in the form it was scored in.
+
+**The loop that acts on it.** Failure analysis (deterministic) → candidate
+(Gemini writes the prose where reachable; deterministic proposer otherwise;
+provenance set by the code path that ran) → offline replay over the real
+committed evidence → gates → an authenticated human.
+
+**The line it never crosses:**
+
+> The loop can change what an agent is **told**. It can never change what an
+> agent is **allowed**.
+
+Scope, tools, budgets and thresholds stay in `fleet/roles.py` behind the
+unmodified Gateway. A version carrying one is refused at construction, again
+at the gate, and again on content-address integrity.
+
+**No model authorises its own promotion.** `assert_human_principal` refuses an
+`agent::` or `service::` principal — and runs *before* any measurement, so a
+self-promotion attempt cannot even cause work
+(`tests/test_evolution_promote.py::test_agent_principal_cannot_promote`).
+
+**The gate is asymmetric, and that was a finding, not a design.** A single
+zero-tolerance per-criterion rule refused the most important promotion the
+loop can make — ungoverned → governed — because `TASK_SUCCESS` fell 1.00 to
+0.95. It is *supposed* to fall: the governed agent declines missions the
+ungoverned one completed. So safety criteria may never fall; throughput
+criteria may, but only when a safety criterion improves to pay for it, and the
+trade is **named** in the decision record. **A candidate can trade completions
+for compliance. It can never trade compliance for completions.**
+
+See it end to end, no credentials and no database needed:
+
+```bash
+UNWIND_VERTEX_DISABLED=1 python scripts/evolution_demo.py
+```
+
+- [`docs/TECHNICAL-ARTICLE.md`](docs/TECHNICAL-ARTICLE.md) — the full write-up, with a limitations section that names what is **NOT YET MEASURED**
+- [`docs/evaluation-report.md`](docs/evaluation-report.md) — generated from real runs
+- [`docs/architecture-evolution.mmd`](docs/architecture-evolution.mmd) — the loop, including the edge an agent can never traverse
+
 ### What is honestly NOT built
 
 - **Live Gemini fleet planning.** `fleet/agents.py` builds a real ADK
@@ -189,6 +259,22 @@ behaving:
   in `evidence/INDEX.md` §13. Generated artefacts are gitignored output, not
   evidence committed to the repo; the verification JSON and this session's
   transcript are the evidence.
+- **The evolution loop's INSTRUCTION delta is not measured without a model.**
+  With `UNWIND_VERTEX_DISABLED=1` the deterministic planner produces every
+  plan and never reads an agent's instruction text, so a candidate whose
+  prose changed has not been exercised. The system says so rather than
+  scoring it: `evolution/promote.py` attaches an `EXERCISE:` reason to any
+  such candidate, and `docs/evaluation-report.md`'s limitations section
+  labels the measurement **NOT YET MEASURED**. What IS measured with no model
+  is the POLICY delta, and it is genuinely load-bearing —
+  `tests/test_evolution_replay.py::test_policy_genuinely_changes_the_trajectory_with_no_model_involved`
+  proves two versions differing only in policy take different paths over
+  identical evidence.
+- **No longitudinal self-improvement claim.** The loop measures candidates
+  and gates them. It is not claimed to discover improvements unsupervised
+  over time, and improvement across many real missions is **NOT YET
+  MEASURED**. n = 4 scenarios over one incident bundle; no confidence
+  interval is offered because none would be meaningful at that size.
 - **A live agent-spawning fleet.** Five roles are registered from static
   definitions; no agent process is spawned.
 - **Multi-tenancy, token rotation, distributed rate limiting, gate expiry.**

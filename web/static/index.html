@@ -210,6 +210,7 @@
       require human approval before any external action
     </label>
     <button id="cmdos-open-instrument" type="button" class="btn btn-quiet">the six-layer instrument &#9658;</button>
+    <button id="cmdos-open-evolution" type="button" class="btn btn-quiet">Trajectory Evaluation &amp; Evolution &#9658;</button>
   </div>
 
   <div id="cmdos-offline" class="mono instr-offline" hidden>
@@ -402,6 +403,31 @@
   <p class="instr-hint mono">every stage above calls a real engine one layer down · every status
     label is served by <span class="cond">/api/command-os/status</span>, a second independently
     queryable source that must agree with this page or this page is wrong</p>
+</section>
+
+<!-- ─────────── TRAJECTORY EVALUATION & GOVERNED EVOLUTION ─────────── -->
+<section id="evolution" class="overlay cmdos" hidden>
+  <button type="button" id="evo-back" class="btn btn-quiet cmdos-back-link">&#9650; Agentic Command OS</button>
+  <h2 class="cond overlay-h">TRAJECTORY EVALUATION &amp; GOVERNED EVOLUTION</h2>
+  <p class="mono cmdos-lede">how the agent BEHAVED, not just what it returned — seven deterministic
+    criteria computed from what the mission measured, never from a model's account of itself</p>
+
+  <h3 class="mono cmdos-h">Agent roster — the version actually serving</h3>
+  <div id="evo-versions" class="cmdos-report mono"></div>
+
+  <h3 class="mono cmdos-h">Evaluated missions</h3>
+  <div class="evo-grid">
+    <div>
+      <ol id="evo-missions" class="evo-list mono"></ol>
+    </div>
+    <div>
+      <h3 class="mono cmdos-h evo-detail-h">Trajectory score</h3>
+      <div id="evo-detail" class="cmdos-report mono"></div>
+    </div>
+  </div>
+
+  <h3 class="mono cmdos-h">Promotion history — refusals included</h3>
+  <div id="evo-history" class="cmdos-report mono"></div>
 </section>
 
 <!-- ─────────── THE INSTRUMENT (Card 0 spanning Cards 1-3) ─────────── -->

@@ -2369,6 +2369,8 @@
       "</pre>";
   }
 
+  $("cmdos-open-evolution").addEventListener("click", showEvolution);
+  $("evo-back").addEventListener("click", showCommandOS);
 
   async function showInstrument() {
     // The panel used to stay entirely hidden until three sequential,
@@ -2425,12 +2427,196 @@
   $("wd-earn").addEventListener("click", handleEarn);
   $("hd-probe").addEventListener("click", handleHyperionProbe);
 
+  // ── trajectory evaluation & governed evolution ────────────────────
+  //
+  // Every value rendered here comes from a persisted document. There is no
+  // computed-on-read score and no placeholder number anywhere in this panel:
+  // a mission that was never scored renders as "not scored", which is a real
+  // and different thing from a score of zero.
+
+  function evoNotice(text, hint) {
+    return (
+      "<div class='cmdos-stage-summary'>" + esc(text) + "</div>" +
+      (hint ? "<div class='cmdos-hint mono'>" + esc(hint) + "</div>" : "")
+    );
+  }
+
+  //: Criteria that may never regress, per evolution/promote.py. Kept in sync
+  //: with that module by tests/test_evolution_promote.py's partition
+  //: assertion; duplicated here only for display grouping.
+  const EVO_SAFETY = [
+    "POLICY_COMPLIANCE", "RISK_DISCIPLINE", "CONTEXT_QUALITY",
+    "TOOL_CORRECTNESS", "RECOVERY",
+  ];
+
+  function evoBar(score) {
+    const pct = Math.round(Math.max(0, Math.min(1, score)) * 100);
+    return (
+      "<span class='evo-bar' aria-hidden='true'><span class='evo-bar-fill' style='width:" +
+      pct + "%'></span></span>"
+    );
+  }
+
+  function renderEvaluation(ev) {
+    if (!ev) {
+      $("evo-detail").innerHTML = evoNotice(
+        "select an evaluated mission",
+        "each row below is a mission that was scored when it completed"
+      );
+      return;
+    }
+    const rows = (ev.criteria || []).map((c) => {
+      const safety = EVO_SAFETY.indexOf(c.key) !== -1;
+      return (
+        "<tr class='" + (c.passed ? "" : "evo-failed") + "'>" +
+        "<td>" + esc(c.name) + (safety ? " <span class='evo-tag'>safety</span>" : "") + "</td>" +
+        "<td class='evo-num'>" + c.score.toFixed(4) + "</td>" +
+        "<td class='evo-num'>" + c.weight.toFixed(2) + "</td>" +
+        "<td>" + evoBar(c.score) + "</td>" +
+        "<td class='evo-why'>" + esc(c.passed ? c.expected : c.failure) + "</td>" +
+        "</tr>"
+      );
+    }).join("");
+
+    const failures = (ev.failures || []).length
+      ? "<div class='cmdos-hint mono evo-failures'><strong>Named failures</strong><ul>" +
+        ev.failures.map((f) => "<li>" + esc(f) + "</li>").join("") +
+        "</ul></div>"
+      : "";
+
+    // The mission's own status, carried verbatim. An evaluation can never read
+    // better than the mission it scores, and showing both side by side is the
+    // whole point of the panel.
+    $("evo-detail").innerHTML =
+      "<div class='evo-headline'>" +
+      "<span class='evo-composite'>" + ev.composite.toFixed(4) + "</span>" +
+      "<span class='cmdos-hint mono'>composite &middot; mission reported " +
+      esc(ev.outcome || "—") + "</span>" +
+      "</div>" +
+      "<div class='cmdos-hint mono'>scored against version " +
+      esc(ev.agent_version_id || "—") + "</div>" +
+      "<table class='evo-table'><thead><tr><th>criterion</th><th>score</th>" +
+      "<th>weight</th><th></th><th>expected / failure</th></tr></thead><tbody>" +
+      rows + "</tbody></table>" + failures;
+  }
+
+  async function showEvolution() {
+    hideCore();
+    // Open FIRST, populate after -- the same fix evidence/timemachine/
+    // TIME-MACHINE-FIX.md diagnosed and evidence/INDEX.md 14 applied to six
+    // more buttons. A panel that stays hidden while it fetches is
+    // indistinguishable from a dead button.
+    show("evolution");
+    $("evo-versions").innerHTML = evoNotice("loading…");
+    $("evo-missions").innerHTML = "";
+    $("evo-history").innerHTML = "";
+    renderEvaluation(null);
+
+    let versionsRes, evalsRes, historyRes;
+    try {
+      [versionsRes, evalsRes, historyRes] = await Promise.all([
+        authedFetch("/api/evolution/versions?agent_key=orchestrator"),
+        authedFetch("/api/evolution/evaluations"),
+        authedFetch("/api/evolution/history"),
+      ]);
+    } catch (err) {
+      $("evo-versions").innerHTML = evoNotice("could not reach the API", String(err));
+      return;
+    }
+
+    if (versionsRes.status === 401 || versionsRes.status === 403) {
+      $("evo-versions").innerHTML = evoNotice(
+        "NOT AUTHENTICATED — evaluations are a protected read",
+        "enter an operator token in Agentic Command OS, then reopen this panel. " +
+          "An evaluation names which agent version produced which behaviour, so it is not an anonymous read."
+      );
+      return;
+    }
+    if (!versionsRes.ok) {
+      $("evo-versions").innerHTML = evoNotice("unavailable (HTTP " + versionsRes.status + ")");
+      return;
+    }
+
+    const versions = await versionsRes.json();
+    if (!versions.available) {
+      $("evo-versions").innerHTML = evoNotice(
+        "FIRESTORE UNREACHABLE",
+        versions.reason || "agent versions are persisted in Firestore; without it there is no roster to show"
+      );
+      return;
+    }
+
+    $("evo-versions").innerHTML =
+      "<table class='evo-table'><thead><tr><th></th><th>version</th><th>status</th>" +
+      "<th>provenance</th><th>promoted by</th></tr></thead><tbody>" +
+      (versions.versions || []).map((v) => {
+        const serving = v.version_id === versions.active_version_id;
+        return (
+          "<tr class='" + (serving ? "evo-serving" : "") + "'>" +
+          "<td>" + (serving ? "<span class='evo-tag'>serving</span>" : "") + "</td>" +
+          "<td>v" + v.version_n + " <span class='cmdos-hint'>" + esc(v.version_id) + "</span></td>" +
+          "<td>" + esc(v.status) + "</td>" +
+          "<td>" + esc(v.provenance) + (v.model ? " &middot; " + esc(v.model) : "") + "</td>" +
+          "<td>" + esc(v.promoted_by || "—") + "</td>" +
+          "</tr>"
+        );
+      }).join("") +
+      "</tbody></table>" +
+      "<div class='cmdos-hint mono'>a version carries an instruction and a bounded policy. " +
+      "It carries no scope, no tools and no budget: those live in fleet/roles.py behind the " +
+      "Gateway, which this loop never writes to.</div>";
+
+    const evals = evalsRes.ok ? await evalsRes.json() : { evaluations: [] };
+    const rows = (evals.evaluations || []).slice().reverse();
+    if (!rows.length) {
+      $("evo-missions").innerHTML = mtmNotice(
+        "no mission has been scored yet",
+        "run a mission from Agentic Command OS — every completed mission is scored automatically"
+      );
+    } else {
+      $("evo-missions").innerHTML = rows.map((ev, i) =>
+        "<li class='cmdos-stage evo-pick' data-i='" + i + "'>" +
+        "<div class='cmdos-stage-summary'>" + ev.composite.toFixed(4) +
+        " &middot; " + esc(ev.outcome || "—") + "</div>" +
+        "<div class='cmdos-hint mono'>" + esc(ev.objective || ev.mission_id) + "</div>" +
+        ((ev.failures || []).length
+          ? "<div class='cmdos-hint mono'>" + ev.failures.length + " named failure(s)</div>"
+          : "") +
+        "</li>"
+      ).join("");
+      Array.prototype.forEach.call(
+        document.querySelectorAll("#evo-missions .evo-pick"),
+        (el) => el.addEventListener("click", () => renderEvaluation(rows[Number(el.dataset.i)]))
+      );
+      renderEvaluation(rows[0]);
+    }
+
+    const history = historyRes.ok ? await historyRes.json() : { decisions: [] };
+    const decisions = history.decisions || [];
+    $("evo-history").innerHTML = decisions.length
+      ? "<table class='evo-table'><thead><tr><th>outcome</th><th>composite</th>" +
+        "<th>decided by</th><th>reasons</th></tr></thead><tbody>" +
+        decisions.slice().reverse().map((d) =>
+          "<tr class='" + (d.outcome === "REFUSED" ? "evo-failed" : "") + "'>" +
+          "<td>" + esc(d.outcome) + "</td>" +
+          "<td class='evo-num'>" + d.baseline_composite.toFixed(4) + " &rarr; " +
+          d.candidate_composite.toFixed(4) + "</td>" +
+          "<td>" + esc(d.human_principal || "—") + "</td>" +
+          "<td class='evo-why'>" + (d.reasons || []).map(esc).join("<br>") + "</td>" +
+          "</tr>"
+        ).join("") + "</tbody></table>"
+      : evoNotice(
+          "no promotion has been attempted",
+          "a refused candidate is kept, never deleted — a rejected proposal is part of the audit record"
+        );
+  }
+
   // ── screen orchestration ──────────────────────────────────────────
 
   const SCREENS = [
     "split", "obligation", "court", "loadrating", "honesty", "instrument",
     "warrant-detail", "tower-detail", "countersign-detail", "hyperion-detail",
-    "singularity-detail", "command-os",
+    "singularity-detail", "command-os", "evolution",
   ];
 
   function show(name) {
@@ -2506,6 +2692,12 @@
       // The Time Machine used to be its own screen, reached by a button, and
       // needed a special Escape case to get back. It is now a section of the
       // Command OS page, so there is nothing to escape from.
+      //
+      // The evolution panel IS still its own overlay, opened from Agentic
+      // Command OS, so Escape returns the user where they came from rather
+      // than to the instrument -- which would strand them one screen away
+      // from the panel they had just been on.
+      if (state.screen === "evolution") { showCommandOS(); return; }
       if (state.screen !== "instrument") showInstrument();
     }
   });

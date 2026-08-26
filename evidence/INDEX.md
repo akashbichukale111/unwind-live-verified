@@ -1014,3 +1014,84 @@ its own date, was not re-verified here, and was not changed.
 - **The instruction delta is NOT YET MEASURED**, because measuring it requires
   a model in the planning path. See `docs/evaluation-report.md` §Limitations.
 
+---
+
+## 19. Consolidation onto `main` (2026-08-26)
+
+`main` is now the single canonical branch. Every commit and every file from
+all three feature branches is reachable from it; nothing was deleted to make
+branches match, and no branch was force-pushed.
+
+| Branch | State before | Now |
+| --- | --- | --- |
+| `claude/unwind-hackathon-foundation-s36wdi` | `bb5443d`, GitHub default | 0 commits / 0 files missing from `main` |
+| `claude/video-player-bonus-model-nmwlbp` | `6d28aa0` | 0 commits / 0 files missing from `main` |
+| `claude/unwind-hackathon-final-ocfeia` | `39c0014` | 0 commits / 0 files missing from `main` |
+
+`main` had diverged from the evolution branch by 3 commits (the committed
+Veo/Lyria media bundle, the Media Lab race fix, and the redeploy docs) while
+that branch was 5 ahead. Both sides are preserved in full — the merge commit
+records each conflict and why it resolved the way it did. Two are worth
+repeating here:
+
+- **The Time Machine.** `main` had just RETIRED it as a separate screen and
+  inlined it into the Agentic Command OS page; the evolution branch, which
+  predated that, re-added the overlay and put its own button beside the
+  retired one. Resolved to `main`'s newer shape — no button, no overlay,
+  inline panel — plus the Evolution overlay. Verified afterwards that no JS
+  references a DOM id that no longer exists.
+- **A section-numbering collision in this file.** `bb5443d` already had a
+  §15, so the evolution branch's "§15"/"§15b" were duplicates while `main`
+  had gone on to use §16 and §17. Renumbered to §18/§18b. (§8, §9 and §10
+  each appear twice; that predates this merge on `origin/main` and
+  renumbering it would churn the document and break references.)
+
+### Verification of the merged tree
+
+| Check | Result |
+| --- | --- |
+| Full suite, Firestore emulator | **768 passed, 1 skipped** |
+| `ruff check` / `ruff format --check` | clean |
+| `verify_timemachine_and_media.py` | **55/55** — matches `main`'s own recorded run in `evidence/media/demo/PROOF.md` |
+| `verify_all_cards.py` | **26/26** |
+| `verify_evolution_panel.py` | 7 criteria, serving version named, real missions scored, panel opens synchronously, no horizontal scroll |
+| Media really plays | 1280×720 decoded frames, 35 s track, clock advancing on both |
+| Deploy preflight | **20/20**, service `unwind`, region `us-central1` |
+| Zero-model evolution loop | reproduces |
+| `docs/evaluation-report.md --check` | current |
+
+Logs: `evidence/merge/`.
+
+### No model call, nothing regenerated
+
+Verified byte-for-byte: `evidence/models/*.json` is identical to `bb5443d`
+(Gemini, Veo and Lyria still `LIVE_VERIFIED`; Gemma still `UNAVAILABLE`), and
+every file under `evidence/media/demo/` and `web/static/media/` is identical
+to `origin/main`. No Vertex credential existed in this environment.
+
+### What could NOT be completed, and why
+
+Both are proxy policy denials in this session's environment, reported rather
+than retried:
+
+- **The GitHub default branch is still
+  `claude/unwind-hackathon-foundation-s36wdi`.** `PATCH /repos/{owner}/{repo}`
+  returns `403 Repository settings writes are not permitted through this
+  proxy.`
+- **No branch was deleted.** `git push origin --delete` is refused at the
+  transport, and `DELETE /git/refs/heads/{branch}` returns `403 Write access
+  to this GitHub API path is not permitted through this proxy.` The
+  foundation branch could not be deleted in any case while it remains the
+  default.
+
+Neither blocks anything: `main` is complete and pushed. The remaining steps
+are two clicks in GitHub's settings.
+
+### Deployment
+
+**Not performed in this session, and not claimed.** `gcloud` is absent with no
+credentials of any kind, and the egress proxy answers 403 to
+`CONNECT *.a.run.app`, so the live URL cannot be reached from here. See §18b.
+`main` is deployment-ready: preflight 20/20, and `.gcloudignore` carries
+`evolution/`, `web/static/media/` and `docs/` into the upload.
+

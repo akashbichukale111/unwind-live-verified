@@ -34,7 +34,7 @@ Google "All Things Agentic" Hackathon
 | Lyria | mission signal — real HTML5 `<audio>`, plays the committed **DEMO AUDIO — NOT A LYRIA GENERATION** render on every deployment; the one genuine `lyria-002` generation is `LIVE_VERIFIED` evidence, gitignored bytes, not committed |
 | Bonus Google model stack | `GET /api/media/model-roster` — Gemini, Gemma, Veo, Lyria joined live to `evidence/models/verification-*.json`; a model with no verification reads `UNVERIFIED`, never a borrowed green tick |
 | Evidence | [`evidence/INDEX.md`](evidence/INDEX.md) (every claim → file → reproduction command) · [`evidence/media/demo/PROOF.md`](evidence/media/demo/PROOF.md) (checksums, stream headers, audio levels, real-vs-demo distinction) |
-| Tests | `644 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`, reproduced this pass on a fresh Windows checkout); `ruff check` / `format --check` clean |
+| Tests | `768 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`, reproduced this pass on a fresh Windows checkout); `ruff check` / `format --check` clean |
 | Deployment status | **LIVE** — service `unwind`, project `project-895d4ca8-d301-447d-916`, region `us-central1`, revision `unwind-00021-nwl`, 100% traffic — see [Deployed](#deployed) below |
 
 **What is REAL, what is DEMO, what is ARCHITECTURE** — this project draws that

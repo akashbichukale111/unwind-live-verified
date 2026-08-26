@@ -4,6 +4,23 @@
 `evidence/INDEX.md`, and every row there names the exact command that
 reproduces it. Nothing here is projected.*
 
+> **This card predates the Agentic Command OS.** What follows (Cards 0–3,
+> 369 tests) is still accurate and still live — it has not been removed or
+> weakened, and the four-card instrument is now reachable from
+> `the six-layer instrument ▶` on the Agentic Command OS page. But it is no
+> longer the whole submission. Since this card was written, the project grew
+> a second, larger layer on top: an **Agentic Command OS** (objective → plan
+> → delegate → recon → risk → challenge → governance gate → sandboxed action
+> → verify, with a Gemini/Veo/Lyria Mission Media Lab and an inline **Mission
+> Time Machine** over every checkpoint), plus a **governed evolution loop**
+> that scores agent trajectories on seven deterministic criteria and refuses
+> to promote a version that trades safety for throughput. The whole suite is
+> now **768 passed, 1 skipped** (was 369) — see
+> [`evidence/INDEX.md` §16–19](../evidence/INDEX.md) and `README.md`'s
+> "Agentic Command OS" section for the current, larger picture. Read this
+> card for the original four-card architecture; read the README for
+> everything built since.
+
 ---
 
 **Project** — UNWIND, Consequence Clearing
@@ -139,3 +156,12 @@ number against a rubric this submission does not own would be exactly the
 kind of unbacked figure the rest of this repository refuses to print. The
 honesty here is not modesty — it is the reason the 75.6% and the +18.2 pp
 are both worth believing.
+
+**Since this verdict was written**, the same discipline was pointed at the
+Agentic Command OS layer: `docs/evaluation-report.md` measures, rather than
+asserts, that a governed agent trades a small amount of raw task success for
+a large gain in safety/verification criteria — and shows an *ungoverned*
+agent scoring a perfect 1.00 on outcome-only success while being the
+measurably worse agent (composite 0.8206 vs 0.9599), which is the argument
+for governance made in numbers instead of prose. That report's own weakest
+point is stated in its Limitations section, not hidden from it.

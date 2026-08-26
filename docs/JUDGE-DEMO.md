@@ -1,5 +1,14 @@
 # Judge demo — four minutes, no Google Cloud account required
 
+> **This script predates the Mission Media Lab and the Mission Time
+> Machine.** The command_os.cli walkthrough below is still accurate and
+> still the fastest way to see the causal seam. It does not cover the web
+> UI's Media Lab (Gemini/Veo/Lyria, playable with no credential) or the
+> inline Time Machine — see `README.md`'s "Agentic Command OS" section and
+> [`evidence/INDEX.md` §16–19](../evidence/INDEX.md) for those. The
+> "what a judge should not be told" section below is from before those
+> shipped and has been corrected in place, not deleted.
+
 Everything below runs on a cold clone against the Firestore emulator. Nothing
 in this script needs credentials, and nothing in it is scripted output — every
 number you will see is computed at the moment you see it.
@@ -172,10 +181,23 @@ list of gaps is `docs/SECURITY.md` §6.
 
 ## What a judge should not be told
 
-- That Gemini or Gemma ran here. They did not — no credentials.
-- That this commit is deployed. It is not; the last recorded Cloud Run
-  revision predates this rewrite.
-- That Veo or Lyria exist. They do not.
+- That Gemini or Gemma **ran a live model call in this local walkthrough**.
+  They did not here — no credentials in this environment. (Separately, one
+  real Gemini call and one real Veo/Lyria generation DID happen, on
+  2026-08-21, and are `LIVE_VERIFIED` evidence — see below. Do not confuse
+  "not exercised on this run" with "never happened.")
+- That the deployed URL is running whatever commit HEAD happens to be at
+  read time. Check `evidence/deploy/` / `evidence/firestore/` for the
+  revision that was actually verified live, and the date.
+- That every Veo/Lyria player on screen is a real model generation. It is
+  not: the players in the Mission Media Lab are a **deterministic local
+  render** of a real mission's checkpoints, labelled as such on screen, and
+  they play with no credential on every deployment. The **one genuine** Veo
+  generation and **one genuine** Lyria generation this project has ever run
+  are real, evidenced, `LIVE_VERIFIED` — but their bytes are gitignored
+  output, so the "Real Verified Evidence" panel that plays them stays
+  honestly hidden on any machine that does not physically have those files.
 
-`evidence/INDEX.md` §8 lists what each claim is backed by and what is
-explicitly not evidenced.
+`evidence/INDEX.md` §8 (original evidence boundary) and §13, §16–17 (the
+Media Lab, the real Veo/Lyria pass, and the honesty discipline around both)
+list what each claim is backed by and what is explicitly not evidenced.

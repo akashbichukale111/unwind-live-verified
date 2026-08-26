@@ -60,6 +60,24 @@ jobs:
       - name: Eval harness runs
         run: .venv/bin/python -m evals.harness --scenarios evals/scenarios --out evals/results
 
+      # The evaluation report is GENERATED from real runs over the committed
+      # evidence bundle. A number in it that no longer reproduces is a build
+      # failure, not a stale sentence somebody forgot to update. The generation
+      # timestamp is normalised out; every measured number is compared exactly.
+      - name: Evaluation report still matches the code
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+        run: .venv/bin/python scripts/evaluation_report.py --check
+
+      # The governed evolution loop must run end to end with the single door to
+      # a model closed, for the same reason the cascade must: a guarantee that
+      # only gets exercised when somebody remembers to try it is a guarantee
+      # that rots.
+      - name: Governed evolution loop runs with Vertex disabled
+        env:
+          UNWIND_VERTEX_DISABLED: "1"
+        run: .venv/bin/python scripts/evolution_demo.py
+
       # ---------------------------------------------------------------------
       # THE GUARANTEE, as a required check rather than a demo moment.
       #

@@ -9,8 +9,7 @@ claim site.
 A screenshot in this repository proves what its own caption says and
 nothing more. There are no decorative screenshots.
 
-**Generated / last refreshed:** 2026-08-25 (§14 added; §1–13 unchanged since
-2026-08-21). Timestamps in filenames are the actual run time, not an edit
+**Generated / last refreshed:** 2026-08-26 (§15 added; §1–14 unchanged). Timestamps in filenames are the actual run time, not an edit
 time.
 
 ---
@@ -723,3 +722,78 @@ this section: `services/api/main.py` (`_firestore_unavailable_reason`,
 `_dependency_versions`/`/api/healthz`), `lib/firestore.py` (comment only —
 the code is unchanged from before this section), `pyproject.toml`
 (`google-cloud-firestore<2.29.0`, `google-api-core<2.35.0`).
+
+---
+
+## 15. Trajectory evaluation and the governed evolution loop (2026-08-26)
+
+Added `evolution/`: seven deterministic behavioural criteria and the governed
+loop that acts on them. Everything below was run in an environment with **no
+Google credentials and no gcloud** — so nothing here touched Gemini, Veo or
+Lyria, nothing was regenerated, and no deployment was performed or claimed.
+The Firestore emulator WAS available and the full suite was run against it.
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| Full suite green against the emulator: **756 passed, 1 skipped** | `pytest` output | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` |
+| Full suite green with **no** emulator: 612 passed, 131 skipped (the skips are emulator-dependent tests, not failures) | `pytest` output | `python -m pytest -q` |
+| Lint and format clean | `ruff` output | `ruff check . && ruff format --check .` |
+| Two missions BOTH reporting `COMPLETED` score 0.97 and 0.25 — outcome-only evaluation cannot tell them apart | `tests/test_evolution_criteria.py::test_outcome_only_scoring_cannot_tell_these_apart` | `python -m pytest tests/test_evolution_criteria.py -k outcome_only -v` |
+| Ungoverned agent scores a perfect **1.00** on `TASK_SUCCESS` and is measurably the worse agent (composite 0.8206 vs 0.9599) | `docs/evaluation-report.md` (generated), `evidence/evolution/loop-*.json` | `UNWIND_VERTEX_DISABLED=1 python scripts/evaluation_report.py` |
+| The evaluation report is GENERATED, not written — a stale number is a build failure | `scripts/evaluation_report.py` | `UNWIND_VERTEX_DISABLED=1 python scripts/evaluation_report.py --check` |
+| An agent principal cannot promote an agent version, and is refused BEFORE any measurement runs | `tests/test_evolution_promote.py::test_agent_principal_cannot_promote`, `::test_the_principal_check_runs_before_any_measurement` | `python -m pytest tests/test_evolution_promote.py -k principal -v` |
+| A service credential gets 403 at `/api/evolution/promote`; anonymous gets 401 — before any backend is consulted | `tests/test_evolution_api.py` | `python -m pytest tests/test_evolution_api.py -k credential -v` |
+| A candidate carrying scope/tools/budget is refused at construction, at the gate, and on content-address integrity | `tests/test_evolution_promote.py`, `tests/test_evolution_versions.py` | `python -m pytest tests/test_evolution_versions.py tests/test_evolution_promote.py -k "authority or integrity" -v` |
+| A candidate that drops the governance anchor from its instruction is REJECTED, not clamped | `tests/test_evolution_propose.py::test_a_candidate_that_drops_the_governance_anchor_is_rejected` | `python -m pytest tests/test_evolution_propose.py -k anchor -v` |
+| Safety criteria may never fall; throughput may, only when safety pays for it, and the trade is NAMED | `tests/test_evolution_promote.py::test_governance_improvement_is_allowed_and_the_trade_is_named`, `::test_trading_safety_away_is_refused` | `python -m pytest tests/test_evolution_promote.py -k trade -v` |
+| A clean failure history produces NO candidate (409), rather than an invented one | `tests/test_evolution_propose.py`, `tests/test_evolution_api.py` | `python -m pytest tests/test_evolution_propose.py -k clean_history -v` |
+| Policy is genuinely load-bearing: two versions with byte-identical instructions take different paths over identical evidence, with no model | `tests/test_evolution_replay.py::test_policy_genuinely_changes_the_trajectory_with_no_model_involved` | `python -m pytest tests/test_evolution_replay.py -k policy_genuinely -v` |
+| Scoring cannot reach a model client or `google.adk`, even transitively | `tests/test_evolution_zero_model.py` | `python -m pytest tests/test_evolution_zero_model.py -v` |
+| Running a mission writes a real evaluation attributed to the serving version | `tests/test_evolution_api.py::test_a_mission_writes_a_real_evaluation_of_its_own_trajectory` | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest tests/test_evolution_api.py -k writes_a_real -v` |
+| The whole loop, end to end, terminal | `evidence/evolution/loop-20260826T113000Z.json` | `UNWIND_VERTEX_DISABLED=1 python scripts/evolution_demo.py` |
+
+### Two measurement bugs found and fixed during this pass
+
+Both were found by the tests, not by review, and both would have produced
+numbers that looked fine.
+
+**1. Deriving scenario evidence through `csv.DictReader`/`DictWriter`
+REPAIRED the fixture.** `fleet/data/incident/capability-requests.csv`
+deliberately contains a row with a blank `agent_id`, a row with a missing
+integer and a row whose timestamp is the literal `NOT_A_TIMESTAMP`.
+Re-serialising them produces well-formed rows. Measured, the round trip moved
+the committed bundle from **16/20 parsed, completeness 0.80, one escalation
+found** to **12/13 parsed, completeness 0.92, ZERO escalations found**. Every
+scenario would have been scored against evidence quietly cleaner than the
+evidence this repository ships, and the escalation the whole incident turns
+on would have vanished. Deletion is now by raw line, and
+`tests/test_evolution_replay.py::test_verbatim_copy_measures_identically`
+pins it.
+
+**2. A version altered after construction kept its original `version_id`.**
+Its content address no longer described its contents, which defeats the point
+of content addressing: an evaluation would refer to text that is no longer
+there. `evolution/promote.py` now recomputes the address as an INTEGRITY gate
+and refuses the mismatch.
+
+### A duplicate scenario was deleted rather than kept
+
+The evaluation dataset began with five scenarios. `contested-evidence-no-human`
+measured byte-identically to `clean-investigation`, which would have padded
+the dataset and silently double-weighted one behaviour. It was removed, and
+`tests/test_evolution_replay.py::test_the_dataset_contains_no_duplicate_scenarios`
+stops the next one.
+
+### What this pass did NOT do, stated plainly
+
+- **No model call of any kind.** No credentials existed in this environment.
+  Gemini / Veo / Lyria evidence in §13 is unchanged and was not regenerated.
+- **No deployment.** `gcloud` is not installed here; no Cloud Run revision was
+  created and none is claimed. The deployment claims in §1 and §14 are
+  unchanged and carry their own dates.
+- **No browser verification.** Playwright's browser could not be driven
+  against a deployed URL without a deployment; the existing browser evidence
+  in `evidence/browser/` is unchanged.
+- **The instruction delta is NOT YET MEASURED**, because measuring it requires
+  a model in the planning path. See `docs/evaluation-report.md` §Limitations.
+

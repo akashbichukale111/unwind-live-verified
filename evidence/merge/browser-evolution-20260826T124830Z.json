@@ -1,0 +1,18 @@
+{
+  "evolution_button_exists": true,
+  "token_field_filled": true,
+  "panel_visible_ms_after_click": 955.2,
+  "panel_opened_before_data": true,
+  "versions_rendered": true,
+  "versions_excerpt": "\tversion\tstatus\tprovenance\tpromoted by\nSERVING\tv1 v_c4ceb9e785794b2f\tACTIVE\tSEED\tSEED\na version carries an instruction and a bounded policy. It carries no scope, no tools and no budget: those live in fleet/roles.py behin",
+  "missions_excerpt": "0.9500 \u00b7 COMPLETED_WITH_RESTRICTIONS\nInvestigate an anomalous finance capability request.\n0.9500 \u00b7 COMPLETED_WITH_RESTRICTIONS\nInvestigate an anomalous finance capability request.\n0.9500 \u00b7 COMPLETED_WITH_RESTRICTIONS\nInv",
+  "detail_excerpt": "0.9500\ncomposite \u00b7 mission reported COMPLETED_WITH_RESTRICTIONS\nscored against version v_c4ceb9e785794b2f\ncriterion\tscore\tweight\t\texpected / failure\nTask success\t0.9000\t0.20\t\n\tA terminal status that answers the objective (COMPLETED or COMPLETED_WITH_RESTRICTIONS).\nPolicy compliance SAFETY\t1.0000\t0.2",
+  "seven_criteria_rendered": true,
+  "criteria_rows": 7,
+  "history_excerpt": "no promotion has been attempted\na refused candidate is kept, never deleted \u2014 a rejected proposal is part of the audit record",
+  "body_scrolls_horizontally": false,
+  "page_errors": [
+    "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+}

@@ -19,7 +19,7 @@
     {
       "check": "      anonymous mutation refused",
       "pass": true,
-      "detail": "env development \u00b7 2 bearer token(s) configured \u00b7 anonymous mutation: r"
+      "detail": "env development \u00b7 1 bearer token(s) configured \u00b7 dev principal active "
     },
     {
       "check": "      System Reality panel populated",
@@ -34,7 +34,7 @@
     {
       "check": "      mission runs end to end",
       "pass": true,
-      "detail": "13 stages"
+      "detail": "44 stages"
     },
     {
       "check": "      report is truthful",
@@ -94,7 +94,7 @@
     {
       "check": "      HYPERION-ZERO renders real content",
       "pass": true,
-      "detail": "2000 chars"
+      "detail": "2001 chars"
     },
     {
       "check": "[7/7] SINGULARITY-MESH opens",
@@ -119,12 +119,12 @@
     {
       "check": "      every failed request identified by URL",
       "pass": true,
-      "detail": "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:"
+      "detail": "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:; GET http://127.0.0.1:8099/static/media/mission-replay.webm; GET http://127.0.0.1:8099/static/media/mission-signal.wav"
     },
     {
       "check": "      no failed request is a product defect",
       "pass": true,
-      "detail": "only the deliberate 401 and the sandbox-blocked font host"
+      "detail": "only the deliberate 401, the sandbox-blocked font host, and media buffering cancelled by navigation"
     },
     {
       "check": "      zero server-side errors",
@@ -136,6 +136,8 @@
     "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
   ],
   "failed_requests": [
-    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CERT_AUTHORITY_INVALID"
+    "GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap -> net::ERR_CERT_AUTHORITY_INVALID",
+    "GET http://127.0.0.1:8099/static/media/mission-replay.webm -> net::ERR_ABORTED",
+    "GET http://127.0.0.1:8099/static/media/mission-signal.wav -> net::ERR_ABORTED"
   ]
 }

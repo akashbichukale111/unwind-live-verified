@@ -1,0 +1,21 @@
+{
+  "evolution_button_exists": true,
+  "token_field_filled": true,
+  "panel_visible_ms_after_click": 960.2,
+  "panel_opened_before_data": true,
+  "versions_rendered": false,
+  "versions_excerpt": "NOT AUTHENTICATED \u2014 evaluations are a protected read\nenter an operator token in Agentic Command OS, then reopen this panel. An evaluation names which agent version produced which behaviour, so it is not an anonymous read",
+  "missions_excerpt": "",
+  "detail_excerpt": "select an evaluated mission\neach row below is a mission that was scored when it completed",
+  "seven_criteria_rendered": false,
+  "criteria_rows": 0,
+  "history_excerpt": "",
+  "body_scrolls_horizontally": false,
+  "page_errors": [
+    "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "console.error: Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ]
+}

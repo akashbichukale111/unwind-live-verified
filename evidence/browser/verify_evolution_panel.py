@@ -1,13 +1,19 @@
 """Drive the evaluation/evolution panel in a real browser and assert what it shows."""
 
 import json
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = "http://127.0.0.1:8099"
-TOKEN = "ui-tok"
+BASE = os.environ.get("UNWIND_BASE_URL", "http://127.0.0.1:8099")
+#: Matches the operator token the other committed browser suites use, so one
+#: server started per `evidence/media/demo/PROOF.md` serves all of them. An
+#: INVALID token is worse than none: it is rejected 401 even where
+#: UNWIND_DEV_PRINCIPAL would otherwise allow the read, and the panel then
+#: correctly renders its NOT AUTHENTICATED state rather than its data.
+TOKEN = os.environ.get("UNWIND_OPERATOR_TOKEN", "demo-tok")
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/tmp/evo-ui")
 OUT.mkdir(parents=True, exist_ok=True)
 findings = {}

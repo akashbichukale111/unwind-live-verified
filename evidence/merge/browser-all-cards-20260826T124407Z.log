@@ -1,0 +1,30 @@
+/home/user/unwind-live-verified/.venv/lib/python3.12/site-packages/google/cloud/firestore_v1/base_collection.py:317: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+  return query.where(field_path, op_string, value)
+  PASS  [1/7] AGENTIC COMMAND OS renders
+  PASS        fleet: 5 bounded identities — 5 rows
+  PASS        warrant market prices live
+  PASS        anonymous mutation refused — env development · 1 bearer token(s) configured · dev principal active 
+  PASS        System Reality panel populated
+  PASS        Gemini labelled CONFIGURED_NOT_EXERCISED
+  PASS        mission runs end to end — 42 stages
+  PASS        report is truthful — MISSION: COMPLETED WITH RESTRICTIONS
+  PASS        external action recorded
+  PASS  [2/7] six-layer INSTRUMENT renders
+  PASS  [3/7] WARRANT opens
+  PASS        WARRANT renders real content — 811 chars
+  PASS        WARRANT detail body populated
+  PASS  [4/7] CONTROL TOWER opens
+  PASS        CONTROL TOWER renders real content — 911 chars
+  PASS  [5/7] COUNTERSIGN opens
+  PASS        COUNTERSIGN renders real content — 962 chars
+  PASS  [6/7] HYPERION-ZERO opens
+  PASS        HYPERION-ZERO renders real content — 2001 chars
+  PASS  [7/7] SINGULARITY-MESH opens
+  PASS        SINGULARITY-MESH renders real content — 13190 chars
+  PASS  [7/7] UNWIND CORE opens
+  PASS        returns to the instrument / command os
+  PASS        every failed request identified by URL — GET https://fonts.googleapis.com/css2?family=Archivo+Narrow:; GET http://127.0.0.1:8099/static/media/mission-replay.webm; GET http://127.0.0.1:8099/static/media/mission-signal.wav
+  FAIL        no failed request is a product defect — GET http://127.0.0.1:8099/static/media/mission-replay.webm -> net::ERR_ABORTED; GET http://127.0.0.1:8099/static/media/mission-signal.wav -> net::ERR_ABORTED
+  PASS        zero server-side errors — 1 console error(s), all traced to the requests above
+
+25/26 checks passed

@@ -52,6 +52,43 @@ def collect_tool_calls(checkpoints: list[dict[str, Any]]) -> list[dict[str, Any]
     return calls
 
 
+def executed_tool_order(checkpoints: list[dict[str, Any]], report: dict[str, Any]) -> list[str]:
+    """The order tools were ACTUALLY invoked in, first occurrence first.
+
+    THE DEFECT THIS EXISTS TO FIX
+    --------------------------------
+    `TOOL_CORRECTNESS` originally read `MissionReport.tools_used`, which is
+    built as `sorted({s.tool for s in plan.steps})` -- an alphabetically
+    SORTED SET of the tools the plan mentions. It carries no ordering
+    information at all, and it describes what was planned rather than what
+    ran.
+
+    Reading it as a trajectory was silently wrong in both directions. On a
+    real mission it produced a FALSE FAILURE: the sorted list puts
+    `remediation.execute` before `remediation.prepare` purely because "e" < "p",
+    so a correctly-ordered mission was scored as having executed a correction
+    it had not prepared. It could equally have produced a false PASS, since
+    alphabetical order happens to satisfy "evidence gathered before it is
+    analysed" (`recon` < `risk`) whatever the mission actually did.
+
+    The checkpoints carry the real thing: `command_os/mission.py:_run_tool`
+    appends one entry per attempt in execution order, and checkpoints are
+    persisted and read back ordered by `seq`.
+
+    Falls back to `tools_used` only when there are no tool calls to read --
+    which is the case for a caller that passes a report and no checkpoints,
+    such as a unit test constructing an explicit ordered sequence.
+    """
+    ordered: list[str] = []
+    for call in collect_tool_calls(checkpoints):
+        tool = str(call.get("tool", "") or "")
+        if tool and tool not in ordered:
+            ordered.append(tool)
+    if ordered:
+        return ordered
+    return [str(t) for t in (report.get("tools_used", []) or [])]
+
+
 def _policy_trace(
     report: dict[str, Any], checkpoints: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -184,10 +221,18 @@ def evaluate_trajectory(
     checkpoints = checkpoints or []
     calls = collect_tool_calls(checkpoints)
 
+    # `tool_correctness` needs the EXECUTION order, which `report["tools_used"]`
+    # does not carry -- see `executed_tool_order`. The report is passed through
+    # with that one field replaced by the real sequence; nothing else about it
+    # is altered, and the substitution is recorded in the criterion's
+    # `observed` so a reader can see which sequence was scored.
+    ordered_tools = executed_tool_order(checkpoints, report)
+    report_for_tools = {**report, "tools_used": ordered_tools}
+
     criteria = [
         task_success(report),
         policy_compliance(report),
-        tool_correctness(report, registry=tool_registry),
+        tool_correctness(report_for_tools, registry=tool_registry),
         context_quality(report),
         risk_discipline(report),
         recovery(report, tool_calls=calls),

@@ -322,3 +322,96 @@ def test_composite_is_recomputable_by_hand_from_the_record():
     evaluation = _evaluate(_report())
     by_hand = sum(c.score * c.weight for c in evaluation.criteria)
     assert round(by_hand, 4) == evaluation.composite
+
+
+# ---------------------------------------------------------------------------
+# The execution order must come from the checkpoints, not from `tools_used`
+# ---------------------------------------------------------------------------
+
+
+def test_tool_order_comes_from_the_checkpoints_not_the_sorted_report_field():
+    """`MissionReport.tools_used` is `sorted({s.tool for s in plan.steps})` --
+    an alphabetically sorted SET of PLANNED tools, carrying no ordering at all.
+
+    Scoring it as a trajectory produced a FALSE FAILURE on a real mission:
+    alphabetical order puts `remediation.execute` before `remediation.prepare`
+    ("e" < "p"), so a correctly-ordered mission was scored as having executed
+    a correction it never prepared. This pins the fix.
+    """
+    from evolution.trajectory import executed_tool_order
+
+    # Exactly what a real mission's report carries.
+    sorted_field = [
+        "recon.extract_claims",
+        "remediation.execute",
+        "remediation.prepare",
+        "risk.probe",
+        "verify.check",
+    ]
+    assert sorted_field == sorted(sorted_field), "precondition: the field is sorted"
+
+    # The order the mission actually ran in.
+    real_order = [
+        "recon.extract_claims",
+        "risk.probe",
+        "remediation.prepare",
+        "remediation.execute",
+        "verify.check",
+    ]
+    checkpoints = [
+        {
+            "seq": i + 1,
+            "stage": {"name": f"STEP {i + 1}", "detail": {"tool_calls": [{"tool": t, "ok": True}]}},
+        }
+        for i, t in enumerate(real_order)
+    ]
+    report = _report(tools_used=sorted_field)
+
+    assert executed_tool_order(checkpoints, report) == real_order
+
+    # Scored with the real order, the mission passes every invariant.
+    with_checkpoints = _evaluate(report, checkpoints)
+    assert _score(with_checkpoints, CriterionKey.TOOL_CORRECTNESS) == 1.0
+
+    # Scored from the sorted field alone, it does not -- which is the bug.
+    without = _evaluate(report)
+    assert _score(without, CriterionKey.TOOL_CORRECTNESS) < 1.0
+
+
+def test_a_genuinely_misordered_trajectory_still_fails_with_checkpoints():
+    """The fix must not make the criterion unfailable."""
+    misordered = ["recon.extract_claims", "remediation.execute", "verify.check"]
+    checkpoints = [
+        {
+            "seq": i + 1,
+            "stage": {"name": f"STEP {i + 1}", "detail": {"tool_calls": [{"tool": t, "ok": True}]}},
+        }
+        for i, t in enumerate(misordered)
+    ]
+    evaluation = _evaluate(_report(tools_used=sorted(misordered)), checkpoints)
+    crit = next(c for c in evaluation.criteria if c.key is CriterionKey.TOOL_CORRECTNESS)
+    assert crit.score < 1.0
+    assert "prepared" in crit.failure
+
+
+def test_a_retry_does_not_duplicate_a_tool_in_the_order():
+    """`collect_tool_calls` is per-ATTEMPT, so a retried tool appears twice.
+    The order is first-occurrence-unique, or a retry would look like the agent
+    running the same step at two points in its trajectory."""
+    from evolution.trajectory import executed_tool_order
+
+    checkpoints = [
+        {
+            "seq": 1,
+            "stage": {
+                "name": "STEP 1",
+                "detail": {
+                    "tool_calls": [
+                        {"tool": "risk.probe", "ok": False, "attempt": 1},
+                        {"tool": "risk.probe", "ok": True, "attempt": 2},
+                    ]
+                },
+            },
+        }
+    ]
+    assert executed_tool_order(checkpoints, _report()) == ["risk.probe"]

@@ -735,7 +735,7 @@ The Firestore emulator WAS available and the full suite was run against it.
 
 | Claim | File | Reproduction command |
 | --- | --- | --- |
-| Full suite green against the emulator: **756 passed, 1 skipped** | `pytest` output | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` |
+| Full suite green against the emulator: **759 passed, 1 skipped** | `pytest` output | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q` |
 | Full suite green with **no** emulator: 612 passed, 131 skipped (the skips are emulator-dependent tests, not failures) | `pytest` output | `python -m pytest -q` |
 | Lint and format clean | `ruff` output | `ruff check . && ruff format --check .` |
 | Two missions BOTH reporting `COMPLETED` score 0.97 and 0.25 — outcome-only evaluation cannot tell them apart | `tests/test_evolution_criteria.py::test_outcome_only_scoring_cannot_tell_these_apart` | `python -m pytest tests/test_evolution_criteria.py -k outcome_only -v` |
@@ -752,10 +752,38 @@ The Firestore emulator WAS available and the full suite was run against it.
 | Running a mission writes a real evaluation attributed to the serving version | `tests/test_evolution_api.py::test_a_mission_writes_a_real_evaluation_of_its_own_trajectory` | `FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest tests/test_evolution_api.py -k writes_a_real -v` |
 | The whole loop, end to end, terminal | `evidence/evolution/loop-20260826T113000Z.json` | `UNWIND_VERTEX_DISABLED=1 python scripts/evolution_demo.py` |
 
-### Two measurement bugs found and fixed during this pass
+### Browser verification of the evaluation panel
 
-Both were found by the tests, not by review, and both would have produced
-numbers that looked fine.
+Run against a local server on the Firestore emulator with
+`UNWIND_VERTEX_DISABLED=1`, in real Chromium via Playwright. **This is a
+LOCAL browser verification, not a verification of any deployed URL** — no
+deployment was performed this pass.
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| The panel opens **synchronously, in 1.5ms**, before any of its three reads return — the "open first, populate after" property `evidence/timemachine/TIME-MACHINE-FIX.md` diagnosed | `evidence/evolution/browser-findings-*.json` | `python evidence/browser/verify_evolution_panel.py /tmp/evo-ui` |
+| All seven criteria render with score, weight and the expected-or-failure text; the serving version is named | `evidence/evolution/evolution-panel-*.png` (full-page screenshot) | same |
+| The page body never scrolls horizontally | `browser-findings-*.json` → `body_scrolls_horizontally: false` | same |
+| Promotion history renders an honest empty state, not a zero | screenshot | same |
+
+Two console errors appear in the findings file and are **not** caused by this
+work: `fonts.googleapis.com` is blocked by this sandbox's egress proxy. The
+stylesheet declares real fallback stacks (`"Archivo Narrow", "Arial Narrow",
+Impact, sans-serif`), so the page renders correctly without it.
+
+**Two layout defects were found by the screenshot and fixed** — and neither
+was visible to the DOM assertions, which passed before and after. The mission
+list reused `.mtm-arc`, which is `display:flex` (a horizontal timeline): the
+missions laid out in a row that ran off the right edge, pushing the score and
+history panels out of view entirely. And `.cmdos-report`'s 78ch prose cap
+clipped the explanatory column mid-word ("no external effect without", "a
+correction prepare"). The panel now has its own grid and list classes. A
+passing assertion is not a rendered page.
+
+### Three measurement bugs found and fixed during this pass
+
+All three were found by running the code, not by review, and all three would
+have produced numbers that looked entirely reasonable.
 
 **1. Deriving scenario evidence through `csv.DictReader`/`DictWriter`
 REPAIRED the fixture.** `fleet/data/incident/capability-requests.csv`
@@ -770,7 +798,25 @@ on would have vanished. Deletion is now by raw line, and
 `tests/test_evolution_replay.py::test_verbatim_copy_measures_identically`
 pins it.
 
-**2. A version altered after construction kept its original `version_id`.**
+**2. `TOOL_CORRECTNESS` was scoring the alphabet.** The criterion read
+`MissionReport.tools_used`, which is built as
+`sorted({s.tool for s in plan.steps})` — an alphabetically SORTED SET of
+PLANNED tools, carrying no ordering information at all. On a real mission this
+produced a FALSE FAILURE: alphabetical order puts `remediation.execute` before
+`remediation.prepare` ("e" < "p"), so a correctly-ordered mission was scored as
+having executed a correction it never prepared, at 0.75 instead of 1.00. It
+could equally have produced a false PASS, since `recon` < `risk` satisfies
+"evidence gathered before it is analysed" whatever the mission actually did.
+The execution order now comes from the checkpoints' `tool_calls`, which
+`command_os/mission.py:_run_tool` appends in real execution order. Verified on
+a live mission: order `recon.extract_claims → risk.probe →
+remediation.prepare → remediation.execute → verify.check`, `TOOL_CORRECTNESS`
+1.00, composite 0.9125 → 0.9500.
+`tests/test_evolution_criteria.py::test_tool_order_comes_from_the_checkpoints_not_the_sorted_report_field`
+pins it, and a companion test proves the fix did not make the criterion
+unfailable.
+
+**3. A version altered after construction kept its original `version_id`.**
 Its content address no longer described its contents, which defeats the point
 of content addressing: an evaluation would refer to text that is no longer
 there. `evolution/promote.py` now recomputes the address as an INTEGRITY gate

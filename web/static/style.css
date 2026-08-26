@@ -1253,3 +1253,142 @@ html, body {
     row-gap: 0.15rem;
   }
 }
+
+/* ── Trajectory evaluation & governed evolution ─────────────────────────
+ *
+ * No new colour tokens. Every value below reuses the palette declared at the
+ * top of this file, whose contrast ratios are measured rather than eyeballed:
+ * --bone on --ink is 14.98:1, --amber and --oxide are used for emphasis and
+ * failure at full weight rather than as tinted backgrounds behind small text.
+ *
+ * The score bar is deliberately `aria-hidden` in the markup and carries no
+ * information the adjacent numeric column does not already state, so a
+ * screen reader gets the number rather than a decorative width.
+ */
+
+.evo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.evo-table th {
+  text-align: left;
+  color: var(--amber);
+  font-weight: 400;
+  padding: 4px 10px 6px 0;
+  border-bottom: 1px solid var(--slate);
+  white-space: nowrap;
+}
+
+.evo-table td {
+  color: var(--bone);
+  opacity: 0.82;
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--slate);
+  vertical-align: top;
+}
+
+.evo-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* A failed criterion states WHY in the last column; the row tint is a second
+ * channel on top of that text, never the only one carrying the meaning. */
+.evo-table tr.evo-failed td { color: var(--oxide); opacity: 1; }
+.evo-table tr.evo-serving td { color: var(--bone); opacity: 1; }
+
+.evo-why { opacity: 0.66; line-height: 1.55; min-width: 15rem; }
+
+.evo-tag {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--verdigris);
+  border: 1px solid var(--verdigris);
+  border-radius: 2px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.evo-bar {
+  display: block;
+  width: 64px;
+  height: 4px;
+  background: var(--slate);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.evo-bar-fill { display: block; height: 100%; background: var(--amber); }
+
+.evo-headline { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+
+.evo-composite {
+  font-family: var(--mono);
+  font-size: 30px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.evo-failures { margin-top: 12px; }
+.evo-failures ul { margin: 6px 0 0; padding-left: 18px; }
+.evo-failures li { margin-bottom: 4px; line-height: 1.55; }
+
+.evo-pick { cursor: pointer; }
+.evo-pick:hover .cmdos-stage-summary { opacity: 1; }
+.evo-pick:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+@media (max-width: 720px) {
+  .evo-table { font-size: 11px; }
+  .evo-why { min-width: 0; }
+  .evo-composite { font-size: 24px; }
+}
+
+/* The evolution panel carries a five-column table, so it does not use
+ * `.cmdos-tf-grid` -- that grid is capped at 78ch for prose and squeezes the
+ * table into an unreadable column. The mission list is a VERTICAL list and
+ * deliberately not `.mtm-arc`, which is `display:flex` (a horizontal
+ * timeline): reusing it laid the missions out in a row that ran off the
+ * right edge of the viewport, with the score and history panels pushed out
+ * of view entirely. Caught by a full-page screenshot, not by the DOM
+ * assertions, which passed throughout. */
+.evo-grid {
+  display: grid;
+  grid-template-columns: minmax(18ch, 26ch) minmax(0, 1fr);
+  gap: 20px 32px;
+  margin-bottom: 26px;
+  align-items: start;
+}
+
+.evo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.evo-list .cmdos-stage { padding: 6px 0; border-bottom: 1px solid var(--slate); }
+
+.evo-detail-h { margin-top: 0; }
+
+/* A wide table scrolls inside its own box; the page body never scrolls
+ * horizontally. The 78ch cap `.cmdos-report` applies is right for prose and
+ * wrong here -- it clipped the "expected / failure" column mid-word ("no
+ * external effect without", "a correction prepare"). These three panels hold
+ * tables, so they take the width their column gives them. */
+#evo-detail, #evo-history, #evo-versions { overflow-x: auto; max-width: 100%; }
+
+/* Let the explanatory column wrap rather than run under the border, and give
+ * the numeric columns only the width they need. */
+.evo-table th:first-child, .evo-table td:first-child { width: 16ch; }
+.evo-table .evo-why { white-space: normal; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .evo-grid { grid-template-columns: 1fr; }
+  .evo-list { max-height: 16rem; }
+}

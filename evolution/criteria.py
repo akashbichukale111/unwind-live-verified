@@ -227,6 +227,11 @@ def tool_correctness(report: dict[str, Any], *, registry: dict[str, str]) -> Cri
     had no opportunity to violate would make read-only classes score
     differently from write classes for no behavioural reason.
     """
+    # This MUST be an execution-ordered sequence.
+    # `evolution/trajectory.py:executed_tool_order` derives it from the
+    # checkpoints' tool calls before calling here, because
+    # `MissionReport.tools_used` is an alphabetically sorted SET of PLANNED
+    # tools and reading it as a trajectory scores the alphabet.
     used = [str(t) for t in (report.get("tools_used", []) or [])]
     objective_class = str(report.get("objective_class", "") or "")
 

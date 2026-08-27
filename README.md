@@ -137,6 +137,15 @@ human gate outcome, the external action id, and — when a prior mission had
 already written anything — exactly how many records were recalled from which
 mission and how many changes that made to this plan.
 
+## Mission Cockpit
+
+![UNWIND Mission Cockpit](assets/images/mission-cockpit.png)
+
+One mission view, not a set of disconnected panels: the Mission Flow chain,
+specialist execution, reconciliation, human governance, the external
+action, knowledge/recall, mission media, and checkpoints all read from the
+same mission's own state, in the order they actually happened.
+
 ### The seven things a hostile judge should check first
 
 
@@ -571,6 +580,24 @@ make eval                                 # 41 scenarios, 0 model calls
 Full command list and the credentialed paths: [Running it](#running-it).
 
 ---
+
+## System Architecture
+
+![UNWIND System Architecture](assets/images/architecture.png)
+
+The request/auth boundary separates an unauthenticated Judge Demo read from
+an authenticated operator mutation before either reaches mission
+orchestration; the orchestrator delegates to the specialist agent fleet
+under scoped tools; every worker result passes output-contract validation
+before it may touch mission state, with a rejected result routing to
+replan rather than being discarded silently; reconciliation re-derives any
+contradiction from authority independently of the extractor that found it;
+human governance gates the one external action a mission may take; the
+result is distilled into the knowledge/recall store for the next mission
+and folded into evaluation; mission media and the evidence/audit trail
+are generated alongside execution rather than after it; and the whole
+pipeline runs deployed on Cloud Run with Firestore, Pub/Sub, and Secret
+Manager underneath.
 
 ## Architecture
 

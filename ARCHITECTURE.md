@@ -22,6 +22,12 @@ so "T0/T1 survive a Vertex outage" is testable rather than asserted. The full
 cascade runs with it set, **on every CI push**, and the job fails if a single
 model call is made.
 
+![UNWIND System Architecture](assets/images/architecture.png)
+
+*UNWIND system architecture: request/auth boundary, orchestration,
+output-contract validation, governance, evidence, memory, evaluation, media,
+and deployment paths.*
+
 ## Components
 
 ### `lib/config.py`

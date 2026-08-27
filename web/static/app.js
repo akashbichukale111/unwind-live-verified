@@ -1815,6 +1815,11 @@
       renderMissionFlow(m);
       renderMissionReport(m.report, m.status);
       renderExternal(m.report);
+      // Same renderer a live, authenticated GET /api/recall/mission/{id}
+      // read already feeds -- the captured payload carries the identical
+      // shape (scripts/capture_judge_demo.py), so this is the one real
+      // network call the live path makes, done offline instead.
+      if (payload.recall_detail) renderRecall(payload.recall_detail);
 
       const when = payload.captured_at ? new Date(payload.captured_at).toLocaleString() : "";
       $("cmdos-demo-banner-when").textContent = when ? "Captured " + when + "." : "";
@@ -1823,6 +1828,13 @@
       out.textContent = "";
       $("cmdos-flow").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
       await guidedFlowReveal();
+      // Every node above is a summary; the same mission's full depth is one
+      // click further, in panels that already exist -- not new ones.
+      out.hidden = false;
+      out.innerHTML =
+        "Explore this same mission further: the Reconciliation and Recall panels below the " +
+        "report, or <span class='cond'>the six-layer instrument ▶</span> and " +
+        "<span class='cond'>Trajectory Evaluation &amp; Evolution ▶</span> above.";
     } catch (err) {
       out.textContent = "judge demo failed to load: " + err;
     } finally {

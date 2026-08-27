@@ -97,6 +97,17 @@ def main() -> int:
         (reconcile_stage.detail or {}).get("reconciliation") if reconcile_stage else None
     )
 
+    #: The one piece of `GET /api/recall/mission/{id}`'s response shape that
+    #: is NOT already sitting in the PLAN checkpoint's own detail: what this
+    #: mission itself distilled, queryable only after it completes. Captured
+    #: here so the Judge Demo's Recall panel can call the exact same
+    #: `renderRecall()` a live, authenticated read already uses, with a
+    #: real, non-zero "knowledge this mission produced" count instead of a
+    #: silently-omitted one.
+    from recall.store import list_records
+
+    produced = [r.model_dump(mode="json") for r in list_records(mission_id=demo.mission_id)]
+
     payload = {
         "captured_at": datetime.now(UTC).isoformat(),
         "captured_by": "scripts/capture_judge_demo.py",
@@ -108,6 +119,19 @@ def main() -> int:
         "objective": OBJECTIVE,
         "seed_mission_id": seed.mission_id,
         "mission": demo.model_dump(mode="json"),
+        #: Exactly `GET /api/recall/mission/{id}`'s response shape, so the
+        #: frontend can feed this straight into the SAME `renderRecall()` a
+        #: live, authenticated read already uses -- no parallel rendering
+        #: path for the demo.
+        "recall_detail": {
+            "available": True,
+            "mission_id": demo.mission_id,
+            "consulted": recall,
+            "scrutiny_applied": plan_detail.get("scrutiny_applied", []),
+            "risk_profile_before_recall": plan_detail.get("risk_profile_before_recall"),
+            "risk_profile": plan_detail.get("risk_profile"),
+            "produced": produced,
+        },
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

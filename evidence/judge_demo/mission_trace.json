@@ -1,11 +1,11 @@
 {
-  "captured_at": "2026-08-27T06:03:55.425408+00:00",
+  "captured_at": "2026-08-27T07:05:42.906318+00:00",
   "captured_by": "scripts/capture_judge_demo.py",
   "note": "A real, deterministic, zero-model mission trace, captured offline. The Judge Demo replays this exact JSON; it does not run a new mission, mint warrant, or touch Firestore when a judge clicks the button.",
   "objective": "Investigate an anomalous finance capability request.",
-  "seed_mission_id": "mission_55508e026c",
+  "seed_mission_id": "mission_927e703a83",
   "mission": {
-    "mission_id": "mission_5ac899a4f6",
+    "mission_id": "mission_c722d24cb8",
     "objective": "Investigate an anomalous finance capability request.",
     "status": "COMPLETED_WITH_RESTRICTIONS",
     "stages": [
@@ -88,7 +88,7 @@
             "provenance": "ZERO_MODEL",
             "model": "unwind-deterministic-planner@1",
             "input_hash": "823614b7602e5c53e0d5de13652b9373",
-            "created_at": "2026-08-27T06:03:53.653226Z",
+            "created_at": "2026-08-27T07:05:40.992976Z",
             "latency_ms": 0,
             "clamps": [],
             "notes": "model planner not attempted: allow_model=False"
@@ -110,11 +110,11 @@
             "selection_ratio": 0.3333,
             "selected_records": [
               {
-                "record_id": "kr_50487d3f539a40287460514b",
+                "record_id": "kr_12eaa7a3f5cd10492c956935",
                 "kind": "AGENT_ISOLATION",
                 "subject": "fleet_recon",
                 "statement": "Agent fleet_recon was ISOLATED after requesting 'finance.secret_read' with 147 tool calls on dataset 'finance'; the Gateway refused it.",
-                "mission_id": "mission_55508e026c",
+                "mission_id": "mission_927e703a83",
                 "checkpoint_seq": 6,
                 "source": "fleet/data/incident/capability-requests.csv",
                 "score": 2.459392,
@@ -124,11 +124,11 @@
                 ]
               },
               {
-                "record_id": "kr_f3cd7c7fd511239b89102bb0",
+                "record_id": "kr_88334667cb2c77bdd1195cd1",
                 "kind": "SCOPE_ESCALATION",
                 "subject": "fleet_recon",
                 "statement": "Agent fleet_recon requested 'finance.secret_read', outside its registered scope ['corpus.read', 'evidence.read'], on request 'req-8802' at risk class 'HIGH'.",
-                "mission_id": "mission_55508e026c",
+                "mission_id": "mission_927e703a83",
                 "checkpoint_seq": 5,
                 "source": "fleet/data/incident/capability-requests.csv",
                 "score": 0.907154,
@@ -141,15 +141,15 @@
               "raise_risk_class": "MEDIUM",
               "require_verification": false,
               "scrutiny_notes": [
-                "prior mission mission_55508e026c recorded AGENT_ISOLATION for fleet_recon; risk floor raised to MEDIUM",
-                "prior mission mission_55508e026c recorded SCOPE_ESCALATION for fleet_recon; risk floor raised to MEDIUM"
+                "prior mission mission_927e703a83 recorded AGENT_ISOLATION for fleet_recon; risk floor raised to MEDIUM",
+                "prior mission mission_927e703a83 recorded SCOPE_ESCALATION for fleet_recon; risk floor raised to MEDIUM"
               ],
               "subjects_of_concern": [
                 "fleet_recon"
               ],
               "derived_from": [
-                "kr_50487d3f539a40287460514b",
-                "kr_f3cd7c7fd511239b89102bb0"
+                "kr_12eaa7a3f5cd10492c956935",
+                "kr_88334667cb2c77bdd1195cd1"
               ]
             }
           },
@@ -224,7 +224,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_recon",
             "task": "recon.extract_claims: Gather and structure the incident evidence.",
-            "checked_at": "2026-08-27T06:03:54.146820Z"
+            "checked_at": "2026-08-27T07:05:41.516196Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -251,7 +251,7 @@
             {
               "tool": "recon.extract_claims",
               "ok": true,
-              "latency_ms": 16,
+              "latency_ms": 0,
               "attempt": 1
             }
           ],
@@ -259,7 +259,7 @@
             "agent_role": "WORKER_DOCUMENT",
             "tool_calls": 1,
             "dataset": "documents",
-            "latency_ms": 16,
+            "latency_ms": 1,
             "requested_export": false,
             "requested_secret_access": false
           },
@@ -269,13 +269,13 @@
             "drift_band": "NORMAL",
             "capability_action": "NONE",
             "signals": [
-              "latency 16ms outside baseline [200, 3000]ms"
+              "latency 1ms outside baseline [200, 3000]ms"
             ],
             "observation": {
               "agent_role": "WORKER_DOCUMENT",
               "tool_calls": 1,
               "dataset": "documents",
-              "latency_ms": 16,
+              "latency_ms": 1,
               "requested_export": false,
               "requested_secret_access": false
             }
@@ -319,7 +319,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_reconciler",
             "task": "reconcile.adjudicate: re-derive contradicted claims from authority",
-            "checked_at": "2026-08-27T06:03:54.219622Z"
+            "checked_at": "2026-08-27T07:05:41.591032Z"
           },
           "reconciliation": {
             "resolutions": [
@@ -626,7 +626,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_risk",
             "task": "risk.probe: Hunt for scope escalation and unbacked authority in the gathered evidence.",
-            "checked_at": "2026-08-27T06:03:54.301251Z"
+            "checked_at": "2026-08-27T07:05:41.720108Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -759,7 +759,7 @@
             "reason": "agent 'fleet_recon' requested ['finance.secret_read'], which is outside its granted scope ['corpus.read', 'documents', 'evidence.read', 'web'].",
             "agent_id": "fleet_recon",
             "task": "containment probe: finance.secret_read requested by fleet_recon",
-            "checked_at": "2026-08-27T06:03:54.343254Z"
+            "checked_at": "2026-08-27T07:05:41.768576Z"
           },
           "risk": {
             "reason_code": "SCOPE_EXCEEDED",
@@ -812,7 +812,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_remediation",
             "task": "remediation.prepare: Prepare the smallest reversible correction for what was confirmed.",
-            "checked_at": "2026-08-27T06:03:54.393569Z"
+            "checked_at": "2026-08-27T07:05:41.845067Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -929,7 +929,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_remediation",
             "task": "remediation.execute: Execute the correction against the sandboxed system of record.",
-            "checked_at": "2026-08-27T06:03:54.438718Z"
+            "checked_at": "2026-08-27T07:05:41.929274Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -958,7 +958,7 @@
             {
               "tool": "remediation.execute",
               "ok": true,
-              "latency_ms": 0,
+              "latency_ms": 15,
               "attempt": 1
             }
           ],
@@ -966,7 +966,7 @@
             "agent_role": "WORKER_PYTHON",
             "tool_calls": 1,
             "dataset": "sandbox",
-            "latency_ms": 1,
+            "latency_ms": 15,
             "requested_export": false,
             "requested_secret_access": false
           },
@@ -977,13 +977,13 @@
             "capability_action": "RESTRICT",
             "signals": [
               "dataset 'sandbox' outside baseline ['sales']",
-              "latency 1ms outside baseline [300, 4000]ms"
+              "latency 15ms outside baseline [300, 4000]ms"
             ],
             "observation": {
               "agent_role": "WORKER_PYTHON",
               "tool_calls": 1,
               "dataset": "sandbox",
-              "latency_ms": 1,
+              "latency_ms": 15,
               "requested_export": false,
               "requested_secret_access": false
             }
@@ -1037,7 +1037,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_verifier",
             "task": "verify.check: Independently re-read the system of record and confirm the effect.",
-            "checked_at": "2026-08-27T06:03:54.480073Z"
+            "checked_at": "2026-08-27T07:05:42.004306Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -1158,23 +1158,23 @@
         "n": 12,
         "name": "EXECUTE \u2014 correction applied to the system of record",
         "status": "LIVE (SANDBOX BACKEND)",
-        "summary": "REVOKE_CAPABILITY_REQUEST -> sandbox_file#sbx-e2d9d28536c7 (applied), 140bp spent",
+        "summary": "REVOKE_CAPABILITY_REQUEST -> sandbox_file#sbx-d13e358a43d6 (applied), 140bp spent",
         "detail": {
           "executed": true,
           "record": {
             "backend": "sandbox_file",
-            "idempotency_key": "mission_5ac899a4f6:req-8802:revoke",
-            "external_id": "sbx-e2d9d28536c7",
+            "idempotency_key": "mission_c722d24cb8:req-8802:revoke",
+            "external_id": "sbx-d13e358a43d6",
             "action": "REVOKE_CAPABILITY_REQUEST",
             "status": "APPLIED",
-            "recorded_at": "2026-08-27T06:03:54.880515+00:00",
+            "recorded_at": "2026-08-27T07:05:42.211692+00:00",
             "replayed": false,
             "target_request_id": "req-8802",
             "target_agent_id": "fleet_recon",
             "revoke_scope": "finance.secret_read",
             "reason": "'finance.secret_read' is outside fleet_recon's registered scope ['corpus.read', 'evidence.read']",
             "title": "Revoke out-of-scope request req-8802 from fleet_recon",
-            "mission_id": "mission_5ac899a4f6",
+            "mission_id": "mission_c722d24cb8",
             "acting_principal": "agent::fleet_remediation",
             "human_principal": "human::judge-demo",
             "cost_bp": 140,
@@ -1199,7 +1199,7 @@
             "reason": "all checks passed.",
             "agent_id": "fleet_remediation",
             "task": "execute correction: REVOKE_CAPABILITY_REQUEST",
-            "checked_at": "2026-08-27T06:03:54.868945Z"
+            "checked_at": "2026-08-27T07:05:42.203076Z"
           },
           "risk": {
             "reason_code": "ALLOWED",
@@ -1218,8 +1218,8 @@
           "verified": true,
           "reason": "recorded effect matches the proposal field for field",
           "mismatches": [],
-          "recorded_at": "2026-08-27T06:03:54.880515+00:00",
-          "external_id": "sbx-e2d9d28536c7",
+          "recorded_at": "2026-08-27T07:05:42.211692+00:00",
+          "external_id": "sbx-d13e358a43d6",
           "settlement": {
             "before_bp": 80,
             "action": "MINT",
@@ -1232,7 +1232,7 @@
         "n": 14,
         "name": "REPORT \u2014 COMPLETED_WITH_RESTRICTIONS",
         "status": "LIVE",
-        "summary": "COMPLETED_WITH_RESTRICTIONS: 0 refusal(s), 1 isolation(s), challenger agrees=True, external=sbx-e2d9d28536c7, verified=True",
+        "summary": "COMPLETED_WITH_RESTRICTIONS: 0 refusal(s), 1 isolation(s), challenger agrees=True, external=sbx-d13e358a43d6, verified=True",
         "detail": {
           "status": "COMPLETED_WITH_RESTRICTIONS"
         }
@@ -1288,7 +1288,7 @@
       "human_decision_mode": "auto_approved_at_launch",
       "gate": "APPROVED",
       "external_action": "REVOKE_CAPABILITY_REQUEST",
-      "external_action_id": "sbx-e2d9d28536c7",
+      "external_action_id": "sbx-d13e358a43d6",
       "external_backend": "sandbox_file",
       "external_replayed": false,
       "verified": true,
@@ -1296,15 +1296,15 @@
       "warrant_before_bp": 80,
       "warrant_after_bp": 280,
       "case_ids": [
-        "mission_5ac899a4f6_step1",
-        "mission_5ac899a4f6_reconcile",
-        "mission_5ac899a4f6_step2",
-        "mission_5ac899a4f6_contain",
-        "mission_5ac899a4f6_step3",
-        "mission_5ac899a4f6_step4",
-        "mission_5ac899a4f6_step5",
-        "mission_5ac899a4f6_challenge",
-        "mission_5ac899a4f6_execute"
+        "mission_c722d24cb8_step1",
+        "mission_c722d24cb8_reconcile",
+        "mission_c722d24cb8_step2",
+        "mission_c722d24cb8_contain",
+        "mission_c722d24cb8_step3",
+        "mission_c722d24cb8_step4",
+        "mission_c722d24cb8_step5",
+        "mission_c722d24cb8_challenge",
+        "mission_c722d24cb8_execute"
       ]
     },
     "plan": {
@@ -1380,10 +1380,203 @@
       "provenance": "ZERO_MODEL",
       "model": "unwind-deterministic-planner@1",
       "input_hash": "823614b7602e5c53e0d5de13652b9373",
-      "created_at": "2026-08-27T06:03:53.653226Z",
+      "created_at": "2026-08-27T07:05:40.992976Z",
       "latency_ms": 0,
       "clamps": [],
       "notes": "model planner not attempted: allow_model=False"
     }
+  },
+  "recall_detail": {
+    "available": true,
+    "mission_id": "mission_c722d24cb8",
+    "consulted": {
+      "quarantined": [],
+      "available": true,
+      "corpus_records": 6,
+      "selected": 2,
+      "filtered_out": 0,
+      "zero_scored": 4,
+      "dropped_for_budget": 0,
+      "chars_returned": 292,
+      "char_budget": 1200,
+      "selection_ratio": 0.3333,
+      "selected_records": [
+        {
+          "record_id": "kr_12eaa7a3f5cd10492c956935",
+          "kind": "AGENT_ISOLATION",
+          "subject": "fleet_recon",
+          "statement": "Agent fleet_recon was ISOLATED after requesting 'finance.secret_read' with 147 tool calls on dataset 'finance'; the Gateway refused it.",
+          "mission_id": "mission_927e703a83",
+          "checkpoint_seq": 6,
+          "source": "fleet/data/incident/capability-requests.csv",
+          "score": 2.459392,
+          "matched_terms": [
+            "capability",
+            "finance"
+          ]
+        },
+        {
+          "record_id": "kr_88334667cb2c77bdd1195cd1",
+          "kind": "SCOPE_ESCALATION",
+          "subject": "fleet_recon",
+          "statement": "Agent fleet_recon requested 'finance.secret_read', outside its registered scope ['corpus.read', 'evidence.read'], on request 'req-8802' at risk class 'HIGH'.",
+          "mission_id": "mission_927e703a83",
+          "checkpoint_seq": 5,
+          "source": "fleet/data/incident/capability-requests.csv",
+          "score": 0.907154,
+          "matched_terms": [
+            "capability"
+          ]
+        }
+      ],
+      "directive": {
+        "raise_risk_class": "MEDIUM",
+        "require_verification": false,
+        "scrutiny_notes": [
+          "prior mission mission_927e703a83 recorded AGENT_ISOLATION for fleet_recon; risk floor raised to MEDIUM",
+          "prior mission mission_927e703a83 recorded SCOPE_ESCALATION for fleet_recon; risk floor raised to MEDIUM"
+        ],
+        "subjects_of_concern": [
+          "fleet_recon"
+        ],
+        "derived_from": [
+          "kr_12eaa7a3f5cd10492c956935",
+          "kr_88334667cb2c77bdd1195cd1"
+        ]
+      }
+    },
+    "scrutiny_applied": [
+      "step 1: risk class raised LOW -> MEDIUM on recalled evidence",
+      "step 3: on the correction path (ANALYZE by fleet_remediation); left at LOW",
+      "step 4: on the correction path (CREATE_TICKET by fleet_remediation); left at MEDIUM",
+      "step 5: risk class raised LOW -> MEDIUM on recalled evidence"
+    ],
+    "risk_profile_before_recall": "1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW",
+    "risk_profile": "1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM",
+    "produced": [
+      {
+        "record_id": "kr_65510e0c1e2cbbfcc19be511",
+        "kind": "EXTERNAL_EFFECT",
+        "standing": "OBSERVED",
+        "subject": "REVOKE_CAPABILITY_REQUEST",
+        "statement": "External action 'REVOKE_CAPABILITY_REQUEST' was executed as sbx-d13e358a43d6 against backend 'sandbox_file' and verified=True.",
+        "value": {
+          "external_id": "sbx-d13e358a43d6",
+          "replayed": false,
+          "backend": "sandbox_file",
+          "verified": true
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 0,
+        "agent_id": "fleet_remediation",
+        "tool": "",
+        "source": "",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      },
+      {
+        "record_id": "kr_633f924e691e8364a326cb50",
+        "kind": "DISPUTED_PREMISE",
+        "standing": "CAUTION",
+        "subject": "clm_tariff_rate_K",
+        "statement": "Premise clm_tariff_rate_K (tariff_rate_pct) is DISPUTED (AUTHORITY_CONTRADICTS_RECENCY): recency selects 8.0 from 'src_erp' while authority selects 8.5 from 'src_compliance_note'. Not decided by the system.",
+        "value": {
+          "predicate": "tariff_rate_pct",
+          "authority_value": 8.5,
+          "dispute_kind": "AUTHORITY_CONTRADICTS_RECENCY",
+          "recency_value": 8.0
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 3,
+        "agent_id": "fleet_reconciler",
+        "tool": "reconcile.adjudicate",
+        "source": "src_compliance_note",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      },
+      {
+        "record_id": "kr_5d0169ba2b920e2654d3dba1",
+        "kind": "EVIDENCE_COVERAGE",
+        "standing": "CAUTION",
+        "subject": "incident_evidence",
+        "statement": "Evidence coverage measured at 0.80: 16 of 20 records parsed on a SECURITY_INVESTIGATION mission.",
+        "value": {
+          "completeness": 0.8,
+          "parsed": 16,
+          "total": 20
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 0,
+        "agent_id": "fleet_recon",
+        "tool": "recon.extract_claims",
+        "source": "fleet/data/incident",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      },
+      {
+        "record_id": "kr_3662f55f9754c45ac9a56adf",
+        "kind": "SETTLED_PREMISE",
+        "standing": "OBSERVED",
+        "subject": "clm_supplier_K_lead_time",
+        "statement": "Premise clm_supplier_K_lead_time (lead_time_days) settled at 20 on the authority of 'procurement' via source 'src_procurement'; the recency rule agreed.",
+        "value": {
+          "value": 20,
+          "authority": "procurement",
+          "agreed_with_recency": true,
+          "predicate": "lead_time_days"
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 3,
+        "agent_id": "fleet_reconciler",
+        "tool": "reconcile.adjudicate",
+        "source": "src_procurement",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      },
+      {
+        "record_id": "kr_108e5a0c4d3c01c1c277961c",
+        "kind": "AGENT_ISOLATION",
+        "standing": "CAUTION",
+        "subject": "fleet_recon",
+        "statement": "Agent fleet_recon was ISOLATED after requesting 'finance.secret_read' with 147 tool calls on dataset 'finance'; the Gateway refused it.",
+        "value": {
+          "tool_calls": 147,
+          "dataset": "finance",
+          "request_id": "req-8802",
+          "requested_scope": "finance.secret_read"
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 6,
+        "agent_id": "fleet_recon",
+        "tool": "",
+        "source": "fleet/data/incident/capability-requests.csv",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      },
+      {
+        "record_id": "kr_07ef1c6846bd95a41eb1877a",
+        "kind": "SCOPE_ESCALATION",
+        "standing": "CAUTION",
+        "subject": "fleet_recon",
+        "statement": "Agent fleet_recon requested 'finance.secret_read', outside its registered scope ['corpus.read', 'evidence.read'], on request 'req-8802' at risk class 'HIGH'.",
+        "value": {
+          "tool_calls": 147,
+          "requested_scope": "finance.secret_read",
+          "granted_scope": [
+            "corpus.read",
+            "evidence.read"
+          ],
+          "request_id": "req-8802",
+          "risk_class": "HIGH"
+        },
+        "mission_id": "mission_c722d24cb8",
+        "objective_class": "SECURITY_INVESTIGATION",
+        "checkpoint_seq": 5,
+        "agent_id": "fleet_recon",
+        "tool": "risk.probe",
+        "source": "fleet/data/incident/capability-requests.csv",
+        "observed_at": "2026-08-27T07:05:42.850854Z"
+      }
+    ]
   }
 }

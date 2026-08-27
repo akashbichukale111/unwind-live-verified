@@ -1287,6 +1287,48 @@ an unauthorized, rejected request, not a billed one. The script now sets
 both flags itself, defensively, so this cannot recur on a future capture
 regardless of the calling shell's environment.
 
+### 22b. The dedicated Recall panel now populates in Judge Demo too (2026-08-27)
+
+§22 originally left the Recall panel out of the replay -- `loadRecall()`
+is an authenticated `GET`, and the captured trace had no equivalent data
+to feed it. `GET /api/recall/mission/{id}`'s response shape turns out to
+be almost entirely a subset of the PLAN checkpoint's own `detail` (the
+captured trace already carried it), with one exception: `produced`, the
+records the mission itself distilled, queryable only after completion.
+`scripts/capture_judge_demo.py` now also captures that (`recall.store
+.list_records(mission_id=...)`, still zero-model, zero-network) and writes
+the whole thing as `recall_detail` in the committed JSON, in EXACTLY
+`GET /api/recall/mission/{id}`'s shape. `web/static/app.js:runJudgeDemo`
+feeds it straight into the same `renderRecall()` a live, authenticated
+read already uses -- no second rendering path for the demo. Verified this
+pass, twice: the panel shows a real record count, a real "knowledge this
+mission produced" count (6), and the real risk-profile change
+(`1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW` → `1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM`).
+
+A short "explore this mission further" pointer was added after the guided
+reveal, naming the Reconciliation/Recall panels and the existing
+six-layer-instrument / Evolution buttons by name -- no new UI, just an
+explicit link from the summary to the depth that was already one click
+away.
+
+Full suite after this addendum: **1207 passed, 1 skipped** — a fully
+clean run (the one test that flaked on the previous long combined run
+passed cleanly here with no isolation needed, confirming it was the
+established shared-emulator-state pattern, not a regression). `ruff
+check` / `format --check` clean. Browser suites re-verified:
+`verify_all_cards.py` 26/26 (×2 clean of 3 runs — the third run's own
+first attempt showed the same pre-existing cold-start flakiness this
+project has documented before, unrelated to this change),
+`verify_timemachine_and_media.py` 55/55, `verify_mission_button.py`
+11/11, `verify_recall_and_reconcile.py` 23/23. Security regression,
+checked directly: anonymous `GET /api/judge-demo/mission` → 200;
+anonymous `POST /api/command-os/mission` → 401; anonymous
+`POST /api/command-os/mission/{id}/gate` → 401; anonymous
+`POST /api/instrument/burn` → 401. No secret or real token found in
+source, git history, or any tracked file (checked directly this pass;
+`demo-tok`/`kim@ops.example` — the long-published local-dev demo
+credential — appear only in tests/docs, never in production code).
+
 Full suite after this pass: **1205 passed, 1 skipped** (was 1202); one test
 (`test_command_os_checkpoint.py::test_resume_does_not_duplicate_external_action`)
 failed on this long combined run and passed cleanly both alone and as its

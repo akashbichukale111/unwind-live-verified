@@ -39,7 +39,7 @@ FLOOR = 4.5
 
 #: Selectors whose surface is the PAPER (bone ground), where the legal set is
 #: different. Anything not matching these is treated as sitting on --ink.
-PAPER_PREFIXES = (".paper", ".o-", ".told", "#o-", ".btn-dark", ".instr-freeze")
+PAPER_PREFIXES = (".paper", ".o-", ".told", "#o-", ".btn-dark", ".instr-freeze", ".btn-judge-demo")
 
 LEGAL_ON_INK = {"bone", "amber"}
 LEGAL_ON_BONE = {"ink", "graphite", "oxide"}

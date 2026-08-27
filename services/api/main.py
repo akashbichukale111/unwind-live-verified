@@ -1252,6 +1252,42 @@ async def singularity_behavior_probe(
 # ---------------------------------------------------------------------------
 
 
+#: Loaded once at import time, not per-request: the file is committed
+#: evidence (`scripts/capture_judge_demo.py`), not something a caller can
+#: influence, so there is nothing to gain from re-reading it on every hit
+#: and a real cost (a disk read on every anonymous request) to doing so.
+_JUDGE_DEMO_PATH = REPO / "evidence" / "judge_demo" / "mission_trace.json"
+try:
+    _JUDGE_DEMO_PAYLOAD: dict[str, Any] | None = json.loads(
+        _JUDGE_DEMO_PATH.read_text(encoding="utf-8")
+    )
+except (OSError, json.JSONDecodeError):
+    _JUDGE_DEMO_PAYLOAD = None
+
+
+@app.get("/api/judge-demo/mission")
+async def judge_demo_mission() -> dict[str, Any]:
+    """The Judge Demo's one and only data source: a real, captured,
+    zero-model mission trace, replayed verbatim.
+
+    Deliberately carries NO auth dependency -- this is the one intentional
+    exception to "every mutating route requires a principal", and it is not
+    an exception to that rule at all: this route is a GET, it performs no
+    Firestore write, mints no warrant, and triggers no external effect. It
+    returns the exact same static JSON to every caller, always. Making
+    `/api/command-os/mission` itself anonymous would be the actual violation
+    this route exists to avoid -- see `scripts/capture_judge_demo.py` for
+    the full reasoning.
+    """
+    if _JUDGE_DEMO_PAYLOAD is None:
+        raise HTTPException(
+            404,
+            "no captured judge-demo trace on this build "
+            "(run scripts/capture_judge_demo.py and redeploy)",
+        )
+    return _JUDGE_DEMO_PAYLOAD
+
+
 @app.post("/api/command-os/mission")
 async def command_os_mission(
     objective: str = Query(""),

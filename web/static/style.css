@@ -38,6 +38,18 @@
 
 * { box-sizing: border-box; }
 
+/* A class that sets its own `display` (`.cmdos-tf-grid { display: grid }`,
+ * `.cmdos-actions { display: flex }`, ...) has the SAME specificity as the
+ * browser's own `[hidden] { display: none }` default and, loaded later,
+ * wins the cascade -- so `el.hidden = true` silently stops hiding an
+ * element the moment any class on it declares `display`. Found this pass
+ * (`.cmdos-demo-banner`, and the pre-existing `.cmdos-tf-grid` carries the
+ * identical latent bug on `#cmdos-trust-firewall`). One rule, high enough
+ * specificity to always win, fixes every element in the page at once
+ * rather than auditing each `display`-setting class for whether it is ever
+ * toggled with `hidden`. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -917,6 +929,62 @@ html, body {
 .cmdos-lede { max-width: 68ch; opacity: 0.7; margin: 0 0 22px; }
 .cmdos-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 .cmdos-back-link { position: absolute; top: 22px; right: 24px; }
+
+/* The judge's first click, and the only one this page asks for with no
+ * credential. Filled bone -- the same "paper surface on the dark field"
+ * register `.btn-dark` already uses in reverse, so it reads as the primary
+ * entry point with no new colour vocabulary: ink text on bone (14.98:1) is
+ * the paper's own pairing, just placed on the field. `scripts/check_contrast.py`
+ * verifies this selector against --bone (its real, own background) rather
+ * than the default --ink field, listed alongside `.btn-dark` for the same
+ * reason -- see that script's PAPER_PREFIXES. */
+.cmdos-judge-demo {
+  border: 1px solid var(--amber);
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  max-width: 78ch;
+}
+.cmdos-judge-demo-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.cmdos-judge-demo-tagline { opacity: 0.85; }
+.btn-judge-demo {
+  background: var(--bone);
+  color: var(--ink);
+  border-color: var(--bone);
+  font-size: 12px;
+  padding: 11px 20px;
+  font-weight: 700;
+}
+.btn-judge-demo:hover { background: var(--amber); border-color: var(--amber); }
+.btn-judge-demo:disabled { opacity: 0.5; cursor: default; background: var(--bone); border-color: var(--bone); }
+
+.cmdos-divider {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding-top: 6px;
+  border-top: 1px solid var(--slate);
+}
+.cmdos-divider-label { color: var(--bone); opacity: 0.55; font-size: 11px; letter-spacing: 0.08em; }
+
+.cmdos-demo-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px dashed var(--amber);
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  max-width: 78ch;
+  color: var(--bone);
+  opacity: 0.85;
+}
+
+/* The guided reveal: each flow node gets this class in sequence while the
+ * judge demo steps through already-fetched, real data. Never re-fetches,
+ * never re-computes -- purely a reading pace, so it must never be mistaken
+ * for "still loading". */
+.cmdos-flow-node.current { border-left-color: var(--amber); background: rgba(200, 138, 46, 0.08); }
 
 .cmdos-stages { list-style: none; padding: 0; margin: 0 0 26px; max-width: 78ch; }
 .cmdos-stage {

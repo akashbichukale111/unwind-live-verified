@@ -1234,3 +1234,74 @@ deploy, and did not call any model or media-generation API. §13's
 `LIVE_VERIFIED` Gemini/Veo/Lyria evidence is untouched — verified
 byte-identical against this section's own starting commit.
 
+## 22. A credential-free Judge Demo (2026-08-27)
+
+The Agentic Command OS page opened with a single mutating action ("Run
+autonomous mission") gated behind an operator token field — the correct
+posture for a real mission, and the single largest first-run friction point
+for a judge who has never seen the product. This section closes that
+friction without touching the gate it is friction FOR.
+
+**The design constraint, stated exactly:** no credential entry, no token
+sent from the frontend at all, and no privileged mutation endpoint made
+anonymous. `POST /api/command-os/mission` mints warrant and can reach a
+real (sandboxed) external write; making it anonymous — even behind a
+second "demo" route — would be exactly the outcome this feature is
+forbidden from producing.
+
+**What was built instead:** `scripts/capture_judge_demo.py` runs two real,
+deterministic, zero-model missions offline (`allow_model=False`,
+`UNWIND_VERTEX_DISABLED=1`, `UNWIND_COUNTERSIGN_SIMULATED=1`, over the
+committed `fleet/data/incident/` bundle, under the honestly-named principal
+`human::judge-demo` rather than an impersonated operator) and commits the
+second mission's full, real trace to `evidence/judge_demo/mission_trace.json`.
+A new route, `GET /api/judge-demo/mission`, carries deliberately NO auth
+dependency — the one intentional exception to "every mutating route
+requires a principal" — because it is a GET that performs no Firestore
+write, mints no warrant, and returns the same static JSON to every caller,
+always.
+
+| Claim | File | Reproduction / evidence |
+| --- | --- | --- |
+| The demo trace is a real mission, not fabricated data | `evidence/judge_demo/mission_trace.json` | `python scripts/capture_judge_demo.py` reproduces it deterministically |
+| The button sends no Authorization header | `web/static/app.js:runJudgeDemo` | browser-verified this pass: `requests to /api/judge-demo/mission carry no Authorization header` |
+| `POST /api/command-os/mission` is unchanged and still refuses anonymous callers | `services/api/main.py` (untouched) | `curl -X POST .../api/command-os/mission` → 401, reproduced this pass |
+| The demo reuses the SAME render functions a live mission uses, not a parallel path | `web/static/app.js` | `renderMissionStages`, `renderPlan`, `renderReconciliation`, `renderMissionFlow`, `renderMissionReport`, `renderExternal` are called identically from both `runJudgeDemo` and `applyMissionResult` |
+| Switching from Judge Demo to a live Operator Mode mission does not leave a stale "replayed" banner | `#cmdos-demo-banner` | browser-verified this pass, twice |
+
+**A real bug found and fixed while building this, unrelated to the demo
+itself:** `el.hidden = true` was silently not hiding `#cmdos-trust-firewall`
+(and would not have hidden the new demo banner either) whenever the element
+also carried a class that declares its own `display` — `.cmdos-tf-grid`'s
+`display: grid` has the same CSS specificity as the browser's default
+`[hidden] { display: none }` and, loaded later in the cascade, wins. One
+global rule (`[hidden] { display: none !important; }` in `web/static/style.css`)
+fixes every such element in the page, not just the two found.
+
+**A near-miss, disclosed rather than hidden:** the first run of
+`scripts/capture_judge_demo.py` did not set `UNWIND_VERTEX_DISABLED` or
+`UNWIND_COUNTERSIGN_SIMULATED`, and the mission's CHALLENGE stage attempted
+a real Countersign/Gemma call. It was refused with `403 PERMISSION_DENIED`
+(wrong default project, `unwind-local`) before any inference occurred —
+an unauthorized, rejected request, not a billed one. The script now sets
+both flags itself, defensively, so this cannot recur on a future capture
+regardless of the calling shell's environment.
+
+Full suite after this pass: **1205 passed, 1 skipped** (was 1202); one test
+(`test_command_os_checkpoint.py::test_resume_does_not_duplicate_external_action`)
+failed on this long combined run and passed cleanly both alone and as its
+whole file — the established shared-emulator-state flakiness pattern this
+project's own evidence has documented before, not a regression from
+anything in this section.
+`ruff check` / `ruff format --check` clean, including the new
+`scripts/check_contrast.py` registration for `.btn-judge-demo` (a genuine
+new UI surface, not an exception carved out of the existing rule — see that
+script's `PAPER_PREFIXES`). Browser suites re-verified: `verify_all_cards.py`
+26/26 (×2), `verify_timemachine_and_media.py` 55/55, `verify_mission_button.py`
+11/11, `verify_recall_and_reconcile.py` 23/23 — none touched by
+this pass, all re-run to confirm zero regression. The Judge Demo path itself:
+13/13 (×2), fresh anonymous browser context.
+
+No model or API call succeeded this pass. §13's `LIVE_VERIFIED`
+Gemini/Veo/Lyria evidence is untouched.
+

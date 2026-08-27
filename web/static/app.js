@@ -1685,6 +1685,11 @@
 
   function applyMissionResult(d) {
     cmdosMissionId = d.mission_id;
+    // A real mission just ran under the operator's own identity -- the
+    // Judge Demo's "this is a replayed capture" banner must not linger over
+    // live results, which would be the honesty failure in the other
+    // direction from the one the banner exists to prevent.
+    $("cmdos-demo-banner").hidden = true;
     renderMissionStages(d.stages);
     renderPlan(d.plan);
     renderReconciliation(d.stages);
@@ -1750,6 +1755,80 @@
       if (token) { token.focus(); token.select(); }
     }
     el.scrollIntoView({ block: "nearest" });
+  }
+
+  //: A brief, sequential highlight sweep across already-rendered Mission
+  //: Flow nodes. All ten nodes' real content is on screen BEFORE this runs
+  //: -- this only paces a reader's eye through them in order, the same
+  //: distinction `applyInstrumentAction`'s feed-line pulse already draws
+  //: between "revealing what happened" and "still loading". Never skipped
+  //: under prefers-reduced-motion by looping with 0ms pauses -- the content
+  //: is identical either way, only the pacing changes.
+  async function guidedFlowReveal() {
+    const nodes = document.querySelectorAll("#cmdos-flow-chain .cmdos-flow-node");
+    for (const n of nodes) {
+      n.classList.add("current");
+      n.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+      await new Promise((r) => setTimeout(r, reduced ? 0 : 550));
+      n.classList.remove("current");
+    }
+  }
+
+  //: The judge's one-click path. Fetches ONE static, committed, zero-model
+  //: mission trace (`scripts/capture_judge_demo.py`) from an intentionally
+  //: unauthenticated GET -- no token field is read, none is sent, and
+  //: nothing this function calls can mutate real state. It reuses the exact
+  //: same render functions a live mission result feeds
+  //: (`renderMissionStages`, `renderPlan`, `renderReconciliation`,
+  //: `renderMissionFlow`, `renderMissionReport`, `renderExternal`) rather
+  //: than a second, parallel rendering path -- so "does the demo look
+  //: right" and "does a live mission look right" can never silently drift
+  //: apart from each other.
+  async function runJudgeDemo() {
+    const btn = $("cmdos-judge-demo-run");
+    const out = $("cmdos-judge-demo-out");
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "loading captured trace…";
+    out.hidden = false;
+    out.textContent = "";
+    try {
+      const res = await fetch("/api/judge-demo/mission");
+      if (!res.ok) {
+        const { status, help, detail } = await describeFailure(res);
+        out.innerHTML =
+          "<span class='cmdos-tag cmdos-unavailable'>HTTP " + status + "</span> " +
+          esc(help) + (detail ? "<div class='cmdos-hint mono'>" + esc(detail) + "</div>" : "");
+        return;
+      }
+      const payload = await res.json();
+      const m = payload.mission;
+
+      $("cmdos-offline").hidden = true;
+      $("cmdos-authfail").hidden = true;
+      $("cmdos-gate").hidden = true;
+      $("cmdos-plan-panel").hidden = false;
+
+      renderMissionStages(m.stages);
+      renderPlan(m.plan);
+      renderReconciliation(m.stages);
+      renderMissionFlow(m);
+      renderMissionReport(m.report, m.status);
+      renderExternal(m.report);
+
+      const when = payload.captured_at ? new Date(payload.captured_at).toLocaleString() : "";
+      $("cmdos-demo-banner-when").textContent = when ? "Captured " + when + "." : "";
+      $("cmdos-demo-banner").hidden = false;
+
+      out.textContent = "";
+      $("cmdos-flow").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      await guidedFlowReveal();
+    } catch (err) {
+      out.textContent = "judge demo failed to load: " + err;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
   }
 
   async function runMission() {
@@ -2351,6 +2430,7 @@
   }
 
   $("cmdos-run").addEventListener("click", runMission);
+  $("cmdos-judge-demo-run").addEventListener("click", runJudgeDemo);
   $("cmdos-open-instrument").addEventListener("click", showInstrument);
   $("instr-cmdos-link").addEventListener("click", showCommandOS);
   $("cmdos-gate-approve").addEventListener("click", () => handleGateDecision("approve"));

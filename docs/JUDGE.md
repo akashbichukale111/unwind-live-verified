@@ -32,6 +32,16 @@ reproduces it. Nothing here is projected.*
 > **[`RUBRIC.md`](../RUBRIC.md)** for the criterion → mechanism → test → UI
 > map. Read this card for the original four-card architecture; read the
 > README for everything built since.
+>
+> **Since then, one more thing changed specifically for judges**: the
+> Agentic Command OS page now opens with **▶ START JUDGE DEMO** — no
+> credential, no setup — which replays a real, captured, zero-model mission
+> through the whole chain (plan, delegate, reconcile, contain, gate,
+> execute, distil, next-mission adaptation) via one new, explicitly
+> unauthenticated, read-only `GET /api/judge-demo/mission` route. The
+> mutating route it deliberately does NOT touch, `POST
+> /api/command-os/mission`, is unchanged: still `require_human_principal`,
+> still 401 anonymous. See `evidence/INDEX.md` §22.
 
 ---
 

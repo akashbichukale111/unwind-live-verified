@@ -20,6 +20,31 @@ Google "All Things Agentic" Hackathon
 
 ---
 
+## For judges: one click, no credential
+
+Open [the live URL](https://unwind-hgeodtazqq-uc.a.run.app) and click **▶ START JUDGE
+DEMO** at the top of the Agentic Command OS page. No token, no setup, no
+configuration. It replays a real, captured, zero-model mission — the exact same
+pipeline "Run autonomous mission" below it uses — through the whole chain:
+plan → delegate → recon → **reconcile** (a genuine authority-vs-recency dispute)
+→ risk → contain → challenge → **human gate** → execute → verify → report →
+distil → **next-mission adaptation** (this mission recalling what an earlier one
+measured). The Mission Flow panel it lands on names every node and dims the ones
+this particular mission didn't reach.
+
+**What the button does NOT do, by construction:** it sends no operator token —
+none is read from the page, none is attached to the request — and it calls one
+new, explicitly unauthenticated, **read-only** `GET /api/judge-demo/mission`
+route that returns a fixed, pre-captured JSON file
+(`scripts/capture_judge_demo.py`, `evidence/judge_demo/mission_trace.json`).
+`POST /api/command-os/mission` — the route that can mint warrant and reach a
+real (sandboxed) external write — is untouched: still `require_human_principal`,
+still 401 to every anonymous caller, exactly as `tests/test_api_auth.py` already
+proves. Want to see it run live instead of replayed? Fill in an operator
+credential in "Operator Mode" directly below the demo button.
+
+---
+
 ## Live demo / verified media
 
 | | |

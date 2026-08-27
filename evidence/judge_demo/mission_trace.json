@@ -1,0 +1,1389 @@
+{
+  "captured_at": "2026-08-27T06:03:55.425408+00:00",
+  "captured_by": "scripts/capture_judge_demo.py",
+  "note": "A real, deterministic, zero-model mission trace, captured offline. The Judge Demo replays this exact JSON; it does not run a new mission, mint warrant, or touch Firestore when a judge clicks the button.",
+  "objective": "Investigate an anomalous finance capability request.",
+  "seed_mission_id": "mission_55508e026c",
+  "mission": {
+    "mission_id": "mission_5ac899a4f6",
+    "objective": "Investigate an anomalous finance capability request.",
+    "status": "COMPLETED_WITH_RESTRICTIONS",
+    "stages": [
+      {
+        "n": 1,
+        "name": "PLAN \u2014 objective decomposed",
+        "status": "LIVE (ZERO-MODEL)",
+        "summary": "SECURITY_INVESTIGATION: 5 step(s) [WORKER_DOCUMENT, WORKER_COMPLIANCE, WORKER_PYTHON, WORKER_PYTHON, SENTINEL] \u2014 planner provenance ZERO_MODEL; 4 change(s) from 2 recalled record(s)",
+        "detail": {
+          "plan": {
+            "objective": "Investigate an anomalous finance capability request.",
+            "objective_class": "SECURITY_INVESTIGATION",
+            "steps": [
+              {
+                "seq": 1,
+                "role": "WORKER_DOCUMENT",
+                "intent": "Gather and structure the incident evidence.",
+                "tool": "recon.extract_claims",
+                "action_kind": "READ_INTERNAL",
+                "requested_scope": [
+                  "evidence.read"
+                ],
+                "requested_actions": [],
+                "risk_class": "MEDIUM",
+                "rationale": "An investigation cannot start from a summary; it starts from the records."
+              },
+              {
+                "seq": 2,
+                "role": "WORKER_COMPLIANCE",
+                "intent": "Hunt for scope escalation and unbacked authority in the gathered evidence.",
+                "tool": "risk.probe",
+                "action_kind": "ANALYZE",
+                "requested_scope": [
+                  "risk.analyze"
+                ],
+                "requested_actions": [],
+                "risk_class": "MEDIUM",
+                "rationale": "The investigation's whole question is whether something exceeded its scope."
+              },
+              {
+                "seq": 3,
+                "role": "WORKER_PYTHON",
+                "intent": "Prepare the smallest reversible correction for what was confirmed.",
+                "tool": "remediation.prepare",
+                "action_kind": "ANALYZE",
+                "requested_scope": [
+                  "remediation.prepare"
+                ],
+                "requested_actions": [],
+                "risk_class": "LOW",
+                "rationale": "Preparation is analysis; it changes nothing outside the process."
+              },
+              {
+                "seq": 4,
+                "role": "WORKER_PYTHON",
+                "intent": "Execute the correction against the sandboxed system of record.",
+                "tool": "remediation.execute",
+                "action_kind": "CREATE_TICKET",
+                "requested_scope": [
+                  "sandbox.write"
+                ],
+                "requested_actions": [],
+                "risk_class": "MEDIUM",
+                "rationale": "A finding that produces no correction has removed no friction."
+              },
+              {
+                "seq": 5,
+                "role": "SENTINEL",
+                "intent": "Independently re-read the system of record and confirm the effect.",
+                "tool": "verify.check",
+                "action_kind": "READ_INTERNAL",
+                "requested_scope": [
+                  "sandbox.read"
+                ],
+                "requested_actions": [],
+                "risk_class": "MEDIUM",
+                "rationale": "The acting agent's own report is not evidence that it acted."
+              }
+            ],
+            "provenance": "ZERO_MODEL",
+            "model": "unwind-deterministic-planner@1",
+            "input_hash": "823614b7602e5c53e0d5de13652b9373",
+            "created_at": "2026-08-27T06:03:53.653226Z",
+            "latency_ms": 0,
+            "clamps": [],
+            "notes": "model planner not attempted: allow_model=False"
+          },
+          "fingerprint": "WORKER_DOCUMENT:recon.extract_claims:READ_INTERNAL|WORKER_COMPLIANCE:risk.probe:ANALYZE|WORKER_PYTHON:remediation.prepare:ANALYZE|WORKER_PYTHON:remediation.execute:CREATE_TICKET|SENTINEL:verify.check:READ_INTERNAL",
+          "fingerprint_before_recall": "WORKER_DOCUMENT:recon.extract_claims:READ_INTERNAL|WORKER_COMPLIANCE:risk.probe:ANALYZE|WORKER_PYTHON:remediation.prepare:ANALYZE|WORKER_PYTHON:remediation.execute:CREATE_TICKET|SENTINEL:verify.check:READ_INTERNAL",
+          "risk_profile": "1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM",
+          "risk_profile_before_recall": "1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW",
+          "recall": {
+            "quarantined": [],
+            "available": true,
+            "corpus_records": 6,
+            "selected": 2,
+            "filtered_out": 0,
+            "zero_scored": 4,
+            "dropped_for_budget": 0,
+            "chars_returned": 292,
+            "char_budget": 1200,
+            "selection_ratio": 0.3333,
+            "selected_records": [
+              {
+                "record_id": "kr_50487d3f539a40287460514b",
+                "kind": "AGENT_ISOLATION",
+                "subject": "fleet_recon",
+                "statement": "Agent fleet_recon was ISOLATED after requesting 'finance.secret_read' with 147 tool calls on dataset 'finance'; the Gateway refused it.",
+                "mission_id": "mission_55508e026c",
+                "checkpoint_seq": 6,
+                "source": "fleet/data/incident/capability-requests.csv",
+                "score": 2.459392,
+                "matched_terms": [
+                  "capability",
+                  "finance"
+                ]
+              },
+              {
+                "record_id": "kr_f3cd7c7fd511239b89102bb0",
+                "kind": "SCOPE_ESCALATION",
+                "subject": "fleet_recon",
+                "statement": "Agent fleet_recon requested 'finance.secret_read', outside its registered scope ['corpus.read', 'evidence.read'], on request 'req-8802' at risk class 'HIGH'.",
+                "mission_id": "mission_55508e026c",
+                "checkpoint_seq": 5,
+                "source": "fleet/data/incident/capability-requests.csv",
+                "score": 0.907154,
+                "matched_terms": [
+                  "capability"
+                ]
+              }
+            ],
+            "directive": {
+              "raise_risk_class": "MEDIUM",
+              "require_verification": false,
+              "scrutiny_notes": [
+                "prior mission mission_55508e026c recorded AGENT_ISOLATION for fleet_recon; risk floor raised to MEDIUM",
+                "prior mission mission_55508e026c recorded SCOPE_ESCALATION for fleet_recon; risk floor raised to MEDIUM"
+              ],
+              "subjects_of_concern": [
+                "fleet_recon"
+              ],
+              "derived_from": [
+                "kr_50487d3f539a40287460514b",
+                "kr_f3cd7c7fd511239b89102bb0"
+              ]
+            }
+          },
+          "scrutiny_applied": [
+            "step 1: risk class raised LOW -> MEDIUM on recalled evidence",
+            "step 3: on the correction path (ANALYZE by fleet_remediation); left at LOW",
+            "step 4: on the correction path (CREATE_TICKET by fleet_remediation); left at MEDIUM",
+            "step 5: risk class raised LOW -> MEDIUM on recalled evidence"
+          ],
+          "registration": {
+            "fleet_orchestrator": "present",
+            "fleet_recon": "present",
+            "fleet_reconciler": "present",
+            "fleet_risk": "present",
+            "fleet_remediation": "present",
+            "fleet_verifier": "present"
+          },
+          "seeded_warrant_bp": {
+            "fleet_recon:LOW": 300,
+            "fleet_recon:MEDIUM": 150,
+            "fleet_reconciler:LOW": 300,
+            "fleet_reconciler:MEDIUM": 150,
+            "fleet_risk:LOW": 300,
+            "fleet_risk:MEDIUM": 150,
+            "fleet_risk:HIGH": 100,
+            "fleet_remediation:LOW": 400,
+            "fleet_remediation:MEDIUM": 200,
+            "fleet_verifier:LOW": 300,
+            "fleet_verifier:MEDIUM": 150
+          },
+          "planner_provenance": "ZERO_MODEL",
+          "planner_model": "unwind-deterministic-planner@1",
+          "planner_notes": "model planner not attempted: allow_model=False",
+          "clamps": []
+        }
+      },
+      {
+        "n": 2,
+        "name": "STEP 1 \u2014 fleet_recon \u00b7 recon.extract_claims",
+        "status": "LIVE",
+        "summary": "ALLOWED at 10bp (10bp +0% tax); recon.extract_claims ok; behaviour NORMAL (score 10)",
+        "detail": {
+          "step": {
+            "seq": 1,
+            "role": "WORKER_DOCUMENT",
+            "intent": "Gather and structure the incident evidence.",
+            "tool": "recon.extract_claims",
+            "action_kind": "READ_INTERNAL",
+            "requested_scope": [
+              "evidence.read"
+            ],
+            "requested_actions": [],
+            "risk_class": "MEDIUM",
+            "rationale": "An investigation cannot start from a summary; it starts from the records."
+          },
+          "priced": {
+            "action_kind": "READ_INTERNAL",
+            "base_bp": 10,
+            "tax_pct": 0,
+            "cost_bp": 10,
+            "contributions": [],
+            "requires_human": false,
+            "mutating": false
+          },
+          "requested_scope": [
+            "evidence.read"
+          ],
+          "narrowed_by_drift": false,
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_recon",
+            "task": "recon.extract_claims: Gather and structure the incident evidence.",
+            "checked_at": "2026-08-27T06:03:54.146820Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          },
+          "genome": {
+            "agent_role": "WORKER_DOCUMENT",
+            "task": "Gather and structure the incident evidence.",
+            "risk_class": "MEDIUM",
+            "requested_actions": [
+              "recon.extract_claims"
+            ],
+            "allowed_actions": [],
+            "denied_actions": [
+              "recon.extract_claims"
+            ],
+            "risk_level": "MEDIUM",
+            "decision": "DENY",
+            "reason": "recon.extract_claims: outside WORKER_DOCUMENT's role ceiling"
+          },
+          "tool_calls": [
+            {
+              "tool": "recon.extract_claims",
+              "ok": true,
+              "latency_ms": 16,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "WORKER_DOCUMENT",
+            "tool_calls": 1,
+            "dataset": "documents",
+            "latency_ms": 16,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "WORKER_DOCUMENT",
+            "drift_score": 10,
+            "drift_band": "NORMAL",
+            "capability_action": "NONE",
+            "signals": [
+              "latency 16ms outside baseline [200, 3000]ms"
+            ],
+            "observation": {
+              "agent_role": "WORKER_DOCUMENT",
+              "tool_calls": 1,
+              "dataset": "documents",
+              "latency_ms": 16,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "output_keys": [
+            "anomalies",
+            "as_of",
+            "claims",
+            "completeness",
+            "contradictions",
+            "incident_age_seconds",
+            "newest_age_seconds",
+            "note_signals",
+            "parsed",
+            "reference_at",
+            "requests",
+            "sources",
+            "total"
+          ],
+          "executed": true
+        }
+      },
+      {
+        "n": 3,
+        "name": "RECONCILE \u2014 1 settled, 1 DISPUTED",
+        "status": "LIVE",
+        "summary": "fleet_reconciler re-derived 2 contradicted claim(s) from authority: verdict RESOLVED_WITH_DISPUTES; clm_tariff_rate_K disputed (AUTHORITY_CONTRADICTS_RECENCY): recency 8.0 vs authority 8.5",
+        "detail": {
+          "priced": {
+            "action_kind": "ANALYZE",
+            "base_bp": 5,
+            "tax_pct": 0,
+            "cost_bp": 5,
+            "contributions": [],
+            "requires_human": false,
+            "mutating": false
+          },
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_reconciler",
+            "task": "reconcile.adjudicate: re-derive contradicted claims from authority",
+            "checked_at": "2026-08-27T06:03:54.219622Z"
+          },
+          "reconciliation": {
+            "resolutions": [
+              {
+                "claim_id": "clm_supplier_K_lead_time",
+                "predicate": "lead_time_days",
+                "chosen_value": 20,
+                "chosen_source": "src_procurement",
+                "chosen_authority": "procurement",
+                "agreed_with_recency": true,
+                "why": "'procurement' holds standing over 'lead_time_days' and its value is also the most recent: two independent rules, one answer",
+                "superseded": [
+                  {
+                    "source": "src_planning_sheet",
+                    "authority": "planning",
+                    "value": 11
+                  }
+                ]
+              }
+            ],
+            "disputes": [
+              {
+                "claim_id": "clm_tariff_rate_K",
+                "predicate": "tariff_rate_pct",
+                "dispute_kind": "AUTHORITY_CONTRADICTS_RECENCY",
+                "recency_value": 8.0,
+                "recency_source": "src_erp",
+                "authority_value": 8.5,
+                "authority_source": "src_compliance_note",
+                "authority_holder": "compliance",
+                "why": "recency selects 8.0 from 'src_erp' while 'compliance' -- which holds standing over 'tariff_rate_pct' -- states 8.5. A newer record from a source with no standing does not overrule one that has it, and a parser cannot make that call.",
+                "records": [
+                  {
+                    "source": "src_erp",
+                    "authority": "erp",
+                    "value": 8.0,
+                    "recorded_at": "2026-07-01T08:00:00+00:00"
+                  },
+                  {
+                    "source": "src_compliance_note",
+                    "authority": "compliance",
+                    "value": 8.5,
+                    "recorded_at": "2026-05-02T11:30:00+00:00"
+                  }
+                ]
+              }
+            ],
+            "verdict": "RESOLVED_WITH_DISPUTES",
+            "contradictions_considered": 2,
+            "rules_compared": [
+              "recency",
+              "authority"
+            ],
+            "ladder": {
+              "access_scope_expiry_days": [
+                "iam",
+                "ticketing"
+              ],
+              "cutoff_local": [
+                "carrier",
+                "planning"
+              ],
+              "lead_time_days": [
+                "procurement",
+                "planning"
+              ],
+              "tariff_rate_pct": [
+                "compliance",
+                "erp"
+              ]
+            }
+          },
+          "tool_calls": [
+            {
+              "tool": "reconcile.adjudicate",
+              "ok": true,
+              "latency_ms": 0,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "WORKER_SQL",
+            "tool_calls": 1,
+            "dataset": "documents",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "WORKER_SQL",
+            "drift_score": 40,
+            "drift_band": "ELEVATED",
+            "capability_action": "RESTRICT",
+            "signals": [
+              "dataset 'documents' outside baseline ['sales']",
+              "latency 1ms outside baseline [200, 2000]ms"
+            ],
+            "observation": {
+              "agent_role": "WORKER_SQL",
+              "tool_calls": 1,
+              "dataset": "documents",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "executed": true
+        }
+      },
+      {
+        "n": 4,
+        "name": "CONSEQUENCE \u2014 2594 dependent decisions",
+        "status": "LIVE (ZERO-MODEL)",
+        "summary": "UNWIND RISK INDEX 69 (HIGH); 2594 decisions rest on the premises this action would change; 30 still correctable, 48 ALREADY ESCAPED and un-recallable",
+        "detail": {
+          "resolved": true,
+          "action_kind": "CREATE_TICKET",
+          "premises": [
+            {
+              "canonical": "supplier_K.lead_time_days",
+              "subject": "supplier_K",
+              "predicate": "lead_time_days",
+              "proposed_value": 20,
+              "matched": true,
+              "claim_id": "clm_000000",
+              "source_id": "src_supplier_K",
+              "current_value": 11,
+              "load_weight": 882
+            },
+            {
+              "canonical": "supplier_K.lead_time_days",
+              "subject": "supplier_K",
+              "predicate": "lead_time_days",
+              "proposed_value": 11,
+              "matched": true,
+              "claim_id": "clm_000000",
+              "source_id": "src_supplier_K",
+              "current_value": 11,
+              "load_weight": 882
+            },
+            {
+              "canonical": "line_K.tariff_rate_pct",
+              "subject": "line_K",
+              "predicate": "tariff_rate_pct",
+              "proposed_value": 8.0,
+              "matched": false,
+              "claim_id": "",
+              "source_id": "",
+              "current_value": null,
+              "load_weight": 0
+            },
+            {
+              "canonical": "line_K.tariff_rate_pct",
+              "subject": "line_K",
+              "predicate": "tariff_rate_pct",
+              "proposed_value": 8.5,
+              "matched": false,
+              "claim_id": "",
+              "source_id": "",
+              "current_value": null,
+              "load_weight": 0
+            },
+            {
+              "canonical": "carrier_hub.cutoff_local",
+              "subject": "carrier_hub",
+              "predicate": "cutoff_local",
+              "proposed_value": "14:00",
+              "matched": false,
+              "claim_id": "",
+              "source_id": "",
+              "current_value": null,
+              "load_weight": 0
+            }
+          ],
+          "radius": 2594,
+          "regimes": {
+            "immaterial_contained": 535,
+            "immaterial_escaped": 933,
+            "material_contained": 30,
+            "material_escaped": 48,
+            "unresolved": 174,
+            "closed_out": 874
+          },
+          "graph": [
+            {
+              "kind": "action",
+              "label": "CREATE_TICKET",
+              "detail": "scope ['sandbox.write']",
+              "count": 0,
+              "severity": "CRITICAL"
+            },
+            {
+              "kind": "premise",
+              "label": "supplier_K.lead_time_days",
+              "detail": "11 \u2192 20 (source src_supplier_K, load 882)",
+              "count": 2,
+              "severity": "CAUTION"
+            },
+            {
+              "kind": "consequence",
+              "label": "dependent decisions",
+              "detail": "committed conclusions resting on that premise",
+              "count": 2594,
+              "severity": "CAUTION"
+            },
+            {
+              "kind": "regime",
+              "label": "immaterial",
+              "detail": "the buffer absorbed the shock \u2014 subtraction, not judgement",
+              "count": 1468,
+              "severity": "INFO"
+            },
+            {
+              "kind": "regime",
+              "label": "already closed out",
+              "detail": "the world moving cannot hurt a decision that completed",
+              "count": 874,
+              "severity": "INFO"
+            },
+            {
+              "kind": "regime",
+              "label": "handed to judgement",
+              "detail": "the tier is allowed to say it cannot decide this",
+              "count": 174,
+              "severity": "CAUTION"
+            },
+            {
+              "kind": "regime",
+              "label": "MATERIAL \u2014 still correctable",
+              "detail": "reachable in place; a correction can still land",
+              "count": 30,
+              "severity": "CAUTION"
+            },
+            {
+              "kind": "regime",
+              "label": "MATERIAL \u2014 ALREADY ESCAPED",
+              "detail": "sent, signed, shipped or paid. Cannot be recalled.",
+              "count": 48,
+              "severity": "CRITICAL"
+            }
+          ],
+          "risk": {
+            "security": 45,
+            "data": 86,
+            "financial": 78,
+            "operational": 100,
+            "privilege": 30,
+            "irreversibility": 80,
+            "total": 69,
+            "band": "HIGH",
+            "contributions": [
+              "requests mutating scope: security 45",
+              "2594 dependent decisions in radius: data 86",
+              "78 material consequences: financial 78",
+              "174 handed to judgement: operational 100",
+              "action kind CREATE_TICKET: privilege 30",
+              "48 consequences ALREADY ESCAPED (un-recallable): irreversibility 80"
+            ],
+            "disclaimer": "UNWIND RISK INDEX is an application-specific heuristic, not an industry-certified score. Every weight is a chosen constant, stated in command_os/consequence.py."
+          },
+          "reversible": false,
+          "reason_unresolved": ""
+        }
+      },
+      {
+        "n": 5,
+        "name": "STEP 2 \u2014 fleet_risk \u00b7 risk.probe",
+        "status": "LIVE",
+        "summary": "ALLOWED at 9bp (5bp +80% tax); risk.probe ok; behaviour NORMAL (score 10)",
+        "detail": {
+          "step": {
+            "seq": 2,
+            "role": "WORKER_COMPLIANCE",
+            "intent": "Hunt for scope escalation and unbacked authority in the gathered evidence.",
+            "tool": "risk.probe",
+            "action_kind": "ANALYZE",
+            "requested_scope": [
+              "risk.analyze"
+            ],
+            "requested_actions": [],
+            "risk_class": "MEDIUM",
+            "rationale": "The investigation's whole question is whether something exceeded its scope."
+          },
+          "priced": {
+            "action_kind": "ANALYZE",
+            "base_bp": 5,
+            "tax_pct": 80,
+            "cost_bp": 9,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band ELEVATED: +20%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": false,
+            "mutating": false
+          },
+          "requested_scope": [
+            "risk.analyze"
+          ],
+          "narrowed_by_drift": false,
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_risk",
+            "task": "risk.probe: Hunt for scope escalation and unbacked authority in the gathered evidence.",
+            "checked_at": "2026-08-27T06:03:54.301251Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          },
+          "genome": {
+            "agent_role": "WORKER_COMPLIANCE",
+            "task": "Hunt for scope escalation and unbacked authority in the gathered evidence.",
+            "risk_class": "MEDIUM",
+            "requested_actions": [
+              "risk.probe"
+            ],
+            "allowed_actions": [],
+            "denied_actions": [
+              "risk.probe"
+            ],
+            "risk_level": "MEDIUM",
+            "decision": "DENY",
+            "reason": "risk.probe: outside WORKER_COMPLIANCE's role ceiling"
+          },
+          "tool_calls": [
+            {
+              "tool": "risk.probe",
+              "ok": true,
+              "latency_ms": 0,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "WORKER_COMPLIANCE",
+            "tool_calls": 1,
+            "dataset": "policy",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "WORKER_COMPLIANCE",
+            "drift_score": 10,
+            "drift_band": "NORMAL",
+            "capability_action": "NONE",
+            "signals": [
+              "latency 1ms outside baseline [200, 2000]ms"
+            ],
+            "observation": {
+              "agent_role": "WORKER_COMPLIANCE",
+              "tool_calls": 1,
+              "dataset": "policy",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "output_keys": [
+            "anomaly_count",
+            "contradiction_count",
+            "escalations",
+            "hypotheses",
+            "verdict",
+            "worst_escalation"
+          ],
+          "executed": true
+        }
+      },
+      {
+        "n": 6,
+        "name": "CONTAIN \u2014 fleet_recon ISOLATED",
+        "status": "LIVE",
+        "summary": "behaviour CRITICAL (score 100) from the evidence's own 147 tool calls on 'finance'; Gateway SCOPE_EXCEEDED: agent 'fleet_recon' requested ['finance.secret_read'], which is outside its granted scope ['corpus.read', 'documents', 'evidence.read', 'web'].",
+        "detail": {
+          "target": {
+            "agent_id": "fleet_recon",
+            "requested_scope": "finance.secret_read",
+            "granted_scope": [
+              "corpus.read",
+              "evidence.read"
+            ],
+            "risk_class": "HIGH",
+            "request_id": "req-8802",
+            "tool_calls": 147,
+            "dataset": "finance",
+            "why": "'finance.secret_read' is outside fleet_recon's registered scope ['corpus.read', 'evidence.read']"
+          },
+          "observation": {
+            "agent_role": "WORKER_DOCUMENT",
+            "tool_calls": 147,
+            "dataset": "finance",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": true
+          },
+          "drift": {
+            "agent_role": "WORKER_DOCUMENT",
+            "drift_score": 100,
+            "drift_band": "CRITICAL",
+            "capability_action": "ISOLATE",
+            "signals": [
+              "147 tool calls exceeds baseline ceiling of 10",
+              "dataset 'finance' outside baseline ['documents']",
+              "latency 1ms outside baseline [200, 3000]ms",
+              "secret/credential access attempted"
+            ],
+            "observation": {
+              "agent_role": "WORKER_DOCUMENT",
+              "tool_calls": 147,
+              "dataset": "finance",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": true
+            }
+          },
+          "priced": {
+            "action_kind": "SECRET_ACCESS",
+            "base_bp": 500,
+            "tax_pct": 180,
+            "cost_bp": 1400,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band CRITICAL: +120%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": true,
+            "mutating": false
+          },
+          "decision": {
+            "allowed": false,
+            "reason_code": "SCOPE_EXCEEDED",
+            "reason": "agent 'fleet_recon' requested ['finance.secret_read'], which is outside its granted scope ['corpus.read', 'documents', 'evidence.read', 'web'].",
+            "agent_id": "fleet_recon",
+            "task": "containment probe: finance.secret_read requested by fleet_recon",
+            "checked_at": "2026-08-27T06:03:54.343254Z"
+          },
+          "risk": {
+            "reason_code": "SCOPE_EXCEEDED",
+            "risk_score": 83,
+            "risk_level": "CRITICAL",
+            "threat_type": "Scope Escalation"
+          },
+          "isolated": true
+        }
+      },
+      {
+        "n": 7,
+        "name": "STEP 3 \u2014 fleet_remediation \u00b7 remediation.prepare",
+        "status": "LIVE",
+        "summary": "ALLOWED at 14bp (5bp +180% tax); remediation.prepare ok; behaviour ELEVATED (score 40)",
+        "detail": {
+          "step": {
+            "seq": 3,
+            "role": "WORKER_PYTHON",
+            "intent": "Prepare the smallest reversible correction for what was confirmed.",
+            "tool": "remediation.prepare",
+            "action_kind": "ANALYZE",
+            "requested_scope": [
+              "remediation.prepare"
+            ],
+            "requested_actions": [],
+            "risk_class": "LOW",
+            "rationale": "Preparation is analysis; it changes nothing outside the process."
+          },
+          "priced": {
+            "action_kind": "ANALYZE",
+            "base_bp": 5,
+            "tax_pct": 180,
+            "cost_bp": 14,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band CRITICAL: +120%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": false,
+            "mutating": false
+          },
+          "requested_scope": [
+            "remediation.prepare"
+          ],
+          "narrowed_by_drift": false,
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_remediation",
+            "task": "remediation.prepare: Prepare the smallest reversible correction for what was confirmed.",
+            "checked_at": "2026-08-27T06:03:54.393569Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          },
+          "genome": {
+            "agent_role": "WORKER_PYTHON",
+            "task": "Prepare the smallest reversible correction for what was confirmed.",
+            "risk_class": "LOW",
+            "requested_actions": [
+              "remediation.prepare",
+              "remediation.execute"
+            ],
+            "allowed_actions": [],
+            "denied_actions": [
+              "remediation.prepare",
+              "remediation.execute"
+            ],
+            "risk_level": "LOW",
+            "decision": "DENY",
+            "reason": "remediation.prepare: outside WORKER_PYTHON's role ceiling; remediation.execute: outside WORKER_PYTHON's role ceiling"
+          },
+          "tool_calls": [
+            {
+              "tool": "remediation.prepare",
+              "ok": true,
+              "latency_ms": 0,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "WORKER_PYTHON",
+            "tool_calls": 1,
+            "dataset": "sandbox",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "WORKER_PYTHON",
+            "drift_score": 40,
+            "drift_band": "ELEVATED",
+            "capability_action": "RESTRICT",
+            "signals": [
+              "dataset 'sandbox' outside baseline ['sales']",
+              "latency 1ms outside baseline [300, 4000]ms"
+            ],
+            "observation": {
+              "agent_role": "WORKER_PYTHON",
+              "tool_calls": 1,
+              "dataset": "sandbox",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "output_keys": [
+            "action",
+            "body",
+            "contradictions_flagged",
+            "idempotency_key",
+            "reason",
+            "reversal",
+            "reversible",
+            "revoke_scope",
+            "target_agent_id",
+            "target_request_id",
+            "title"
+          ],
+          "executed": true
+        }
+      },
+      {
+        "n": 8,
+        "name": "STEP 4 \u2014 fleet_remediation \u00b7 remediation.execute",
+        "status": "LIVE",
+        "summary": "ALLOWED at 140bp (50bp +180% tax); remediation.execute ok; behaviour ELEVATED (score 40)",
+        "detail": {
+          "step": {
+            "seq": 4,
+            "role": "WORKER_PYTHON",
+            "intent": "Execute the correction against the sandboxed system of record.",
+            "tool": "remediation.execute",
+            "action_kind": "CREATE_TICKET",
+            "requested_scope": [
+              "sandbox.write"
+            ],
+            "requested_actions": [],
+            "risk_class": "MEDIUM",
+            "rationale": "A finding that produces no correction has removed no friction."
+          },
+          "priced": {
+            "action_kind": "CREATE_TICKET",
+            "base_bp": 50,
+            "tax_pct": 180,
+            "cost_bp": 140,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band CRITICAL: +120%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": false,
+            "mutating": true
+          },
+          "requested_scope": [
+            "sandbox.write"
+          ],
+          "narrowed_by_drift": true,
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_remediation",
+            "task": "remediation.execute: Execute the correction against the sandboxed system of record.",
+            "checked_at": "2026-08-27T06:03:54.438718Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          },
+          "genome": {
+            "agent_role": "WORKER_PYTHON",
+            "task": "Execute the correction against the sandboxed system of record.",
+            "risk_class": "MEDIUM",
+            "requested_actions": [
+              "remediation.prepare",
+              "remediation.execute"
+            ],
+            "allowed_actions": [],
+            "denied_actions": [
+              "remediation.prepare",
+              "remediation.execute"
+            ],
+            "risk_level": "MEDIUM",
+            "decision": "DENY",
+            "reason": "remediation.prepare: outside WORKER_PYTHON's role ceiling; remediation.execute: outside WORKER_PYTHON's role ceiling"
+          },
+          "tool_calls": [
+            {
+              "tool": "remediation.execute",
+              "ok": true,
+              "latency_ms": 0,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "WORKER_PYTHON",
+            "tool_calls": 1,
+            "dataset": "sandbox",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "WORKER_PYTHON",
+            "drift_score": 40,
+            "drift_band": "ELEVATED",
+            "capability_action": "RESTRICT",
+            "signals": [
+              "dataset 'sandbox' outside baseline ['sales']",
+              "latency 1ms outside baseline [300, 4000]ms"
+            ],
+            "observation": {
+              "agent_role": "WORKER_PYTHON",
+              "tool_calls": 1,
+              "dataset": "sandbox",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "output_keys": [
+            "proposal",
+            "staged"
+          ],
+          "executed": true
+        }
+      },
+      {
+        "n": 9,
+        "name": "STEP 5 \u2014 fleet_verifier \u00b7 verify.check",
+        "status": "LIVE",
+        "summary": "ALLOWED at 28bp (10bp +180% tax); verify.check ok; behaviour ELEVATED (score 40)",
+        "detail": {
+          "step": {
+            "seq": 5,
+            "role": "SENTINEL",
+            "intent": "Independently re-read the system of record and confirm the effect.",
+            "tool": "verify.check",
+            "action_kind": "READ_INTERNAL",
+            "requested_scope": [
+              "sandbox.read"
+            ],
+            "requested_actions": [],
+            "risk_class": "MEDIUM",
+            "rationale": "The acting agent's own report is not evidence that it acted."
+          },
+          "priced": {
+            "action_kind": "READ_INTERNAL",
+            "base_bp": 10,
+            "tax_pct": 180,
+            "cost_bp": 28,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band CRITICAL: +120%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": false,
+            "mutating": false
+          },
+          "requested_scope": [
+            "sandbox.read"
+          ],
+          "narrowed_by_drift": false,
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_verifier",
+            "task": "verify.check: Independently re-read the system of record and confirm the effect.",
+            "checked_at": "2026-08-27T06:03:54.480073Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          },
+          "genome": {
+            "agent_role": "SENTINEL",
+            "task": "Independently re-read the system of record and confirm the effect.",
+            "risk_class": "MEDIUM",
+            "requested_actions": [
+              "verify.check"
+            ],
+            "allowed_actions": [],
+            "denied_actions": [
+              "verify.check"
+            ],
+            "risk_level": "MEDIUM",
+            "decision": "DENY",
+            "reason": "verify.check: outside SENTINEL's role ceiling"
+          },
+          "tool_calls": [
+            {
+              "tool": "verify.check",
+              "ok": true,
+              "latency_ms": 0,
+              "attempt": 1
+            }
+          ],
+          "observation": {
+            "agent_role": "SENTINEL",
+            "tool_calls": 1,
+            "dataset": "sandbox",
+            "latency_ms": 1,
+            "requested_export": false,
+            "requested_secret_access": false
+          },
+          "drift": {
+            "agent_role": "SENTINEL",
+            "drift_score": 40,
+            "drift_band": "ELEVATED",
+            "capability_action": "RESTRICT",
+            "signals": [
+              "dataset 'sandbox' outside baseline ['requests']",
+              "latency 1ms outside baseline [50, 500]ms"
+            ],
+            "observation": {
+              "agent_role": "SENTINEL",
+              "tool_calls": 1,
+              "dataset": "sandbox",
+              "latency_ms": 1,
+              "requested_export": false,
+              "requested_secret_access": false
+            }
+          },
+          "output_keys": [
+            "mismatches",
+            "reason",
+            "verified"
+          ],
+          "executed": true
+        }
+      },
+      {
+        "n": 10,
+        "name": "CHALLENGE \u2014 independent challenger agreed",
+        "status": "SIMULATED",
+        "summary": "agrees=True (zero-model-challenger): independent re-derivation from the presented evidence found no unbacked authority, unresolved drift, staleness or coverage gap",
+        "detail": {
+          "material": {
+            "objective": "Investigate an anomalous finance capability request.",
+            "proposed_action": "REVOKE_CAPABILITY_REQUEST",
+            "requested_scope": [
+              "sandbox.write"
+            ],
+            "drift_band": "ELEVATED",
+            "acting_agent": "fleet_remediation",
+            "fleet_worst_drift_band": "CRITICAL",
+            "contained_agent": "fleet_recon",
+            "drift_score": 40,
+            "risk_level": "HIGH",
+            "warrant_balance_bp": 140,
+            "authority_cost_bp": 140,
+            "evidence_completeness": 0.8,
+            "evidence_age_seconds": 1500.0,
+            "contradictions": 2,
+            "escalations": 1,
+            "isolated_agent": "fleet_recon"
+          },
+          "available": true,
+          "agrees": true,
+          "family": "zero-model-challenger",
+          "simulated": true,
+          "ground": "independent re-derivation from the presented evidence found no unbacked authority, unresolved drift, staleness or coverage gap",
+          "policy": {
+            "simulated_countersign": true,
+            "simulated_mint_permitted": true,
+            "production": false,
+            "label": "SIMULATED"
+          }
+        }
+      },
+      {
+        "n": 11,
+        "name": "HUMAN GATE \u2014 concurrence recorded",
+        "status": "LIVE",
+        "summary": "human::judge-demo concurred (auto_approved_at_launch)",
+        "detail": {
+          "required": true,
+          "approved": true,
+          "principal": "human::judge-demo",
+          "mode": "auto_approved_at_launch",
+          "auth_method": "judge_demo_capture"
+        }
+      },
+      {
+        "n": 12,
+        "name": "EXECUTE \u2014 correction applied to the system of record",
+        "status": "LIVE (SANDBOX BACKEND)",
+        "summary": "REVOKE_CAPABILITY_REQUEST -> sandbox_file#sbx-e2d9d28536c7 (applied), 140bp spent",
+        "detail": {
+          "executed": true,
+          "record": {
+            "backend": "sandbox_file",
+            "idempotency_key": "mission_5ac899a4f6:req-8802:revoke",
+            "external_id": "sbx-e2d9d28536c7",
+            "action": "REVOKE_CAPABILITY_REQUEST",
+            "status": "APPLIED",
+            "recorded_at": "2026-08-27T06:03:54.880515+00:00",
+            "replayed": false,
+            "target_request_id": "req-8802",
+            "target_agent_id": "fleet_recon",
+            "revoke_scope": "finance.secret_read",
+            "reason": "'finance.secret_read' is outside fleet_recon's registered scope ['corpus.read', 'evidence.read']",
+            "title": "Revoke out-of-scope request req-8802 from fleet_recon",
+            "mission_id": "mission_5ac899a4f6",
+            "acting_principal": "agent::fleet_remediation",
+            "human_principal": "human::judge-demo",
+            "cost_bp": 140,
+            "reversal": "re-grant 'finance.secret_read' to fleet_recon"
+          },
+          "priced": {
+            "action_kind": "CREATE_TICKET",
+            "base_bp": 50,
+            "tax_pct": 180,
+            "cost_bp": 140,
+            "contributions": [
+              "consequence band HIGH (real blast radius): +35%",
+              "drift band CRITICAL: +120%",
+              "risk signals diverged: +25%"
+            ],
+            "requires_human": false,
+            "mutating": true
+          },
+          "decision": {
+            "allowed": true,
+            "reason_code": "ALLOWED",
+            "reason": "all checks passed.",
+            "agent_id": "fleet_remediation",
+            "task": "execute correction: REVOKE_CAPABILITY_REQUEST",
+            "checked_at": "2026-08-27T06:03:54.868945Z"
+          },
+          "risk": {
+            "reason_code": "ALLOWED",
+            "risk_score": 5,
+            "risk_level": "LOW",
+            "threat_type": "Nominal"
+          }
+        }
+      },
+      {
+        "n": 13,
+        "name": "VERIFY \u2014 confirmed",
+        "status": "LIVE",
+        "summary": "recorded effect matches the proposal field for field \u00b7 authority settled MINT: 80bp -> 280bp",
+        "detail": {
+          "verified": true,
+          "reason": "recorded effect matches the proposal field for field",
+          "mismatches": [],
+          "recorded_at": "2026-08-27T06:03:54.880515+00:00",
+          "external_id": "sbx-e2d9d28536c7",
+          "settlement": {
+            "before_bp": 80,
+            "action": "MINT",
+            "amount_bp": 200,
+            "after_bp": 280
+          }
+        }
+      },
+      {
+        "n": 14,
+        "name": "REPORT \u2014 COMPLETED_WITH_RESTRICTIONS",
+        "status": "LIVE",
+        "summary": "COMPLETED_WITH_RESTRICTIONS: 0 refusal(s), 1 isolation(s), challenger agrees=True, external=sbx-e2d9d28536c7, verified=True",
+        "detail": {
+          "status": "COMPLETED_WITH_RESTRICTIONS"
+        }
+      }
+    ],
+    "report": {
+      "objective": "Investigate an anomalous finance capability request.",
+      "status": "COMPLETED_WITH_RESTRICTIONS",
+      "objective_class": "SECURITY_INVESTIGATION",
+      "planner_provenance": "ZERO_MODEL",
+      "planner_model": "unwind-deterministic-planner@1",
+      "plan_fingerprint": "WORKER_DOCUMENT:recon.extract_claims:READ_INTERNAL|WORKER_COMPLIANCE:risk.probe:ANALYZE|WORKER_PYTHON:remediation.prepare:ANALYZE|WORKER_PYTHON:remediation.execute:CREATE_TICKET|SENTINEL:verify.check:READ_INTERNAL",
+      "agents_selected": [
+        "SENTINEL",
+        "WORKER_COMPLIANCE",
+        "WORKER_DOCUMENT",
+        "WORKER_PYTHON"
+      ],
+      "steps_planned": 5,
+      "steps_executed": 5,
+      "replans": 0,
+      "tools_used": [
+        "recon.extract_claims",
+        "remediation.execute",
+        "remediation.prepare",
+        "risk.probe",
+        "verify.check"
+      ],
+      "evidence_records_parsed": 16,
+      "evidence_records_total": 20,
+      "evidence_completeness": 0.8,
+      "contradictions_found": 2,
+      "escalations_found": 1,
+      "reconciliation_verdict": "RESOLVED_WITH_DISPUTES",
+      "contradictions_reconciled": 1,
+      "contradictions_disputed": 1,
+      "disputed_claims": [
+        "clm_tariff_rate_K"
+      ],
+      "drift_band": "CRITICAL",
+      "drift_score": 40,
+      "agents_isolated": 1,
+      "isolated_agent": "fleet_recon",
+      "gateway_refusals": [],
+      "unsafe_actions_executed": 0,
+      "worker_faults": 0,
+      "worker_fault_kinds": [],
+      "phase_budget_exhausted": false,
+      "challenger_agrees": true,
+      "challenger_ground": "independent re-derivation from the presented evidence found no unbacked authority, unresolved drift, staleness or coverage gap",
+      "challenger_simulated": true,
+      "human_principal": "human::judge-demo",
+      "human_decision_mode": "auto_approved_at_launch",
+      "gate": "APPROVED",
+      "external_action": "REVOKE_CAPABILITY_REQUEST",
+      "external_action_id": "sbx-e2d9d28536c7",
+      "external_backend": "sandbox_file",
+      "external_replayed": false,
+      "verified": true,
+      "authority_settlement": "MINT",
+      "warrant_before_bp": 80,
+      "warrant_after_bp": 280,
+      "case_ids": [
+        "mission_5ac899a4f6_step1",
+        "mission_5ac899a4f6_reconcile",
+        "mission_5ac899a4f6_step2",
+        "mission_5ac899a4f6_contain",
+        "mission_5ac899a4f6_step3",
+        "mission_5ac899a4f6_step4",
+        "mission_5ac899a4f6_step5",
+        "mission_5ac899a4f6_challenge",
+        "mission_5ac899a4f6_execute"
+      ]
+    },
+    "plan": {
+      "objective": "Investigate an anomalous finance capability request.",
+      "objective_class": "SECURITY_INVESTIGATION",
+      "steps": [
+        {
+          "seq": 1,
+          "role": "WORKER_DOCUMENT",
+          "intent": "Gather and structure the incident evidence.",
+          "tool": "recon.extract_claims",
+          "action_kind": "READ_INTERNAL",
+          "requested_scope": [
+            "evidence.read"
+          ],
+          "requested_actions": [],
+          "risk_class": "MEDIUM",
+          "rationale": "An investigation cannot start from a summary; it starts from the records."
+        },
+        {
+          "seq": 2,
+          "role": "WORKER_COMPLIANCE",
+          "intent": "Hunt for scope escalation and unbacked authority in the gathered evidence.",
+          "tool": "risk.probe",
+          "action_kind": "ANALYZE",
+          "requested_scope": [
+            "risk.analyze"
+          ],
+          "requested_actions": [],
+          "risk_class": "MEDIUM",
+          "rationale": "The investigation's whole question is whether something exceeded its scope."
+        },
+        {
+          "seq": 3,
+          "role": "WORKER_PYTHON",
+          "intent": "Prepare the smallest reversible correction for what was confirmed.",
+          "tool": "remediation.prepare",
+          "action_kind": "ANALYZE",
+          "requested_scope": [
+            "remediation.prepare"
+          ],
+          "requested_actions": [],
+          "risk_class": "LOW",
+          "rationale": "Preparation is analysis; it changes nothing outside the process."
+        },
+        {
+          "seq": 4,
+          "role": "WORKER_PYTHON",
+          "intent": "Execute the correction against the sandboxed system of record.",
+          "tool": "remediation.execute",
+          "action_kind": "CREATE_TICKET",
+          "requested_scope": [
+            "sandbox.write"
+          ],
+          "requested_actions": [],
+          "risk_class": "MEDIUM",
+          "rationale": "A finding that produces no correction has removed no friction."
+        },
+        {
+          "seq": 5,
+          "role": "SENTINEL",
+          "intent": "Independently re-read the system of record and confirm the effect.",
+          "tool": "verify.check",
+          "action_kind": "READ_INTERNAL",
+          "requested_scope": [
+            "sandbox.read"
+          ],
+          "requested_actions": [],
+          "risk_class": "MEDIUM",
+          "rationale": "The acting agent's own report is not evidence that it acted."
+        }
+      ],
+      "provenance": "ZERO_MODEL",
+      "model": "unwind-deterministic-planner@1",
+      "input_hash": "823614b7602e5c53e0d5de13652b9373",
+      "created_at": "2026-08-27T06:03:53.653226Z",
+      "latency_ms": 0,
+      "clamps": [],
+      "notes": "model planner not attempted: allow_model=False"
+    }
+  }
+}

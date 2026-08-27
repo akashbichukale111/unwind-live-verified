@@ -187,6 +187,25 @@
     the fleet is planned, delegated, challenged, governed and corrected, and every step leaves
     evidence</p>
 
+  <div id="cmdos-judge-demo" class="cmdos-judge-demo mono">
+    <div class="cmdos-judge-demo-head">
+      <button id="cmdos-judge-demo-run" type="button" class="btn btn-judge-demo">&#9658; START JUDGE DEMO</button>
+      <span class="cmdos-tag cmdos-live">JUDGE DEMO</span>
+      <span class="cmdos-hint cmdos-judge-demo-tagline">Sandboxed &middot; Deterministic &middot; Evidence-backed</span>
+    </div>
+    <p class="cmdos-hint mono">No credential required. Replays a real, captured, zero-model
+      mission trace — recon through governance through knowledge distillation — computed once by
+      the exact same pipeline "Run autonomous mission" below uses, so a judge sees the full chain
+      immediately with nothing to configure. No token is requested or sent by this button, and
+      nothing it does can mutate real state.</p>
+    <div id="cmdos-judge-demo-out" class="cmdos-hint mono" hidden></div>
+  </div>
+
+  <div class="cmdos-divider mono">
+    <span class="cmdos-divider-label">OPERATOR MODE</span>
+    <span class="cmdos-hint">&#128274; credential required — run a LIVE mission under your own identity</span>
+  </div>
+
   <div class="cmdos-auth mono">
     <label for="cmdos-token">operator credential</label>
     <input id="cmdos-token" type="password" placeholder="Bearer token (UNWIND_OPERATOR_TOKENS)"
@@ -301,6 +320,13 @@
       <button id="cmdos-gate-approve" type="button" class="btn">Approve</button>
       <button id="cmdos-gate-deny" type="button" class="btn btn-quiet">Deny</button>
     </div>
+  </div>
+
+  <div id="cmdos-demo-banner" class="mono cmdos-demo-banner" hidden>
+    <span class="cmdos-tag cmdos-live">JUDGE DEMO</span>
+    <span>Everything below is a real, captured, zero-model mission trace — replayed, not computed
+      just now. <span id="cmdos-demo-banner-when"></span> Run "Operator Mode" above with your own
+      credential to see the same pipeline execute live instead.</span>
   </div>
 
   <div id="cmdos-flow" class="cmdos-flow mono" hidden>

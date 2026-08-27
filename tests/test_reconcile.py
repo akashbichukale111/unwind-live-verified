@@ -305,3 +305,125 @@ def test_a_dispute_cannot_be_cleared_by_a_later_clean_step() -> None:
 
     ctx = {"reconciliation_disputed": True, "risk_divergence": False}
     assert _signals(ctx).risk_divergence is True
+
+
+# ===========================================================================
+# SCENARIO B -- a second, independent incident bundle
+# ===========================================================================
+#
+# `fleet/data/incident-access-review/` is not the supply-chain bundle with
+# renamed values. It is a different operator (security desk, not ops), a
+# different domain (entitlements, not lead times and tariffs), a different
+# authority ladder entry (`access_scope_expiry_days`, added to
+# `AUTHORITY_LADDER` for this bundle), and it deliberately exercises the ONE
+# dispute path scenario A never reaches: `NO_AUTHORITY_LADDER`, previously
+# provable only against a synthetic three-line `recon` dict
+# (`test_a_predicate_with_no_authority_ladder_is_disputed_not_decided_by_recency`
+# above), never against a real, messy, three-file incident bundle end to end.
+#
+# The claim these tests exist to prove is not "reconciliation works" -- that
+# is already proven. It is "reconciliation is a GENERAL mechanism, not a
+# fixture-shaped special case": the same `recon_extract_claims` /
+# `reconcile_adjudicate` pair, pointed at unrelated evidence about an
+# unrelated domain, produces an independently correct verdict.
+
+from pathlib import Path as _Path  # noqa: E402
+
+SCENARIO_B_DIR = _Path(__file__).resolve().parents[1] / "fleet" / "data" / "incident-access-review"
+
+
+def test_scenario_b_is_a_different_incident_not_a_relabelled_one() -> None:
+    """Different files, different narrative, different numbers. If this
+    fails, scenario B is not independent evidence of anything."""
+    note_a = (
+        _Path(__file__).resolve().parents[1] / "fleet" / "data" / "incident" / "ops-note.txt"
+    ).read_text(encoding="utf-8")
+    note_b = (SCENARIO_B_DIR / "ops-note.txt").read_text(encoding="utf-8")
+    assert note_a != note_b
+    # No supply-chain vocabulary leaked into the access-review note.
+    for word in ("supplier", "tariff", "carrier hub", "procurement"):
+        assert word not in note_b.lower()
+    # No access-review vocabulary leaked into the original note.
+    for word in ("iam", "ticketing", "classification", "access review"):
+        assert word not in note_a.lower()
+
+
+def test_scenario_b_settles_one_claim_and_disputes_a_different_one() -> None:
+    recon = recon_extract_claims(incident_dir=SCENARIO_B_DIR)
+    result = reconcile_adjudicate(recon=recon)
+
+    assert result["verdict"] == "RESOLVED_WITH_DISPUTES"
+    assert {r["claim_id"] for r in result["resolutions"]} == {"clm_ops02_access_expiry"}
+    assert {d["claim_id"] for d in result["disputes"]} == {"clm_ops07_classification"}
+
+
+def test_scenario_b_settled_claim_is_settled_by_the_new_ladder_entry() -> None:
+    recon = recon_extract_claims(incident_dir=SCENARIO_B_DIR)
+    result = reconcile_adjudicate(recon=recon)
+    settled = result["resolutions"][0]
+    assert settled["chosen_authority"] == "iam"
+    assert settled["chosen_value"] == 0
+    assert settled["agreed_with_recency"] is True
+    assert AUTHORITY_LADDER["access_scope_expiry_days"][0] == "iam"
+
+
+def test_scenario_b_disputed_claim_is_the_path_scenario_a_never_reaches() -> None:
+    """This is the point of scenario B: a REAL incident bundle, not a
+    synthetic dict, produces `NO_AUTHORITY_LADDER` -- the one dispute kind
+    the committed (scenario A) bundle's own data never triggers."""
+    recon = recon_extract_claims(incident_dir=SCENARIO_B_DIR)
+    result = reconcile_adjudicate(recon=recon)
+    dispute = result["disputes"][0]
+    assert dispute["dispute_kind"] == "NO_AUTHORITY_LADDER"
+    assert dispute["authority_value"] is None
+    assert "chosen_value" not in dispute
+    assert "data_classification_level" not in AUTHORITY_LADDER
+
+
+def test_scenario_a_and_scenario_b_produce_materially_different_results() -> None:
+    """Not just different claim ids -- a different DISPUTE KIND, a different
+    coverage figure, and a disjoint set of contradicted predicates. Same
+    mechanism, two unrelated inputs, two independently-derived verdicts."""
+    recon_a = recon_extract_claims()
+    recon_b = recon_extract_claims(incident_dir=SCENARIO_B_DIR)
+    result_a = reconcile_adjudicate(recon=recon_a)
+    result_b = reconcile_adjudicate(recon=recon_b)
+
+    assert recon_a["completeness"] != recon_b["completeness"]
+    dispute_kinds_a = {d["dispute_kind"] for d in result_a["disputes"]}
+    dispute_kinds_b = {d["dispute_kind"] for d in result_b["disputes"]}
+    assert dispute_kinds_a != dispute_kinds_b
+    predicates_a = {d["predicate"] for d in result_a["disputes"]}
+    predicates_b = {d["predicate"] for d in result_b["disputes"]}
+    assert predicates_a.isdisjoint(predicates_b)
+
+
+def test_scenario_b_also_measurably_raises_the_price_of_a_later_action() -> None:
+    """The downstream-consequence mechanism (`warrant/economics.py`) is
+    scenario-agnostic by construction -- it reads a boolean, not a fixture
+    path -- so this proves the SAME generic pricing consequence
+    `test_a_dispute_raises_the_price_of_every_later_action` proved for
+    scenario A also holds for scenario B's own dispute."""
+    from warrant.economics import ActionKind, UncertaintySignals, price_action
+
+    recon = recon_extract_claims(incident_dir=SCENARIO_B_DIR)
+    result = reconcile_adjudicate(recon=recon)
+    assert result["disputes"], (
+        "scenario B must produce a real dispute for this test to mean anything"
+    )
+
+    common = dict(
+        evidence_age_seconds=0.0,
+        evidence_completeness=recon["completeness"],
+        drift_band="NORMAL",
+        model_disagreement=False,
+        external_state_changed=False,
+        consequence_band="NONE",
+    )
+    without = price_action(
+        ActionKind.CREATE_TICKET, UncertaintySignals(risk_divergence=False, **common)
+    )
+    with_dispute = price_action(
+        ActionKind.CREATE_TICKET, UncertaintySignals(risk_divergence=True, **common)
+    )
+    assert with_dispute.cost_bp > without.cost_bp

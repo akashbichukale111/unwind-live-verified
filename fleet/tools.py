@@ -443,6 +443,15 @@ AUTHORITY_LADDER: dict[str, tuple[str, ...]] = {
     "lead_time_days": ("procurement", "planning"),
     "tariff_rate_pct": ("compliance", "erp"),
     "cutoff_local": ("carrier", "planning"),
+    #: Added for the second (access-review) incident bundle,
+    #: `fleet/data/incident-access-review/`: IAM is the system of record for
+    #: whether a grant is still active; a ticketing record is a request for
+    #: one, not proof one still holds. Deliberately does NOT cover
+    #: `data_classification_level` -- that predicate has no ranked authority
+    #: in this incident, on purpose, so its contradiction is escalated
+    #: (`NO_AUTHORITY_LADDER`) rather than settled by a rule invented to
+    #: settle it.
+    "access_scope_expiry_days": ("iam", "ticketing"),
 }
 
 

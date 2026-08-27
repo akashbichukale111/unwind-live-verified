@@ -35,7 +35,7 @@ Google "All Things Agentic" Hackathon
 | Bonus Google model stack | `GET /api/media/model-roster` — Gemini, Gemma, Veo, Lyria joined live to `evidence/models/verification-*.json`; a model with no verification reads `UNVERIFIED`, never a borrowed green tick |
 | Evidence | [`evidence/INDEX.md`](evidence/INDEX.md) (every claim → file → reproduction command) · [`evidence/media/demo/PROOF.md`](evidence/media/demo/PROOF.md) (checksums, stream headers, audio levels, real-vs-demo distinction) |
 | **70-point judge map** | **[`RUBRIC.md`](RUBRIC.md)** — every rubric criterion → mechanism → test → UI proof, with a conservative before/after score and the limitations that remain |
-| Tests | `1181 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`); `1026 passed, 156 skipped` with **no Firestore reachable at all** and nothing failing. 279 of those are `tests/test_documentation_integrity.py`, parameterised one-per-citation, so the total moves when documentation does; `ruff check` / `format --check` clean |
+| Tests | `1202 passed, 1 skipped` with the Firestore emulator up (`FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q`); `1047 passed, 159 skipped` with **no Firestore reachable at all** and nothing failing. 289 of those are `tests/test_documentation_integrity.py`, parameterised one-per-citation, so the total moves when documentation does; `ruff check` / `format --check` clean |
 | Browser verification | `evidence/browser/verify_all_cards.py` 26/26 · `verify_timemachine_and_media.py` 55/55 · `verify_recall_and_reconcile.py` 23/23 (includes a live store-poisoning attack) |
 | Deployment status | **LIVE** — service `unwind`, project `project-895d4ca8-d301-447d-916`, region `us-central1`, revision `unwind-00021-nwl`, 100% traffic — see [Deployed](#deployed) below |
 
@@ -102,6 +102,16 @@ supervised by a real timeout and a bounded retry budget, and the mission's own
 self-extending work queue has a hard ceiling. See
 [`RUBRIC.md`](RUBRIC.md) for the full map of mechanism → test → UI proof.
 
+This diagram is not just documentation. Run a mission on the Agentic Command
+OS page and the **Mission Flow panel** renders the same chain live, above the
+detailed stage list — objective through next-mission adaptation, ten nodes,
+each reading THIS mission's own report (not a second, separately-maintained
+claim): which specialists were actually delegated to, whether a fault forced
+a replan, the reconciliation verdict if evidence contradicted itself, the
+human gate outcome, the external action id, and — when a prior mission had
+already written anything — exactly how many records were recalled from which
+mission and how many changes that made to this plan.
+
 ### The seven things a hostile judge should check first
 
 
@@ -137,7 +147,11 @@ the records that narrowed it, the mission that produced them, and the
 checkpoint each came from. Retrieval is **selection**, and the panel prints the
 arithmetic: `selected 2 of 6 · rejected 4 (4 scored zero) · context used
 292 / 1200 characters`. Proved by
-`tests/test_recall_mission.py::test_the_second_mission_plans_differently_because_of_the_first`.
+`tests/test_recall_mission.py::test_the_second_mission_plans_differently_because_of_the_first`
+— and proved again, over the unrelated access-review bundle above, by
+`tests/test_recall_mission.py::test_scenario_b_second_mission_plans_differently_because_of_the_first`,
+with `tests/test_recall_mission.py::test_scenario_a_and_scenario_b_learn_independently_of_each_other`
+confirming one bundle's knowledge never leaks into the other's plan.
 
 **5. Recalled knowledge can raise scrutiny and can never widen authority.**
 Not "does not currently" — *cannot*. `recall.guard.ScrutinyDirective` is the
@@ -239,6 +253,15 @@ the K line — i \*think\* it's still 8% but the compliance note from
 2026-05-02 says 8.5%. never reconciled. flagging it."* The dispute the system
 produces **is** that flag, turned into a decision record.
 (`tests/test_reconcile.py::test_the_dispute_is_the_one_the_operator_flagged_by_hand`)
+
+**This is not the only incident the mechanism has ever seen.**
+`fleet/data/incident-access-review/` is a second, independent bundle — a
+different operator, a different domain (entitlements, not supply chain) —
+run through the exact same, unmodified `reconcile_adjudicate`. It settles
+one claim and disputes a different one, via a dispute path
+(`NO_AUTHORITY_LADDER`) the original bundle's own data never triggers:
+`tests/test_reconcile.py::test_scenario_a_and_scenario_b_produce_materially_different_results`,
+reproducible directly with `python scripts/reconcile_scenarios_report.py`.
 
 ### The knowledge engine — what the system knows, and which mission measured it
 

@@ -260,3 +260,104 @@ def test_a_poisoned_record_in_the_live_store_changes_nothing(clean_world) -> Non
 
     ids = {r.record_id for r in list_records()}
     assert {"kr_poison", "kr_poison_untrusted"} <= ids
+
+
+# ===========================================================================
+# SCENARIO B -- the same loop, over the second, independent incident bundle
+# ===========================================================================
+#
+# Every test above uses `fleet/data/incident/` (the supply-chain bundle) via
+# the default `incident_dir=None`. This section runs the identical mechanism
+# -- distill after mission N, retrieve before mission N+1 -- over
+# `fleet/data/incident-access-review/` (see `tests/test_reconcile.py`'s own
+# "SCENARIO B" section for that bundle's independence from the first). The
+# claim is not "recall works" -- proven above -- it is "recall is not
+# fixture-shaped": unrelated evidence, a differently-classified objective,
+# and the cross-mission effect still measurably holds.
+
+OBJECTIVE_B = "Investigate suspicious access review activity."
+INCIDENT_DIR_B = "fleet/data/incident-access-review"
+
+
+def test_scenario_b_also_writes_what_it_measured(clean_world) -> None:
+    from command_os.mission import run_mission
+    from recall.store import list_records
+
+    result = run_mission(
+        OBJECTIVE_B,
+        principal="human::test",
+        auth_method="test",
+        allow_model=False,
+        incident_dir=INCIDENT_DIR_B,
+    )
+    records = list_records()
+    assert records, "scenario B's mission left no knowledge behind"
+    assert all(r.mission_id == result.mission_id for r in records)
+
+
+def test_scenario_b_second_mission_plans_differently_because_of_the_first(clean_world) -> None:
+    """The gold-standard cross-mission test, unchanged in shape, run over the
+    unrelated incident bundle. Independently verified this pass: mission 1's
+    risk profile `1:LOW|2:MEDIUM|3:LOW|4:MEDIUM|5:LOW` becomes mission 2's
+    `1:MEDIUM|2:MEDIUM|3:LOW|4:MEDIUM|5:MEDIUM`, attributable to mission 1's
+    own distilled records."""
+    from command_os.mission import reset_for_test, run_mission
+
+    first = run_mission(
+        OBJECTIVE_B,
+        principal="human::test",
+        auth_method="test",
+        allow_model=False,
+        incident_dir=INCIDENT_DIR_B,
+    )
+    reset_for_test()  # a fresh economy; the KNOWLEDGE store is deliberately not reset
+    second = run_mission(
+        OBJECTIVE_B,
+        principal="human::test",
+        auth_method="test",
+        allow_model=False,
+        incident_dir=INCIDENT_DIR_B,
+    )
+
+    d1, d2 = _plan_detail(first), _plan_detail(second)
+
+    assert d1["fingerprint_before_recall"] == d2["fingerprint_before_recall"]
+    assert d1["risk_profile_before_recall"] == d2["risk_profile_before_recall"]
+    assert d2["risk_profile"] != d2["risk_profile_before_recall"]
+    assert d2["risk_profile"] != d1["risk_profile"]
+
+    applied = d2["scrutiny_applied"]
+    assert any("risk class raised" in note for note in applied)
+
+    selected = d2["recall"]["selected_records"]
+    assert selected
+    assert all(r["mission_id"] == first.mission_id for r in selected)
+    assert d2["recall"]["directive"]["derived_from"]
+
+
+def test_scenario_a_and_scenario_b_learn_independently_of_each_other(clean_world) -> None:
+    """The clearest possible proof that this is a general mechanism rather
+    than a special case wired to one incident: scenario A's mission does not
+    influence scenario B's mission, and vice versa, because retrieval is
+    lexically scored against each mission's own evidence and an unrelated
+    corpus scores no matches worth selecting."""
+    from command_os.mission import reset_for_test, run_mission
+
+    run_mission(OBJECTIVE, principal="human::test", auth_method="test", allow_model=False)
+    reset_for_test()
+    second_b = run_mission(
+        OBJECTIVE_B,
+        principal="human::test",
+        auth_method="test",
+        allow_model=False,
+        incident_dir=INCIDENT_DIR_B,
+    )
+
+    selected = _plan_detail(second_b)["recall"]["selected_records"]
+    # Scenario A's mission wrote records too (from the run above); if any of
+    # THOSE were selected into scenario B's plan, retrieval would not be
+    # grounded in the evidence actually gathered -- it would be grabbing
+    # whatever is newest in the store.
+    assert selected == [] or all(
+        "supplier" not in str(r).lower() and "tariff" not in str(r).lower() for r in selected
+    )

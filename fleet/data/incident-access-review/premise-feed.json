@@ -1,0 +1,11 @@
+{
+  "feed": "access-review-feed",
+  "emitted_at": "2026-08-21T22:10:00Z",
+  "records": [
+    {"claim_id": "clm_ops02_access_expiry", "subject": "agent_ops_02", "predicate": "access_scope_expiry_days", "value": 0, "source": "src_iam_export", "recorded_at": "2026-08-21T21:50:00Z", "authority": "iam"},
+    {"claim_id": "clm_ops02_access_expiry", "subject": "agent_ops_02", "predicate": "access_scope_expiry_days", "value": 45, "source": "src_ticketing", "recorded_at": "2026-07-15T09:00:00Z", "authority": "ticketing"},
+    {"claim_id": "clm_ops07_classification", "subject": "agent_ops_07", "predicate": "data_classification_level", "value": "RESTRICTED", "source": "src_security_scanner", "recorded_at": "2026-08-21T21:55:00Z", "authority": "security_scanner"},
+    {"claim_id": "clm_ops07_classification", "subject": "agent_ops_07", "predicate": "data_classification_level", "value": "INTERNAL", "source": "src_catalog", "recorded_at": "2026-06-01T10:00:00Z", "authority": "data_steward"},
+    {"claim_id": "clm_broken_b", "subject": "", "predicate": "access_scope_expiry_days", "value": null, "source": "", "recorded_at": "2026-08-21T21:40:00Z"}
+  ]
+}

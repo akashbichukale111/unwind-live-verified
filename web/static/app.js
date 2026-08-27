@@ -1587,11 +1587,108 @@
     $("cmdos-trust-firewall").hidden = false;
   }
 
+  //: The 30-second version of everything below. Every node reads a field
+  //: already present on `report`, `plan` or `stages[0].detail` -- the exact
+  //: same data `renderMissionReport`, `renderReconciliation` and `renderRecall`
+  //: already render in full. This is not a second source of truth, it is an
+  //: index into the one that exists, in the order the mission actually ran.
+  function renderMissionFlow(d) {
+    const el = $("cmdos-flow");
+    const chain = $("cmdos-flow-chain");
+    if (!d.report) { el.hidden = true; return; }
+    const r = d.report;
+    const planDetail = (d.stages && d.stages[0] && d.stages[0].detail) || {};
+    const recall = planDetail.recall || {};
+    const selected = recall.selected_records || [];
+    const reconcileStage = (d.stages || []).find((s) => s.name.indexOf("RECONCILE") === 0);
+    const reconcileData = reconcileStage && reconcileStage.detail && reconcileStage.detail.reconciliation;
+
+    const node = (label, reached, detail) => (
+      "<li class='cmdos-flow-node " + (reached ? "reached" : "skipped") + "'>" +
+        "<span class='cmdos-flow-arrow'>" + (reached ? "●" : "○") + "</span>" +
+        "<span class='cmdos-flow-label'>" + esc(label) + "</span>" +
+        (detail ? "<span class='cmdos-flow-detail'>" + detail + "</span>" : "") +
+      "</li>"
+    );
+
+    const nodes = [
+      node("OBJECTIVE", true, esc(r.objective)),
+      node(
+        "PLAN",
+        true,
+        esc(r.objective_class) + " · " + esc(r.planner_provenance) + " (" + esc(r.planner_model) + ") · " +
+          r.steps_planned + " step(s)"
+      ),
+      node(
+        "DELEGATE → SPECIALISTS",
+        (r.agents_selected || []).length > 0,
+        esc((r.agents_selected || []).join(", ") || "no specialist selected")
+      ),
+      node(
+        "EXECUTE",
+        r.steps_executed > 0,
+        r.steps_executed + " / " + r.steps_planned + " step(s) executed · tools: " +
+          esc((r.tools_used || []).join(", ") || "—")
+      ),
+      node(
+        "FAILURE / REPLAN",
+        r.replans > 0 || r.worker_faults > 0,
+        r.replans + " replan(s) · " + r.worker_faults + " worker fault(s)" +
+          ((r.worker_fault_kinds || []).length ? " (" + esc(r.worker_fault_kinds.join(", ")) + ")" : "")
+      ),
+      node(
+        "RECONCILE",
+        !!reconcileData,
+        reconcileData
+          ? esc(reconcileData.verdict) + " · " + (reconcileData.resolutions || []).length +
+            " settled / " + (reconcileData.disputes || []).length + " disputed"
+          : "no contradiction in this mission's evidence — nothing to reconcile"
+      ),
+      node(
+        "GOVERNANCE",
+        !!r.human_principal,
+        r.human_principal
+          ? "gate " + esc(r.gate || "—") + " · principal " + esc(r.human_principal) +
+            " · challenger " + (r.challenger_agrees === null ? "UNAVAILABLE" : r.challenger_agrees ? "AGREED" : "DISAGREED")
+          : "no human decision recorded in this mission"
+      ),
+      node(
+        "EXTERNAL ACTION",
+        !!r.external_action_id,
+        r.external_action_id
+          ? esc(r.external_action) + " · " + esc(r.external_action_id) + " · verified " + String(r.verified)
+          : "no external effect — nothing mutated outside this process"
+      ),
+      node(
+        "DISTILL KNOWLEDGE",
+        r.status !== "AWAITING_HUMAN",
+        r.status === "AWAITING_HUMAN"
+          ? "distillation happens on completion — this mission is still paused at the gate"
+          : "on completion, what this mission measured is written to the knowledge store, " +
+            "named to this mission id — see the Evolving Knowledge panel below"
+      ),
+      node(
+        "NEXT-MISSION ADAPTATION",
+        selected.length > 0,
+        selected.length > 0
+          ? selected.length + " record(s) recalled from " +
+            new Set(selected.map((s) => s.mission_id)).size + " prior mission(s) · " +
+            (planDetail.scrutiny_applied || []).length + " change(s) applied to THIS plan"
+          : recall.corpus_records
+            ? recall.corpus_records + " record(s) in the store; none scored high enough to select"
+            : "no prior mission had written anything yet when this one planned"
+      ),
+    ];
+    chain.innerHTML = nodes.join("");
+    el.hidden = false;
+  }
+
   function applyMissionResult(d) {
     cmdosMissionId = d.mission_id;
     renderMissionStages(d.stages);
     renderPlan(d.plan);
     renderReconciliation(d.stages);
+    renderMissionFlow(d);
     loadRecall(d.mission_id);
     if (d.status === "AWAITING_HUMAN") {
       $("cmdos-gate").hidden = false;

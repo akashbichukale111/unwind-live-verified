@@ -22,10 +22,10 @@ and **where it is visible in the running product**.
 make emulator                     # terminal 1 — Firestore emulator, needs Java 11+
                                   # then, in terminal 2:
 FIRESTORE_EMULATOR_HOST=localhost:8080 python -m pytest -q
-# 1181 passed, 1 skipped
+# 1202 passed, 1 skipped
 
 FIRESTORE_EMULATOR_HOST=localhost:9999 python -m pytest -q
-# 1026 passed, 156 skipped — no Firestore anywhere, nothing fails
+# 1047 passed, 159 skipped — no Firestore anywhere, nothing fails
 
 ruff check . && ruff format --check .
 python scripts/check_contrast.py            # accessibility floor, a CI gate
@@ -213,5 +213,59 @@ posture is "70/70 on published criteria, with these named gaps" rather than
    weaker check.
 6. **Live Gemini fleet planning is still unexercised.** Unchanged from before
    this pass; the README's "What is honestly NOT built" section is current.
+   `fleet/agents.py` and `fleet/planner.py:build_plan` already contain a
+   complete, real Gemini planning path (a genuine ADK `LlmAgent`, a real
+   prompt, a real Runner) that is tried automatically whenever Vertex is
+   configured and reachable, with `PlanProvenance.GEMINI` /
+   `GEMINI_CLAMPED` / `ZERO_MODEL` reporting honestly which one actually
+   ran. No credentialed environment has exercised it end to end; this is a
+   cost/environment fact, not a missing code path.
 7. **Multi-tenancy, token rotation, distributed rate limiting, gate expiry** —
-   see `docs/SECURITY.md` §6.
+   see `docs/SECURITY.md` §6. No rate limiter exists anywhere in this
+   codebase today, found during this pass: `MISSION_FAILURE_HELP`'s `429`
+   entry in `web/static/app.js` documents a status code the backend does
+   not yet enforce. Relevant if bearer-token access is ever opened to
+   unauthenticated visitors; not relevant to any claim in this document.
+
+---
+
+# Addendum — a second, independent scenario (this pass)
+
+Two limitations named above when this document was first written --
+reconciliation and cross-mission recall demonstrated on "one incident
+bundle" -- are addressed here, not by editing the scores, but by adding a
+second, unrelated incident and re-running the same, unmodified mechanism
+against it.
+
+`fleet/data/incident-access-review/` is not `fleet/data/incident/` with
+renamed values: different operator, different domain (entitlements, not
+supply chain), a newly-added `AUTHORITY_LADDER` entry
+(`access_scope_expiry_days`), and it deliberately exercises
+`NO_AUTHORITY_LADDER` -- the one dispute kind the original bundle's own
+data never reaches, previously provable only against a synthetic
+three-line dict (`test_a_predicate_with_no_authority_ladder_is_disputed_not_decided_by_recency`).
+
+| Claim | Test | Evidence |
+| --- | --- | --- |
+| Scenario B settles one claim, disputes a different one, via the SAME `reconcile_adjudicate` | `tests/test_reconcile.py::test_scenario_b_settles_one_claim_and_disputes_a_different_one` | `evidence/reconcile/scenarios-*.json` |
+| Scenario B's dispute is `NO_AUTHORITY_LADDER` -- scenario A's is `AUTHORITY_CONTRADICTS_RECENCY` -- a different verdict path over unrelated evidence | `tests/test_reconcile.py::test_scenario_a_and_scenario_b_produce_materially_different_results` | same file, `materially_different` block |
+| Scenario B also measurably raises the price of a later action, via the SAME scenario-agnostic pricing mechanism scenario A uses | `tests/test_reconcile.py::test_scenario_b_also_measurably_raises_the_price_of_a_later_action` | — |
+| A full mission over scenario B's evidence reconciles, contains, gates, executes and reports, end to end, with no code change to the mission orchestrator | `tests/test_recall_mission.py::test_scenario_b_also_writes_what_it_measured` | reproduced this pass: stages `RECONCILE — 1 settled, 1 DISPUTED` → `CONTAIN — fleet_recon ISOLATED` → … → `REPORT — COMPLETED_WITH_RESTRICTIONS` |
+| Mission N+1 over scenario B plans differently because of scenario B's mission N -- the SAME cross-mission mechanism, an unrelated corpus | `tests/test_recall_mission.py::test_scenario_b_second_mission_plans_differently_because_of_the_first` | risk profile `1:LOW\|2:MEDIUM\|3:LOW\|4:MEDIUM\|5:LOW` → `1:MEDIUM\|2:MEDIUM\|3:LOW\|4:MEDIUM\|5:MEDIUM`, reproduced this pass |
+| Scenario A's knowledge does not leak into scenario B's plan, and vice versa -- retrieval is grounded in each mission's own evidence, not "whatever is newest" | `tests/test_recall_mission.py::test_scenario_a_and_scenario_b_learn_independently_of_each_other` | — |
+| The delegation graph (which specialists, which tools) genuinely varies across all five objective classes, not just the two pairs previously compared | `tests/test_fleet.py::test_the_delegation_graph_differs_across_every_objective_class`, `::test_the_tool_selection_also_differs_across_objective_classes` | — |
+| A judge sees the whole causal chain -- objective through next-mission adaptation -- as one panel reading the SAME report/stage data the detailed panels below it already render, not a second source of truth | new `#cmdos-flow` panel, `web/static/app.js:renderMissionFlow` | verified live this pass: 10 nodes, each showing this run's real objective text, plan provenance, delegated specialists, reconciliation verdict, governance/challenger outcome, external action id, and (when a prior mission exists) the recalled-record count and mission id it came from |
+
+Reproduce the reconciliation half directly:
+
+```bash
+python scripts/reconcile_scenarios_report.py
+```
+
+**What this addendum does not claim.** It does not claim the retrieval
+corpus is no longer machine-written (limitation 1, above, is unchanged --
+scenario B's evidence is also machine-written), and it does not claim `n`
+is no longer small (two scenarios is not statistical generality; it is a
+second data point proving the mechanism is not fixture-shaped). Both
+limitations are named, not argued away, exactly as the rest of this
+document already does.

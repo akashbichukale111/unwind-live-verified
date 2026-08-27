@@ -947,6 +947,30 @@ html, body {
 .cmdos-reference { color: var(--bone); opacity: 0.55; }
 .cmdos-designed { color: var(--bone); opacity: 0.4; border-style: dotted; }
 
+/* The mission flow chain -- OBJECTIVE through NEXT-MISSION ADAPTATION, one
+ * node per causal seam this mission's OWN report/stage list already prove
+ * happened or did not. No new endpoint, no new number: `renderMissionFlow`
+ * (app.js) reads the exact same `report` object `renderMissionReport`
+ * renders as a grid, just re-shown as the sequence it happened in. A dimmed
+ * node is a true "this mission did not reach this" rather than an absence
+ * that could be mistaken for the node not existing. */
+.cmdos-flow { margin-bottom: 26px; max-width: 78ch; }
+.cmdos-flow-chain { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 0; }
+.cmdos-flow-node {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 2px 12px;
+  padding: 7px 0;
+  border-left: 2px solid var(--slate);
+  padding-left: 14px;
+  margin-left: 9px;
+}
+.cmdos-flow-node.reached { border-left-color: var(--amber); }
+.cmdos-flow-node.skipped { opacity: 0.4; }
+.cmdos-flow-arrow { color: var(--bone); opacity: 0.4; grid-column: 1; text-align: center; }
+.cmdos-flow-label { color: var(--bone); font-size: 12px; letter-spacing: 0.03em; grid-column: 2; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cmdos-flow-detail { color: var(--bone); opacity: 0.68; grid-column: 2; margin-top: 2px; line-height: 1.6; }
+
 .cmdos-report {
   border: 1px solid var(--verdigris);
   padding: 16px 20px;

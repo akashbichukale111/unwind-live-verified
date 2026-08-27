@@ -20,8 +20,15 @@ reproduces it. Nothing here is projected.*
 > **Reconciler** agent that re-derives contradicted claims from authority so
 > the disagreement between two rules becomes the finding, and a **recall
 > knowledge engine** in which mission N+1 provably plans differently because
-> of mission N. The whole suite is now **1181 passed, 1 skipped** (was 369,
-> then 768) — see [`evidence/INDEX.md` §16–20](../evidence/INDEX.md), and
+> of mission N. **Since then**, reconciliation and recall were proven against
+> a **second, independent incident bundle** (`fleet/data/incident-access-review/`
+> — a different domain, exercising a dispute path the first bundle's own data
+> never reaches), and a **Mission Flow panel** now shows the whole causal
+> chain — objective through next-mission adaptation — as one 10-node summary
+> reading the same report data the detailed panels below it already render.
+> See `RUBRIC.md`'s "Addendum" section for the exact tests. The whole suite
+> is now **1202 passed, 1 skipped** (was 369, then 768, then 1181) —
+> see [`evidence/INDEX.md` §16–20](../evidence/INDEX.md), and
 > **[`RUBRIC.md`](../RUBRIC.md)** for the criterion → mechanism → test → UI
 > map. Read this card for the original four-card architecture; read the
 > README for everything built since.

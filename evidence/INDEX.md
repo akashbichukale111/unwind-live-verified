@@ -1199,3 +1199,38 @@ and it fires on every future mission with nobody watching.
 - **No Gemini/Veo/Lyria run.** Deliberate: no model or API credit was to be
   spent, and §13's `LIVE_VERIFIED` evidence is preserved byte-for-byte.
 
+## 21. A second, independent scenario for reconciliation and recall; a judge-visible mission flow panel (2026-08-27)
+
+A hostile self-audit of §20's own claims found two genuine, named gaps: the
+Reconciler and the recall knowledge engine were both demonstrated against
+exactly one incident bundle, and nothing in the browser UI showed the whole
+OBJECTIVE → … → NEXT-MISSION chain as one legible sequence — a judge had to
+open several panels and infer the order. This pass closes both without
+touching `command_os/mission.py`'s orchestration logic, `fleet/contracts.py`,
+`recall/guard.py`, or any Gemini/Veo/Lyria evidence.
+
+| Claim | File | Reproduction command |
+| --- | --- | --- |
+| A second incident bundle exists, independent of the first — different operator, different domain, different authorities, exercising `NO_AUTHORITY_LADDER` (a dispute kind the first bundle's own data never reaches) | `fleet/data/incident-access-review/` | `tests/test_reconcile.py::test_scenario_b_is_a_different_incident_not_a_relabelled_one` |
+| The same, unmodified `reconcile_adjudicate` settles one claim and disputes a different one over scenario B | `fleet/tools.py` (unchanged except one added `AUTHORITY_LADDER` entry) | `python scripts/reconcile_scenarios_report.py` → `evidence/reconcile/scenarios-*.json` |
+| Scenario A and scenario B produce materially different verdict paths and disjoint disputed predicates | — | `python -m pytest tests/test_reconcile.py -k scenario -v` |
+| A full mission over scenario B reconciles, contains, gates, executes and reports, using the SAME `command_os/mission.py:run_mission(incident_dir=...)` seam the original bundle uses | — | `tests/test_recall_mission.py::test_scenario_b_also_writes_what_it_measured` |
+| Mission N+1 over scenario B plans differently because of scenario B's mission N | — | `tests/test_recall_mission.py::test_scenario_b_second_mission_plans_differently_because_of_the_first` |
+| Scenario A's knowledge does not leak into scenario B's plan, or vice versa | — | `tests/test_recall_mission.py::test_scenario_a_and_scenario_b_learn_independently_of_each_other` |
+| The delegation graph (specialist set, tool set) genuinely varies across all five objective classes, not just the two pairs previously compared | `fleet/planner.py` (unchanged) | `tests/test_fleet.py::test_the_delegation_graph_differs_across_every_objective_class`, `::test_the_tool_selection_also_differs_across_objective_classes` |
+| A judge-visible Mission Flow panel renders the whole causal chain from ONE mission's own already-fetched report/stage data — no new endpoint, no invented number | `web/static/app.js:renderMissionFlow`, `#cmdos-flow` (`web/static/index.html`, `web/static/style.css`) | browser-verified this pass: 10 nodes, real objective text, real plan provenance, real delegated specialists, real reconciliation verdict, real governance/challenger outcome, real external action id, real recalled-record count and source mission id |
+
+Full suite after this pass: **1202 passed, 1 skipped** (was 1181).
+`ruff check` / `ruff format --check` clean. Browser suites re-verified:
+`verify_all_cards.py` 26/26 (×2), `verify_timemachine_and_media.py` 55/55,
+`verify_mission_button.py` 11/11, `verify_recall_and_reconcile.py` 23/23 —
+none touched by this pass's changes, all re-run to confirm no regression.
+
+**What this pass did NOT do:** it did not exercise live Gemini planning
+(`fleet/planner.py:build_plan`'s Gemini path remains real, wired, and
+unexercised — see `RUBRIC.md` limitation 6), did not add a rate limiter
+(found missing during the audit — see `RUBRIC.md` limitation 7), did not
+deploy, and did not call any model or media-generation API. §13's
+`LIVE_VERIFIED` Gemini/Veo/Lyria evidence is untouched — verified
+byte-identical against this section's own starting commit.
+

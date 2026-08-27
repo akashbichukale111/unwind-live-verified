@@ -1,0 +1,21 @@
+access review handover — security desk
+========================================
+2026-08-21 22:15 (end of shift, quick note)
+
+the quarterly access review is still open. the IAM export says
+agent_ops_02's prod-db.write grant expired; the ticketing system's older
+record still shows 45 days of active access remaining. two systems, two
+answers, and nobody owns the tie-break.
+
+separately: the classification catalogue says the export dataset
+agent_ops_07 touched is INTERNAL, but this week's scanner flagged it
+RESTRICTED. neither of those two is "the" source of truth here — I don't
+know which one outranks the other, and I don't think anyone has ever
+written that down.
+
+one exporter agent has been retrying past its own cap again — tool calls
+went from ~5 to over 110 on request req-b104. flagging it same as last
+time.
+
+someone needs to reconcile IAM against the ticket record before the
+audit, and today that call is mine to make with no rule to point to.

@@ -217,6 +217,55 @@ def test_orchestrator_selects_different_agents_per_objective() -> None:
     assert REMEDIATION.agent_role in investigation.roles
 
 
+def test_the_delegation_graph_differs_across_every_objective_class() -> None:
+    """The pairwise check above, generalised to all five classes at once.
+
+    Not just "the plans differ" (`test_different_objectives_create_different_plans`
+    already proves that by fingerprint) -- specifically that the SET OF
+    SPECIALISTS delegated to is not the same five-agent roster every time,
+    which is the concrete, judge-checkable meaning of "delegation" rather
+    than "the same agents run in a different order."
+    """
+    role_sets = {
+        cls: frozenset(step.role for step in deterministic_plan("x", objective_class=cls))
+        for cls in ObjectiveClass
+    }
+    # Every class delegates to at least one specialist -- a plan that
+    # delegates to nobody is not a multi-agent plan.
+    assert all(roles for roles in role_sets.values())
+    # At least two distinct specialist-role sets exist across the five
+    # classes -- delegation genuinely varies rather than every class quietly
+    # routing to the same fixed roster. (Two read-only classes, COMPLIANCE_
+    # REVIEW and PREMISE_IMPACT_TRACE, do share a role set here -- RECON,
+    # RISK, VERIFIER -- and differ instead in tool, scope and risk class;
+    # see `test_the_tool_selection_also_differs_across_objective_classes`.
+    # Stated rather than hidden: role-set uniqueness is not the same claim
+    # as plan uniqueness, and only the second is made here.)
+    assert len(set(role_sets.values())) >= 3
+    # PREMISE_IMPACT_TRACE is the one class with no remediation role at all
+    # -- tracing consequence is read-only by construction, not by omission
+    # (`fleet/planner.py:_plan_premise_impact_trace`'s own docstring makes
+    # the same claim; this asserts it rather than trusting the comment).
+    # CREDENTIAL_AUDIT does delegate to remediation, but only to DRAFT a
+    # revocation (ActionKind.ANALYZE) -- never to apply one.
+    assert REMEDIATION.agent_role not in role_sets[ObjectiveClass.PREMISE_IMPACT_TRACE]
+    assert REMEDIATION.agent_role in role_sets[ObjectiveClass.CREDENTIAL_AUDIT]
+
+
+def test_the_tool_selection_also_differs_across_objective_classes() -> None:
+    """Delegation is not just "which specialist" -- it is also "which tool
+    that specialist runs". `remediation.execute` (a MUTATING tool) appears
+    only in the one class whose whole point is to apply a correction."""
+    tool_sets = {
+        cls: frozenset(step.tool for step in deterministic_plan("x", objective_class=cls))
+        for cls in ObjectiveClass
+    }
+    classes_that_execute = {
+        cls for cls, tools in tool_sets.items() if "remediation.execute" in tools
+    }
+    assert classes_that_execute == {ObjectiveClass.SECURITY_INVESTIGATION}
+
+
 def test_a_read_only_objective_class_plans_no_write_scope() -> None:
     for objective in (
         "Trace the impact of a changed operational premise.",

@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-08-27T04:07:37.871914+00:00",
+  "mechanism": "fleet.tools.recon_extract_claims + fleet.tools.reconcile_adjudicate, unmodified",
+  "model_calls": 0,
+  "scenario_a": {
+    "scenario": "A \u2014 supply chain (committed, original)",
+    "incident_dir": "fleet/data/incident",
+    "coverage": {
+      "parsed": 16,
+      "total": 20,
+      "completeness": 0.8
+    },
+    "anomaly_kinds": [
+      "INCOMPLETE_PREMISE_RECORD",
+      "NO_DEPENDENCY_INDEX",
+      "SECRET_SCOPE_REQUESTED",
+      "TOOL_CALL_SPIKE",
+      "UNPARSEABLE_REQUEST_ROW"
+    ],
+    "contradictions_considered": 2,
+    "verdict": "RESOLVED_WITH_DISPUTES",
+    "settled_claims": [
+      {
+        "claim_id": "clm_supplier_K_lead_time",
+        "predicate": "lead_time_days",
+        "chosen_value": 20,
+        "chosen_authority": "procurement",
+        "agreed_with_recency": true
+      }
+    ],
+    "disputed_claims": [
+      {
+        "claim_id": "clm_tariff_rate_K",
+        "predicate": "tariff_rate_pct",
+        "dispute_kind": "AUTHORITY_CONTRADICTS_RECENCY"
+      }
+    ]
+  },
+  "scenario_b": {
+    "scenario": "B \u2014 access review (independent, this pass)",
+    "incident_dir": "fleet/data/incident-access-review",
+    "coverage": {
+      "parsed": 8,
+      "total": 12,
+      "completeness": 0.6667
+    },
+    "anomaly_kinds": [
+      "INCOMPLETE_PREMISE_RECORD",
+      "SECRET_SCOPE_REQUESTED",
+      "TOOL_CALL_SPIKE",
+      "UNPARSEABLE_REQUEST_ROW"
+    ],
+    "contradictions_considered": 2,
+    "verdict": "RESOLVED_WITH_DISPUTES",
+    "settled_claims": [
+      {
+        "claim_id": "clm_ops02_access_expiry",
+        "predicate": "access_scope_expiry_days",
+        "chosen_value": 0,
+        "chosen_authority": "iam",
+        "agreed_with_recency": true
+      }
+    ],
+    "disputed_claims": [
+      {
+        "claim_id": "clm_ops07_classification",
+        "predicate": "data_classification_level",
+        "dispute_kind": "NO_AUTHORITY_LADDER"
+      }
+    ]
+  },
+  "materially_different": {
+    "coverage_differs": true,
+    "dispute_kinds_differ": true,
+    "disputed_predicates_are_disjoint": true,
+    "scenario_a_dispute_kinds": [
+      "AUTHORITY_CONTRADICTS_RECENCY"
+    ],
+    "scenario_b_dispute_kinds": [
+      "NO_AUTHORITY_LADDER"
+    ]
+  }
+}
